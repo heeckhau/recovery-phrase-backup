@@ -9,6 +9,7 @@ const errorBox = document.getElementById("error");
 
 const outputs = {
   hex: document.getElementById("out-hex"),
+  mnemonic: document.getElementById("out-mnemonic"),
   wif: document.getElementById("out-wif"),
   btc: document.getElementById("out-btc"),
   eth: document.getElementById("out-eth"),
@@ -76,6 +77,7 @@ form.addEventListener("submit", (event) => {
   try {
     const result = convert(input, networkSelect.value, compressedCheckbox.checked);
     outputs.hex.value = result.private_key_hex;
+    outputs.mnemonic.value = result.mnemonic;
     outputs.wif.value = result.wif;
     outputs.btc.value = result.btc_address;
     outputs.eth.value = result.eth_address;

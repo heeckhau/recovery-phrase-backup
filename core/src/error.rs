@@ -16,4 +16,8 @@ pub enum Error {
     UnrecognizedFormat,
     #[error("private key value is not a valid secp256k1 scalar (zero or ≥ curve order)")]
     InvalidScalarRange,
+    #[error("{0}")]
+    InvalidMnemonic(String),
+    #[error("expected a 24-word mnemonic (256-bit), got {0} words")]
+    InvalidMnemonicWordCount(usize),
 }

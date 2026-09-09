@@ -15,6 +15,7 @@ pub struct JsConversionResult {
     pub wif: String,
     pub btc_address: String,
     pub eth_address: String,
+    pub mnemonic: String,
 }
 
 fn network_to_str(network: pkc_core::Network) -> &'static str {
@@ -31,9 +32,10 @@ fn format_to_str(format: pkc_core::KeyFormat) -> &'static str {
     }
 }
 
-/// Converts `input` (raw hex or WIF) to every representation. `network`
-/// must be `"mainnet"` or `"testnet"`; both are only defaults used when
-/// `input` is raw hex — a WIF's own network/format take precedence.
+/// Converts `input` (raw hex, WIF, or a 24-word BIP39 mnemonic) to every
+/// representation. `network` must be `"mainnet"` or `"testnet"`; both are
+/// only defaults used when `input` is raw hex or a mnemonic — a WIF's own
+/// network/format take precedence.
 #[wasm_bindgen]
 pub fn convert(input: &str, network: &str, compressed: bool) -> Result<JsConversionResult, JsValue> {
     let network = match network {
@@ -52,5 +54,6 @@ pub fn convert(input: &str, network: &str, compressed: bool) -> Result<JsConvers
         wif: result.wif,
         btc_address: result.btc_address,
         eth_address: result.eth_address,
+        mnemonic: result.mnemonic,
     })
 }

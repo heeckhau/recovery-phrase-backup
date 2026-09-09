@@ -14,11 +14,18 @@ pub struct ParsedKey {
     pub format: Option<KeyFormat>,
 }
 
-/// Parses either a raw 32-byte hex private key (optionally `0x`-prefixed)
-/// or a Base58Check-encoded WIF private key, validating the WIF checksum
-/// (the legacy tool this replaces never did).
+/// Parses a raw 32-byte hex private key (optionally `0x`-prefixed), a
+/// Base58Check-encoded WIF private key, or a 24-word BIP39 mnemonic,
+/// validating the WIF checksum or mnemonic checksum respectively (the
+/// legacy tool this replaces validated neither).
 pub fn parse_private_key(input: &str) -> Result<ParsedKey, Error> {
     let trimmed = input.trim();
+
+    if trimmed.split_whitespace().count() > 1 {
+        let key = crate::mnemonic::from_mnemonic(trimmed)?;
+        return Ok(ParsedKey { key, network: None, format: None });
+    }
+
     let hex_candidate = trimmed
         .strip_prefix("0x")
         .or_else(|| trimmed.strip_prefix("0X"))

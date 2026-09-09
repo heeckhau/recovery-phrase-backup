@@ -13,3 +13,4 @@ bs58 = { version = "0.5", features = ["check"] }
 zeroize = { version = "1.9", features = ["derive"] }
 thiserror = "2.0"
 hex = "0.4"
+bip39 = { version = "2.2", features = ["zeroize"] }

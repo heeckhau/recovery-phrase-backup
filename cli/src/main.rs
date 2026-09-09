@@ -4,11 +4,12 @@ use clap::{Parser, ValueEnum};
 #[derive(Parser)]
 #[command(version)]
 struct Args {
-    /// Private key as raw hex (optionally 0x-prefixed) or a Bitcoin WIF.
+    /// Private key as raw hex (optionally 0x-prefixed), a Bitcoin WIF, or a
+    /// 24-word BIP39 mnemonic (quote it as one shell argument).
     input: String,
 
-    /// Network to assume when `input` is raw hex. Ignored for WIF input,
-    /// which already encodes its own network.
+    /// Network to assume when `input` is raw hex or a mnemonic. Ignored for
+    /// WIF input, which already encodes its own network.
     #[arg(long, value_enum, default_value_t = NetworkArg::Mainnet)]
     network: NetworkArg,
 
@@ -53,6 +54,7 @@ fn main() {
             println!("WIF:          {}", result.wif);
             println!("BTC address:  {}", result.btc_address);
             println!("ETH address:  {}", result.eth_address);
+            println!("Mnemonic:     {}", result.mnemonic);
         }
         Err(err) => {
             eprintln!("error: {err}");

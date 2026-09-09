@@ -65,7 +65,7 @@
     margin: 1rem 0 0.35rem;
   }
   label:first-of-type { margin-top: 0; }
-  input[type="text"], select {
+  input[type="text"], select, textarea {
     width: 100%;
     padding: 0.55rem 0.65rem;
     border: 1px solid var(--border);
@@ -76,6 +76,10 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   select { font-family: inherit; }
+  textarea {
+    resize: none;
+    line-height: 1.4;
+  }
   .row { display: flex; gap: 1rem; }
   .row > div { flex: 1; }
   .checkbox-row {
@@ -165,8 +169,8 @@
 
   <div class="card">
     <form id="convert-form">
-      <label for="input-key">Private key (hex or WIF)</label>
-      <input type="text" id="input-key" autocomplete="off" spellcheck="false" placeholder="e.g. 0x0000...0001 or a Bitcoin WIF like 5Hp...">
+      <label for="input-key">Private key (hex, WIF, or 24-word mnemonic)</label>
+      <input type="text" id="input-key" autocomplete="off" spellcheck="false" placeholder="e.g. 0x0000...0001, a Bitcoin WIF like 5Hp..., or 24 mnemonic words">
       <button type="submit">Convert</button>
     </form>
 
@@ -176,6 +180,11 @@
       <div class="field">
         <div class="field-label">Private key (hex)</div>
         <input type="text" readonly id="out-hex" class="mono-output">
+      </div>
+      <div class="field">
+        <div class="field-label">Mnemonic (BIP39, 24 words)</div>
+        <textarea readonly id="out-mnemonic" class="mono-output" rows="3"></textarea>
+        <p class="notice" style="margin-top:0.4rem">This encodes exactly this key's bytes as words — it is <strong>not</strong> a wallet seed phrase. Importing it into MetaMask or another HD wallet as a "recovery phrase" will derive different keys, not this one.</p>
       </div>
     </div>
 
