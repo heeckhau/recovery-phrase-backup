@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-k256 = "0.14"
+k256 = { version = "0.14", default-features = false, features = ["arithmetic"] }
 sha3 = "0.12"
 sha2 = "0.11"
 ripemd = "0.2"
