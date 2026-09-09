@@ -41,7 +41,7 @@ entropy, which is reversible but is **not** the "mnemonic → PBKDF2 seed →
 BIP32 HD wallet" pipeline actual wallets use, so it doesn't import into
 MetaMask etc. as a recovery phrase. This is a plain, non-redundant single
 phrase — see Phase 2 for redundant, split backup shares.
-**Status: in progress.**
+**Status: done.**
 
 ### Phase 2 — SLIP-0039 Shamir Secret Sharing
 Split a key/seed into checksum-protected mnemonic shares so it can be
@@ -66,7 +66,22 @@ Chosen as the next phase (over jumping straight to Phase 3) because it's a
 bounded extension of the existing architecture — no new curve, no new
 external ecosystem to learn — that directly serves this tool's existing
 users before taking on something much bigger.
-**Status: not started.**
+
+Turned out there's no audited Rust SLIP-39 crate to depend on at all
+(unlike `k256`/`bip39`): the one candidate with the right license is
+self-described by its own author as "untested work-in-progress," and the
+only actively-maintained option is GPL-3.0 (license-incompatible). Hand-
+implemented directly from the spec instead, verified against the official
+45-vector reference test suite (trezor/python-shamir-mnemonic) — all 45
+pass. Full detail in the plan history (`/plan` at the time; see commit
+`484df7a` onward for the implementation).
+
+The `pkc-slip39` crate, its `wasm` bindings, and `cli slip39 split`/
+`slip39 combine` subcommands are done. The web UI (group-spec entry,
+multi-mnemonic combine input, print-card layout) is still its own,
+separate pass — deliberately not bundled into this one, same reasoning
+as Phase 1's core-before-UI ordering.
+**Status: crate/wasm/cli done; web UI not started.**
 
 ### Phase 3 — Validator key generation (wagyu-key-gen equivalent)
 Add the functionality of [stake-house/wagyu-key-gen](https://github.com/stake-house/wagyu-key-gen)
