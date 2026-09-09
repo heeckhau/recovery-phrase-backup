@@ -6,7 +6,6 @@ const keyInput = document.getElementById("input-key");
 const networkSelect = document.getElementById("input-network");
 const compressedCheckbox = document.getElementById("input-compressed");
 const errorBox = document.getElementById("error");
-const results = document.getElementById("results");
 
 const outputs = {
   hex: document.getElementById("out-hex"),
@@ -19,10 +18,31 @@ for (const field of Object.values(outputs)) {
   field.addEventListener("focus", () => field.select());
 }
 
+const tabs = [
+  { button: document.getElementById("tab-eth"), panel: document.getElementById("panel-eth") },
+  { button: document.getElementById("tab-btc"), panel: document.getElementById("panel-btc") },
+];
+
+for (const { button } of tabs) {
+  button.addEventListener("click", () => {
+    for (const tab of tabs) {
+      const active = tab.button === button;
+      tab.button.setAttribute("aria-selected", String(active));
+      tab.panel.hidden = !active;
+    }
+  });
+}
+
+function clearOutputs() {
+  for (const field of Object.values(outputs)) {
+    field.value = "";
+  }
+}
+
 function showError(message) {
   errorBox.textContent = message;
   errorBox.style.display = "block";
-  results.hidden = true;
+  clearOutputs();
 }
 
 function clearError() {
@@ -61,7 +81,6 @@ form.addEventListener("submit", (event) => {
     outputs.eth.value = result.eth_address;
     networkSelect.value = result.network;
     compressedCheckbox.checked = result.format === "compressed";
-    results.hidden = false;
   } catch (err) {
     showError(String(err));
   }
