@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Private Key Converter</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f5f4;
+    --panel: #ffffff;
+    --text: #1c1c1c;
+    --muted: #6b6b6b;
+    --border: #d8d8d6;
+    --accent: #2454ff;
+    --error-bg: #fdecea;
+    --error-text: #7a1f14;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16161a;
+      --panel: #1f1f24;
+      --text: #ececec;
+      --muted: #9a9a9a;
+      --border: #3a3a40;
+      --accent: #6d93ff;
+      --error-bg: #3a1a17;
+      --error-text: #ff9f92;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 2.5rem 1rem;
+  }
+  main {
+    width: 100%;
+    max-width: 640px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 0.25rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0 0 1.5rem;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 1rem 0 0.35rem;
+  }
+  label:first-of-type { margin-top: 0; }
+  input[type="text"], select {
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  select { font-family: inherit; }
+  .row { display: flex; gap: 1rem; }
+  .row > div { flex: 1; }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .checkbox-row label { margin: 0; font-weight: 500; }
+  button {
+    margin-top: 1.25rem;
+    width: 100%;
+    padding: 0.65rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .error {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 6px;
+    background: var(--error-bg);
+    color: var(--error-text);
+    font-size: 0.85rem;
+  }
+  .results {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .results[hidden] { display: none; }
+  .field { margin-bottom: 0.9rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.25rem;
+  }
+  .notice {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Private Key Converter</h1>
+  <p class="subtitle">Bitcoin WIF &harr; raw private key, with derived Bitcoin and Ethereum addresses.</p>
+
+  <div class="card">
+    <form id="convert-form">
+      <label for="input-key">Private key (hex or WIF)</label>
+      <input type="text" id="input-key" autocomplete="off" spellcheck="false" placeholder="e.g. 0000...0001 or a WIF like 5Hp...">
+
+      <div class="row">
+        <div>
+          <label for="input-network">Network</label>
+          <select id="input-network">
+            <option value="mainnet">Mainnet</option>
+            <option value="testnet">Testnet</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="input-compressed" checked>
+        <label for="input-compressed">Compressed key</label>
+      </div>
+      <p class="notice" style="margin-top:0.35rem">Network/compressed only apply when the input is raw hex — pasting a WIF uses the network and format already encoded in it.</p>
+
+      <button type="submit">Convert</button>
+    </form>
+
+    <div class="error" id="error"></div>
+
+    <div class="results" id="results" hidden>
+      <div class="field">
+        <div class="field-label">Private key (hex)</div>
+        <input type="text" readonly id="out-hex">
+      </div>
+      <div class="field">
+        <div class="field-label">WIF</div>
+        <input type="text" readonly id="out-wif">
+      </div>
+      <div class="field">
+        <div class="field-label">Bitcoin address (P2PKH)</div>
+        <input type="text" readonly id="out-btc">
+      </div>
+      <div class="field">
+        <div class="field-label">Ethereum address</div>
+        <input type="text" readonly id="out-eth">
+      </div>
+    </div>
+  </div>
+
+  <p class="notice">
+    Everything runs locally in your browser via WebAssembly — nothing you type is sent anywhere.
+    For real keys, download this project and run it offline: open <code>web/index.html</code> served
+    from a local static server with no network connection.
+  </p>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
