@@ -22,6 +22,32 @@ pub enum Error {
     InvalidPadding,
     #[error("decoded share value is only {0} bits, must be at least 128")]
     ShareValueTooShort(usize),
+    #[error("group count must be between 1 and 16, got {0}")]
+    InvalidGroupCount(usize),
+    #[error("group threshold must be between 1 and {group_count} (the number of groups), got {group_threshold}")]
+    InvalidGroupThreshold { group_threshold: u8, group_count: u8 },
+    #[error("group {group_index}: member count must be between 1 and 16, got {count}")]
+    InvalidMemberCount { group_index: u8, count: u8 },
+    #[error("group {group_index}: member threshold must be between 1 and {member_count}, got {member_threshold} (a threshold of 1 also requires exactly 1 member)")]
+    InvalidMemberThreshold { group_index: u8, member_threshold: u8, member_count: u8 },
+    #[error("iteration exponent must be between 0 and 15, got {0}")]
+    InvalidIterationExponent(u8),
+    #[error("passphrase contains a character that is not printable ASCII (code point {0})")]
+    InvalidPassphrase(u32),
+    #[error("this only supports 256-bit secrets; these shares decode to {0} bits")]
+    UnsupportedSecretLength(usize),
+    #[error("shares have different {field}s — they aren't all from the same backup")]
+    MismatchedShares { field: &'static str },
+    #[error("group {group_index}: shares disagree on the member threshold")]
+    MismatchedMemberThreshold { group_index: u8 },
+    #[error("group {group_index}: two shares have the same member index {member_index}")]
+    DuplicateMemberIndex { group_index: u8, member_index: u8 },
+    #[error("need shares from exactly {need} distinct groups, got {have}")]
+    WrongGroupCount { have: u8, need: u8 },
+    #[error("group {group_index}: need exactly {need} member shares, got {have}")]
+    WrongMemberShareCount { group_index: u8, have: u8, need: u8 },
+    #[error("no shares provided")]
+    NoShares,
 }
 
 /// The shortest possible valid SLIP-39 mnemonic: a 128-bit share value
