@@ -1,3 +1,4 @@
+mod crypto;
 mod error;
 mod gf256;
 mod rs1024;
