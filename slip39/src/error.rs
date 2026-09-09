@@ -12,7 +12,21 @@ pub enum Error {
     Random,
     #[error("shares do not reconstruct a consistent secret (wrong shares, wrong threshold, or corrupted data)")]
     ShareSetInconsistent,
+    #[error("expected at least {MIN_WORD_COUNT} words, got {0}")]
+    InvalidMnemonicWordCount(usize),
+    #[error("\"{0}\" is not a word in the SLIP-39 wordlist")]
+    UnknownWord(String),
+    #[error("checksum does not match — check for a typo")]
+    InvalidChecksum,
+    #[error("padding bits are not all zero, or the padding is too long (tampered or corrupted share)")]
+    InvalidPadding,
+    #[error("decoded share value is only {0} bits, must be at least 128")]
+    ShareValueTooShort(usize),
 }
+
+/// The shortest possible valid SLIP-39 mnemonic: a 128-bit share value
+/// (20 words total; see the spec's share-length table).
+pub const MIN_WORD_COUNT: usize = 20;
 
 impl From<getrandom::Error> for Error {
     fn from(_: getrandom::Error) -> Self {

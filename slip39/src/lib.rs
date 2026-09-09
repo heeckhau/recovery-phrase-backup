@@ -1,3 +1,4 @@
+mod codec;
 mod crypto;
 mod error;
 mod gf256;
