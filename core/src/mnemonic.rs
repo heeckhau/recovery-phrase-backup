@@ -17,7 +17,12 @@ pub fn to_mnemonic(key: &PrivateKey) -> String {
 /// Parses a 24-word BIP39 mnemonic back into a private key, validating its
 /// checksum.
 pub fn from_mnemonic(phrase: &str) -> Result<PrivateKey, Error> {
-    let parsed = Mnemonic::parse_in(Language::English, phrase)
+    // BIP39 wordlists are all lowercase, but plenty of text fields
+    // (mobile keyboards, Safari's autocapitalize) capitalize the first
+    // letter of what looks like the start of a sentence — normalize
+    // rather than reject what's otherwise a perfectly typed phrase.
+    let normalized = phrase.to_lowercase();
+    let parsed = Mnemonic::parse_in(Language::English, normalized.as_str())
         .map_err(|e| Error::InvalidMnemonic(e.to_string()))?;
 
     let word_count = parsed.word_count();
@@ -49,6 +54,21 @@ mod tests {
         let phrase = to_mnemonic(&key_one());
         assert_eq!(phrase.split_whitespace().count(), 24);
         let recovered = from_mnemonic(&phrase).unwrap();
+        assert_eq!(recovered.to_bytes(), key_one().to_bytes());
+    }
+
+    #[test]
+    fn tolerates_autocapitalized_first_word() {
+        // Safari/mobile keyboards commonly capitalize the first letter of
+        // a text field's contents by default (autocapitalize="sentences").
+        let phrase = to_mnemonic(&key_one());
+        let mut words: Vec<String> = phrase.split_whitespace().map(str::to_string).collect();
+        let mut chars: Vec<char> = words[0].chars().collect();
+        chars[0] = chars[0].to_ascii_uppercase();
+        words[0] = chars.into_iter().collect();
+        let capitalized = words.join(" ");
+
+        let recovered = from_mnemonic(&capitalized).unwrap();
         assert_eq!(recovered.to_bytes(), key_one().to_bytes());
     }
 
