@@ -28,11 +28,19 @@ Each phase below adds a module/crate alongside this structure rather than rework
 
 ## Phases
 
-### Phase 1 — BTC ↔ ETH private key/address converter
+### Phase 1 — ETH-primary private key/address converter
 Feature parity with the legacy tool, fixing its known gaps: no WIF checksum
 validation, uncompressed-keys-only, no testnet, no EIP-55 checksum casing on
 ETH addresses. Full detail (crate layout, dependency choices, API
-signatures, test vectors, milestones) is in [`PLAN.md`](PLAN.md).
+signatures, test vectors, milestones) is in [`PLAN.md`](PLAN.md). Since
+building it, the web UI was restructured Ethereum-first (Ethereum address
+up top, Bitcoin's network/compressed options and WIF/address grouped into
+their own tab), and plain BIP39 mnemonic support was added as a third input
+format alongside hex/WIF — a private key's 32 bytes used directly as BIP39
+entropy, which is reversible but is **not** the "mnemonic → PBKDF2 seed →
+BIP32 HD wallet" pipeline actual wallets use, so it doesn't import into
+MetaMask etc. as a recovery phrase. This is a plain, non-redundant single
+phrase — see Phase 2 for redundant, split backup shares.
 **Status: in progress.**
 
 ### Phase 2 — SLIP-0039 Shamir Secret Sharing
