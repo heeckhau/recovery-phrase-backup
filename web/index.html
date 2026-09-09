@@ -41,7 +41,7 @@
   }
   main {
     width: 100%;
-    max-width: 640px;
+    max-width: 680px;
   }
   h1 {
     font-size: 1.4rem;
@@ -85,6 +85,33 @@
     margin-top: 1rem;
   }
   .checkbox-row label { margin: 0; font-weight: 500; }
+  .mono-output {
+    font-size: 0.82rem;
+    padding: 0.5rem 0.6rem;
+    letter-spacing: -0.01em;
+  }
+  .eth-highlight input {
+    border-color: var(--accent);
+    font-size: 0.88rem;
+  }
+  details.btc-section {
+    margin-top: 1.25rem;
+  }
+  details.btc-section > summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  details.btc-section[open] > summary {
+    margin-bottom: 0.75rem;
+  }
+  .results details.btc-section {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
   button {
     margin-top: 1.25rem;
     width: 100%;
@@ -133,28 +160,30 @@
 <body>
 <main>
   <h1>Private Key Converter</h1>
-  <p class="subtitle">Bitcoin WIF &harr; raw private key, with derived Bitcoin and Ethereum addresses.</p>
+  <p class="subtitle">Convert an Ethereum private key to every format, and derive a Bitcoin address too (same key, same curve).</p>
 
   <div class="card">
     <form id="convert-form">
       <label for="input-key">Private key (hex or WIF)</label>
-      <input type="text" id="input-key" autocomplete="off" spellcheck="false" placeholder="e.g. 0000...0001 or a WIF like 5Hp...">
+      <input type="text" id="input-key" autocomplete="off" spellcheck="false" placeholder="e.g. 0x0000...0001 or a Bitcoin WIF like 5Hp...">
 
-      <div class="row">
-        <div>
-          <label for="input-network">Network</label>
-          <select id="input-network">
-            <option value="mainnet">Mainnet</option>
-            <option value="testnet">Testnet</option>
-          </select>
+      <details class="btc-section">
+        <summary>Bitcoin options</summary>
+        <div class="row">
+          <div>
+            <label for="input-network">Network</label>
+            <select id="input-network">
+              <option value="mainnet">Mainnet</option>
+              <option value="testnet">Testnet</option>
+            </select>
+          </div>
         </div>
-      </div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="input-compressed" checked>
-        <label for="input-compressed">Compressed key</label>
-      </div>
-      <p class="notice" style="margin-top:0.35rem">Network/compressed only apply when the input is raw hex — pasting a WIF uses the network and format already encoded in it.</p>
+        <div class="checkbox-row">
+          <input type="checkbox" id="input-compressed" checked>
+          <label for="input-compressed">Compressed key</label>
+        </div>
+        <p class="notice" style="margin-top:0.35rem">Only affects the Bitcoin WIF/address below (the Ethereum address doesn't depend on either setting) — and only when the input is raw hex, since pasting a WIF uses the network/format already encoded in it.</p>
+      </details>
 
       <button type="submit">Convert</button>
     </form>
@@ -162,22 +191,26 @@
     <div class="error" id="error"></div>
 
     <div class="results" id="results" hidden>
+      <div class="field eth-highlight">
+        <div class="field-label">Ethereum address</div>
+        <input type="text" readonly id="out-eth" class="mono-output">
+      </div>
       <div class="field">
         <div class="field-label">Private key (hex)</div>
-        <input type="text" readonly id="out-hex">
+        <input type="text" readonly id="out-hex" class="mono-output">
       </div>
-      <div class="field">
-        <div class="field-label">WIF</div>
-        <input type="text" readonly id="out-wif">
-      </div>
-      <div class="field">
-        <div class="field-label">Bitcoin address (P2PKH)</div>
-        <input type="text" readonly id="out-btc">
-      </div>
-      <div class="field">
-        <div class="field-label">Ethereum address</div>
-        <input type="text" readonly id="out-eth">
-      </div>
+
+      <details class="btc-section">
+        <summary>Bitcoin</summary>
+        <div class="field">
+          <div class="field-label">WIF</div>
+          <input type="text" readonly id="out-wif" class="mono-output">
+        </div>
+        <div class="field">
+          <div class="field-label">Bitcoin address (P2PKH)</div>
+          <input type="text" readonly id="out-btc" class="mono-output">
+        </div>
+      </details>
     </div>
   </div>
 
