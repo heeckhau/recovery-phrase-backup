@@ -51,21 +51,7 @@ function clearError() {
   errorBox.textContent = "";
 }
 
-submitButton.disabled = true;
-submitButton.textContent = "Loading…";
-
-init()
-  .then(() => {
-    submitButton.disabled = false;
-    submitButton.textContent = "Convert";
-  })
-  .catch((err) => {
-    submitButton.textContent = "Failed to load";
-    showError(`Could not load the WebAssembly module: ${err}`);
-  });
-
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
+function runConversion() {
   clearError();
 
   const input = keyInput.value.trim();
@@ -86,4 +72,30 @@ form.addEventListener("submit", (event) => {
   } catch (err) {
     showError(String(err));
   }
+}
+
+submitButton.disabled = true;
+submitButton.textContent = "Loading…";
+
+init()
+  .then(() => {
+    submitButton.disabled = false;
+    submitButton.textContent = "Convert";
+
+    // ?test prefills the well-known "private key = 1" vector and converts
+    // it immediately, for quick manual/visual testing. Never a real key —
+    // it's the most famous toy vector, so it demonstrably holds no funds.
+    if (new URLSearchParams(window.location.search).has("test")) {
+      keyInput.value = "0000000000000000000000000000000000000000000000000000000000000001";
+      runConversion();
+    }
+  })
+  .catch((err) => {
+    submitButton.textContent = "Failed to load";
+    showError(`Could not load the WebAssembly module: ${err}`);
+  });
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  runConversion();
 });
