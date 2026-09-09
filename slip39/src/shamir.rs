@@ -54,7 +54,7 @@ pub fn split_secret(threshold: u8, share_count: u8, secret: &[u8]) -> Result<Vec
         return Err(Error::InvalidThreshold { threshold, share_count });
     }
     let bits = secret.len() * 8;
-    if bits < 128 || bits % 16 != 0 {
+    if bits < 128 || !bits.is_multiple_of(16) {
         return Err(Error::InvalidSecretLength(bits));
     }
 

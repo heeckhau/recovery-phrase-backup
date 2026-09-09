@@ -7,8 +7,6 @@ const WORDLIST_TXT: &str = include_str!("wordlist.txt");
 
 static WORDLIST: LazyLock<Vec<&'static str>> = LazyLock::new(|| WORDLIST_TXT.lines().collect());
 
-pub const WORD_COUNT: usize = 1024;
-
 /// Looks up the word at a given 10-bit index (0..1024).
 pub fn word_at(index: u16) -> Option<&'static str> {
     WORDLIST.get(index as usize).copied()
@@ -26,7 +24,7 @@ mod tests {
 
     #[test]
     fn has_exactly_1024_words() {
-        assert_eq!(WORDLIST.len(), WORD_COUNT);
+        assert_eq!(WORDLIST.len(), 1024);
     }
 
     #[test]
@@ -34,13 +32,13 @@ mod tests {
         let mut sorted = WORDLIST.clone();
         sorted.sort_unstable();
         sorted.dedup();
-        assert_eq!(sorted.len(), WORD_COUNT, "expected no duplicates");
+        assert_eq!(sorted.len(), 1024, "expected no duplicates");
         assert_eq!(*WORDLIST, sorted, "expected the file to already be sorted");
     }
 
     #[test]
     fn word_at_and_index_of_round_trip() {
-        for i in 0..WORD_COUNT as u16 {
+        for i in 0..1024u16 {
             let word = word_at(i).unwrap();
             assert_eq!(index_of(word), Some(i));
         }
