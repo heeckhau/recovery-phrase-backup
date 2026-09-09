@@ -1,0 +1,14 @@
+[package]
+name = "pkc-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+k256 = "0.14"
+sha3 = "0.12"
+sha2 = "0.11"
+ripemd = "0.2"
+bs58 = { version = "0.5", features = ["check"] }
+zeroize = { version = "1.9", features = ["derive"] }
+thiserror = "2.0"
