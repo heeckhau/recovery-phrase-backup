@@ -94,6 +94,33 @@ pub fn slip39_split(
     Ok(shares.into_iter().map(|members| members.join("\n")).collect())
 }
 
+/// Which group/member a single SLIP-39 share is, and the thresholds it
+/// was split with — all 1-indexed for display. None of this is sensitive;
+/// it's decoded straight from the mnemonic's own plaintext structure.
+#[wasm_bindgen(getter_with_clone)]
+pub struct JsShareInfo {
+    pub group_number: u32,
+    pub group_count: u32,
+    pub group_threshold: u32,
+    pub member_number: u32,
+    pub member_threshold: u32,
+}
+
+/// Identifies a single SLIP-39 mnemonic share — which group/member it is,
+/// and the thresholds it needs — without requiring enough shares to
+/// recover anything. Useful for labeling a share as it's entered.
+#[wasm_bindgen]
+pub fn slip39_inspect(mnemonic: &str) -> Result<JsShareInfo, JsValue> {
+    let info = pkc_slip39::inspect(mnemonic).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    Ok(JsShareInfo {
+        group_number: info.group_index as u32 + 1,
+        group_count: info.group_count as u32,
+        group_threshold: info.group_threshold as u32,
+        member_number: info.member_index as u32 + 1,
+        member_threshold: info.member_threshold as u32,
+    })
+}
+
 /// Recombines SLIP-39 mnemonic shares into the original private key's hex.
 /// A wrong `passphrase` is not detected as an error here — SLIP-39
 /// decryption is intentionally unauthenticated, so it silently returns a

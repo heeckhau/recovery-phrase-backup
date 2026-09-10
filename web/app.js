@@ -1,4 +1,4 @@
-import init, { convert, slip39_split, slip39_combine } from "./pkg/pkc_wasm.js";
+import init, { convert, slip39_split, slip39_combine, slip39_inspect } from "./pkg/pkc_wasm.js";
 
 function setupTabs(tabs) {
   for (const { button } of tabs) {
@@ -316,6 +316,20 @@ function addMnemonicRow() {
   textarea.autocapitalize = "off";
   textarea.placeholder = "paste a mnemonic share";
   field.appendChild(textarea);
+
+  const badge = document.createElement("div");
+  badge.className = "share-badge";
+  field.appendChild(badge);
+
+  textarea.addEventListener("input", () => {
+    try {
+      const info = slip39_inspect(textarea.value);
+      badge.textContent = `Group ${info.group_number} of ${info.group_count} · share ${info.member_number} (needs ${info.member_threshold} from this group, ${info.group_threshold} of ${info.group_count} groups overall)`;
+    } catch {
+      badge.textContent = "";
+    }
+  });
+
   row.appendChild(field);
 
   const removeButton = document.createElement("button");

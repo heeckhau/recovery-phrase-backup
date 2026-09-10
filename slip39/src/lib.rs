@@ -105,6 +105,42 @@ pub fn split(
     Ok(result)
 }
 
+/// The structural metadata a single mnemonic share reveals about itself —
+/// which group/member it is and the thresholds it was split with. None of
+/// this is sensitive (unlike the share's actual value): anyone holding the
+/// mnemonic can already read it directly, `inspect` just decodes it for
+/// display, e.g. so a UI can label a pasted share "Group 2, share 1 of 3"
+/// without the user having to track that by hand.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ShareInfo {
+    pub id: u16,
+    pub extendable: bool,
+    pub iteration_exponent: u8,
+    pub group_index: u8,
+    pub group_threshold: u8,
+    pub group_count: u8,
+    pub member_index: u8,
+    pub member_threshold: u8,
+}
+
+/// Decodes a single mnemonic share's metadata (not its secret value),
+/// validating its checksum. Useful to identify/label a share — e.g. before
+/// enough shares are on hand to `combine` — without exposing anything
+/// sensitive.
+pub fn inspect(mnemonic: &str) -> Result<ShareInfo, Error> {
+    let share = codec::decode(&mnemonic.split_whitespace().collect::<Vec<_>>())?;
+    Ok(ShareInfo {
+        id: share.id,
+        extendable: share.extendable,
+        iteration_exponent: share.iteration_exponent,
+        group_index: share.group_index,
+        group_threshold: share.group_threshold,
+        group_count: share.group_count,
+        member_index: share.member_index,
+        member_threshold: share.member_threshold,
+    })
+}
+
 /// Recombines a flat, order-independent list of mnemonic shares (any mix
 /// of groups) into the original 32-byte master secret. Reads `id`/`ext`/`e`
 /// from the shares themselves, so shares from other SLIP-39
@@ -221,6 +257,29 @@ mod tests {
 
     fn single_group(member_threshold: u8, member_count: u8) -> Vec<GroupSpec> {
         vec![GroupSpec { member_threshold, member_count }]
+    }
+
+    #[test]
+    fn inspect_reveals_group_and_member_position() {
+        let ms = secret();
+        let groups_spec = vec![GroupSpec { member_threshold: 2, member_count: 3 }, GroupSpec { member_threshold: 3, member_count: 4 }];
+        let shares = split(&ms, 2, &groups_spec, "", 0).unwrap();
+
+        let info = inspect(&shares[1][2]).unwrap(); // group 1 (0-indexed), 3rd member
+        assert_eq!(info.group_index, 1);
+        assert_eq!(info.group_threshold, 2);
+        assert_eq!(info.group_count, 2);
+        assert_eq!(info.member_index, 2);
+        assert_eq!(info.member_threshold, 3);
+
+        // Every share of the same backup reports the same id.
+        let other = inspect(&shares[0][0]).unwrap();
+        assert_eq!(other.id, info.id);
+    }
+
+    #[test]
+    fn inspect_rejects_invalid_share_without_panicking() {
+        assert!(inspect("not a real mnemonic").is_err());
     }
 
     #[test]

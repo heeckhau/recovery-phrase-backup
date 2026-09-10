@@ -55,6 +55,8 @@ enum Slip39Command {
     Split(Slip39SplitArgs),
     /// Recombine SLIP-39 mnemonic shares into the original private key.
     Combine(Slip39CombineArgs),
+    /// Show which group/member a single share is, without needing enough shares to recover anything.
+    Inspect(Slip39InspectArgs),
 }
 
 #[derive(Args)]
@@ -94,6 +96,12 @@ struct Slip39CombineArgs {
     /// check the resulting addresses look right before trusting the result.
     #[arg(long, default_value = "")]
     passphrase: String,
+}
+
+#[derive(Args)]
+struct Slip39InspectArgs {
+    /// A single mnemonic share (quote it as one shell argument).
+    mnemonic: String,
 }
 
 fn parse_group(spec: &str) -> Result<pkc_slip39::GroupSpec, String> {
@@ -146,6 +154,14 @@ fn run_slip39_combine(args: Slip39CombineArgs) -> Result<(), String> {
     Ok(())
 }
 
+fn run_slip39_inspect(args: Slip39InspectArgs) -> Result<(), String> {
+    let info = pkc_slip39::inspect(&args.mnemonic).map_err(|e| e.to_string())?;
+    println!("Group:           {} of {}", info.group_index + 1, info.group_count);
+    println!("Member:          {} (this group needs {})", info.member_index + 1, info.member_threshold);
+    println!("Groups required: {} of {}", info.group_threshold, info.group_count);
+    Ok(())
+}
+
 fn hex_encode(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
@@ -157,6 +173,7 @@ fn main() {
         Command::Convert(args) => run_convert(args),
         Command::Slip39 { action: Slip39Command::Split(args) } => run_slip39_split(args),
         Command::Slip39 { action: Slip39Command::Combine(args) } => run_slip39_combine(args),
+        Command::Slip39 { action: Slip39Command::Inspect(args) } => run_slip39_inspect(args),
     };
 
     if let Err(err) = result {
