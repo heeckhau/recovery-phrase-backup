@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+bitvec = { version = "1.1", default-features = false, features = ["alloc"] }
 sha2 = "0.11"
 hmac = "0.13"
 pbkdf2 = "0.13"

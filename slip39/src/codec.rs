@@ -3,6 +3,13 @@
 // e, group index, group threshold, group count, member index, member
 // threshold), the zero-padded share value, then a 30-bit RS1024 checksum,
 // all as one bitstream chunked into 10-bit words.
+//
+// Bit-level read/write is delegated to `bitvec` (a mature, extremely
+// widely used crate — not a crypto primitive itself, but exactly the kind
+// of fiddly index arithmetic worth not hand-rolling: this file's padding
+// math already had one subtle bug caught by the official test vectors).
+use bitvec::prelude::*;
+
 use crate::error::{Error, MIN_WORD_COUNT};
 use crate::rs1024;
 use crate::wordlist;
@@ -20,53 +27,42 @@ pub struct ShareData {
     pub share_value: Vec<u8>,
 }
 
-/// A simple bit buffer — clarity over cleverness, since a share is at most
-/// a few hundred bits.
-struct BitVec(Vec<bool>);
+type Bits = BitVec<u8, Msb0>;
 
-impl BitVec {
-    fn new() -> Self {
-        BitVec(Vec::new())
+/// Appends the low `width` bits of `value`, big-endian.
+fn push_uint(bits: &mut Bits, value: u32, width: usize) {
+    if width == 0 {
+        return;
     }
+    let start = bits.len();
+    bits.resize(start + width, false);
+    bits[start..].store_be(value);
+}
 
-    fn push_uint(&mut self, value: u32, bits: u32) {
-        for i in (0..bits).rev() {
-            self.0.push((value >> i) & 1 == 1);
-        }
+fn push_bytes(bits: &mut Bits, bytes: &[u8]) {
+    for &b in bytes {
+        push_uint(bits, b as u32, 8);
     }
+}
 
-    fn push_bytes(&mut self, bytes: &[u8]) {
-        for &b in bytes {
-            self.push_uint(b as u32, 8);
-        }
+/// Reads a `width`-bit (<=32) big-endian unsigned integer at `start`.
+fn read_uint(bits: &Bits, start: usize, width: usize) -> u32 {
+    if width == 0 {
+        return 0;
     }
+    bits[start..start + width].load_be()
+}
 
-    fn from_words(words: &[u16]) -> Self {
-        let mut v = BitVec::new();
-        for &w in words {
-            v.push_uint(w as u32, 10);
-        }
-        v
-    }
+fn words_from_bits(bits: &Bits) -> Vec<u16> {
+    bits.chunks(10).map(|chunk| chunk.load_be()).collect()
+}
 
-    fn to_words(&self) -> Vec<u16> {
-        self.0
-            .chunks(10)
-            .map(|chunk| chunk.iter().fold(0u16, |acc, &bit| (acc << 1) | (bit as u16)))
-            .collect()
+fn bits_from_words(words: &[u16]) -> Bits {
+    let mut bits = Bits::new();
+    for &w in words {
+        push_uint(&mut bits, w as u32, 10);
     }
-
-    fn read_uint(&self, start: usize, bits: usize) -> u32 {
-        self.0[start..start + bits].iter().fold(0u32, |acc, &bit| (acc << 1) | (bit as u32))
-    }
-
-    fn read_bytes(&self, start: usize, byte_len: usize) -> Vec<u8> {
-        (0..byte_len).map(|i| self.read_uint(start + i * 8, 8) as u8).collect()
-    }
-
-    fn len(&self) -> usize {
-        self.0.len()
-    }
+    bits
 }
 
 const HEADER_BITS: usize = 15 + 1 + 4 + 4 + 4 + 4 + 4 + 4; // 40
@@ -74,28 +70,28 @@ const CHECKSUM_BITS: usize = 30;
 
 /// Encodes `share` as its mnemonic word sequence.
 pub fn encode(share: &ShareData) -> Vec<String> {
-    let mut bits = BitVec::new();
-    bits.push_uint(share.id as u32, 15);
-    bits.push_uint(share.extendable as u32, 1);
-    bits.push_uint(share.iteration_exponent as u32, 4);
-    bits.push_uint(share.group_index as u32, 4);
-    bits.push_uint((share.group_threshold - 1) as u32, 4);
-    bits.push_uint((share.group_count - 1) as u32, 4);
-    bits.push_uint(share.member_index as u32, 4);
-    bits.push_uint((share.member_threshold - 1) as u32, 4);
+    let mut bits = Bits::new();
+    push_uint(&mut bits, share.id as u32, 15);
+    push_uint(&mut bits, share.extendable as u32, 1);
+    push_uint(&mut bits, share.iteration_exponent as u32, 4);
+    push_uint(&mut bits, share.group_index as u32, 4);
+    push_uint(&mut bits, (share.group_threshold - 1) as u32, 4);
+    push_uint(&mut bits, (share.group_count - 1) as u32, 4);
+    push_uint(&mut bits, share.member_index as u32, 4);
+    push_uint(&mut bits, (share.member_threshold - 1) as u32, 4);
 
     let value_bits = share.share_value.len() * 8;
     let padding = (10 - (value_bits % 10)) % 10;
-    bits.push_uint(0, padding as u32);
-    bits.push_bytes(&share.share_value);
+    push_uint(&mut bits, 0, padding);
+    push_bytes(&mut bits, &share.share_value);
 
-    let data_words = bits.to_words();
+    let data_words = words_from_bits(&bits);
     let checksum = rs1024::create_checksum(share.extendable, &data_words);
     for word in checksum {
-        bits.push_uint(word as u32, 10);
+        push_uint(&mut bits, word as u32, 10);
     }
 
-    bits.to_words()
+    words_from_bits(&bits)
         .into_iter()
         .map(|w| wordlist::word_at(w).expect("word index always in range").to_string())
         .collect()
@@ -116,10 +112,10 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
         })
         .collect::<Result<_, _>>()?;
 
-    let bits = BitVec::from_words(&indices);
+    let bits = bits_from_words(&indices);
     let total_bits = bits.len();
 
-    let extendable = bits.read_uint(15, 1) == 1;
+    let extendable = read_uint(&bits, 15, 1) == 1;
     if !rs1024::verify_checksum(extendable, &indices) {
         return Err(Error::InvalidChecksum);
     }
@@ -131,7 +127,7 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
     if padding > 8 {
         return Err(Error::InvalidPadding);
     }
-    if bits.read_uint(HEADER_BITS, padding) != 0 {
+    if read_uint(&bits, HEADER_BITS, padding) != 0 {
         return Err(Error::InvalidPadding);
     }
 
@@ -140,17 +136,17 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
         return Err(Error::ShareValueTooShort(n * 8));
     }
 
-    let share_value = bits.read_bytes(HEADER_BITS + padding, n);
+    let share_value: Vec<u8> = (0..n).map(|i| read_uint(&bits, HEADER_BITS + padding + i * 8, 8) as u8).collect();
 
     Ok(ShareData {
-        id: bits.read_uint(0, 15) as u16,
+        id: read_uint(&bits, 0, 15) as u16,
         extendable,
-        iteration_exponent: bits.read_uint(16, 4) as u8,
-        group_index: bits.read_uint(20, 4) as u8,
-        group_threshold: bits.read_uint(24, 4) as u8 + 1,
-        group_count: bits.read_uint(28, 4) as u8 + 1,
-        member_index: bits.read_uint(32, 4) as u8,
-        member_threshold: bits.read_uint(36, 4) as u8 + 1,
+        iteration_exponent: read_uint(&bits, 16, 4) as u8,
+        group_index: read_uint(&bits, 20, 4) as u8,
+        group_threshold: read_uint(&bits, 24, 4) as u8 + 1,
+        group_count: read_uint(&bits, 28, 4) as u8 + 1,
+        member_index: read_uint(&bits, 32, 4) as u8,
+        member_threshold: read_uint(&bits, 36, 4) as u8 + 1,
         share_value,
     })
 }
