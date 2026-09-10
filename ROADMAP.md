@@ -76,12 +76,19 @@ implemented directly from the spec instead, verified against the official
 pass. Full detail in the plan history (`/plan` at the time; see commit
 `484df7a` onward for the implementation).
 
-The `pkc-slip39` crate, its `wasm` bindings, and `cli slip39 split`/
-`slip39 combine` subcommands are done. The web UI (group-spec entry,
-multi-mnemonic combine input, print-card layout) is still its own,
-separate pass — deliberately not bundled into this one, same reasoning
-as Phase 1's core-before-UI ordering.
-**Status: crate/wasm/cli done; web UI not started.**
+The `pkc-slip39` crate, its `wasm` bindings, `cli slip39 split`/
+`slip39 combine` subcommands, and the web UI (a "SLIP-39 Backup" page tab
+with Split/Combine sub-tabs: dynamic group rows, a group-threshold picker
+that only appears once there's more than one group, and a Combine view
+that shows the recovered key's derived addresses so users can visually
+catch a wrong passphrase) are all done, verified end-to-end in a real
+browser.
+
+Still open: the pen-and-paper print-card layout mentioned above — the
+Split/Combine *forms* are built, but not yet a `@media print` card view
+for writing down/recovering shares on paper. Small, self-contained,
+doesn't block anything else.
+**Status: crate/wasm/cli/web UI done; print cards not started.**
 
 ### Phase 3 — Validator key generation (wagyu-key-gen equivalent)
 Add the functionality of [stake-house/wagyu-key-gen](https://github.com/stake-house/wagyu-key-gen)
