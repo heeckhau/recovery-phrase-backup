@@ -3,11 +3,16 @@
 // the two-level scheme (see lib.rs).
 use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
+use zeroize::Zeroizing;
 
 use crate::error::Error;
 use crate::gf256;
+use crate::SecretBytes;
 
 type HmacSha256 = Hmac<Sha256>;
+
+/// A share point: its x-coordinate (share index) and secret y value-vector.
+pub type Point = (u8, SecretBytes);
 
 /// First 4 bytes of HMAC-SHA256(key, msg) — the "digest" used as the fixed
 /// point at x=254, verified on recovery to detect wrong/insufficient/
@@ -23,9 +28,9 @@ fn digest4(key: &[u8], msg: &[u8]) -> [u8; 4] {
 
 /// Lagrange-interpolates the value-vector at `x` given a set of
 /// (x_i, y_i) points with pairwise distinct x_i.
-fn interpolate(x: u8, points: &[(u8, Vec<u8>)]) -> Vec<u8> {
+fn interpolate(x: u8, points: &[Point]) -> SecretBytes {
     let n = points[0].1.len();
-    let mut result = vec![0u8; n];
+    let mut result = Zeroizing::new(vec![0u8; n]);
     for (xi, yi) in points {
         let mut basis = 1u8;
         for (xj, _) in points {
@@ -46,7 +51,7 @@ fn interpolate(x: u8, points: &[(u8, Vec<u8>)]) -> Vec<u8> {
 /// SplitSecret(T, N, S): splits `secret` into `share_count` shares, any
 /// `threshold` of which reconstruct it. If `threshold` is 1, every share
 /// simply equals the secret.
-pub fn split_secret(threshold: u8, share_count: u8, secret: &[u8]) -> Result<Vec<(u8, Vec<u8>)>, Error> {
+pub fn split_secret(threshold: u8, share_count: u8, secret: &[u8]) -> Result<Vec<Point>, Error> {
     if share_count == 0 || share_count > 16 {
         return Err(Error::InvalidShareCount(share_count));
     }
@@ -59,25 +64,25 @@ pub fn split_secret(threshold: u8, share_count: u8, secret: &[u8]) -> Result<Vec
     }
 
     if threshold == 1 {
-        return Ok((0..share_count).map(|x| (x, secret.to_vec())).collect());
+        return Ok((0..share_count).map(|x| (x, Zeroizing::new(secret.to_vec()))).collect());
     }
 
     let n = secret.len();
-    let mut r = vec![0u8; n - 4];
+    let mut r = Zeroizing::new(vec![0u8; n - 4]);
     getrandom::fill(&mut r)?;
-    let mut d = digest4(&r, secret).to_vec();
+    let mut d = Zeroizing::new(digest4(&r, secret).to_vec());
     d.extend_from_slice(&r);
 
-    let mut shares: Vec<(u8, Vec<u8>)> = Vec::with_capacity(share_count as usize);
+    let mut shares: Vec<Point> = Vec::with_capacity(share_count as usize);
     for x in 0..(threshold - 2) {
-        let mut y = vec![0u8; n];
+        let mut y = Zeroizing::new(vec![0u8; n]);
         getrandom::fill(&mut y)?;
         shares.push((x, y));
     }
 
     let mut interpolation_set = shares.clone();
     interpolation_set.push((254, d));
-    interpolation_set.push((255, secret.to_vec()));
+    interpolation_set.push((255, Zeroizing::new(secret.to_vec())));
 
     for x in (threshold - 2)..share_count {
         shares.push((x, interpolate(x, &interpolation_set)));
@@ -92,7 +97,7 @@ pub fn split_secret(threshold: u8, share_count: u8, secret: &[u8]) -> Result<Vec
 /// consistent secret — which covers wrong shares, too few shares, and
 /// corrupted share data alike, since all of those break the digest check
 /// the same way.
-pub fn recover_secret(threshold: u8, shares: &[(u8, Vec<u8>)]) -> Result<Vec<u8>, Error> {
+pub fn recover_secret(threshold: u8, shares: &[Point]) -> Result<SecretBytes, Error> {
     let Some(first) = shares.first() else {
         return Err(Error::ShareSetInconsistent);
     };
@@ -128,9 +133,9 @@ mod tests {
         let shares = split_secret(1, 4, &secret).unwrap();
         assert_eq!(shares.len(), 4);
         for (_, y) in &shares {
-            assert_eq!(y, &secret);
+            assert_eq!(**y, secret);
         }
-        assert_eq!(recover_secret(1, &shares[..1]).unwrap(), secret);
+        assert_eq!(*recover_secret(1, &shares[..1]).unwrap(), secret);
     }
 
     #[test]
@@ -143,7 +148,7 @@ mod tests {
             // Any t-sized subset must recover the same secret.
             for start in 0..(n - t + 1) {
                 let subset = &shares[start as usize..(start + t) as usize];
-                assert_eq!(recover_secret(t, subset).unwrap(), secret, "t={t} n={n} start={start}");
+                assert_eq!(*recover_secret(t, subset).unwrap(), secret, "t={t} n={n} start={start}");
             }
         }
     }

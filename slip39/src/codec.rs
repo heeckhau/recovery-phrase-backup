@@ -8,13 +8,18 @@
 // widely used crate — not a crypto primitive itself, but exactly the kind
 // of fiddly index arithmetic worth not hand-rolling: this file's padding
 // math already had one subtle bug caught by the official test vectors).
+use std::fmt;
+use std::ops::{Deref, DerefMut};
+
 use bitvec::prelude::*;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::error::{Error, MIN_WORD_COUNT};
 use crate::rs1024;
 use crate::wordlist;
+use crate::SecretBytes;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ShareData {
     pub id: u16, // 15-bit
     pub extendable: bool,
@@ -24,10 +29,51 @@ pub struct ShareData {
     pub group_count: u8,        // actual value 1..=16 (encoded as value-1)
     pub member_index: u8,       // 4-bit (0..16)
     pub member_threshold: u8,   // actual value 1..=16 (encoded as value-1)
-    pub share_value: Vec<u8>,
+    pub share_value: SecretBytes, // zeroized on drop
+}
+
+// Same convention as core's PrivateKey: never print the secret bytes.
+impl fmt::Debug for ShareData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ShareData")
+            .field("id", &self.id)
+            .field("extendable", &self.extendable)
+            .field("iteration_exponent", &self.iteration_exponent)
+            .field("group_index", &self.group_index)
+            .field("group_threshold", &self.group_threshold)
+            .field("group_count", &self.group_count)
+            .field("member_index", &self.member_index)
+            .field("member_threshold", &self.member_threshold)
+            .field("share_value", &format_args!("REDACTED ({} bytes)", self.share_value.len()))
+            .finish()
+    }
 }
 
 type Bits = BitVec<u8, Msb0>;
+
+/// A bit buffer holding a share's full bitstream (which includes the
+/// secret share value), scrubbed on drop. `bitvec` doesn't implement
+/// `Zeroize`, so this wraps it to zero the underlying bytes.
+struct SecretBits(Bits);
+
+impl Drop for SecretBits {
+    fn drop(&mut self) {
+        self.0.as_raw_mut_slice().zeroize();
+    }
+}
+
+impl Deref for SecretBits {
+    type Target = Bits;
+    fn deref(&self) -> &Bits {
+        &self.0
+    }
+}
+
+impl DerefMut for SecretBits {
+    fn deref_mut(&mut self) -> &mut Bits {
+        &mut self.0
+    }
+}
 
 /// Appends the low `width` bits of `value`, big-endian.
 fn push_uint(bits: &mut Bits, value: u32, width: usize) {
@@ -70,7 +116,7 @@ const CHECKSUM_BITS: usize = 30;
 
 /// Encodes `share` as its mnemonic word sequence.
 pub fn encode(share: &ShareData) -> Vec<String> {
-    let mut bits = Bits::new();
+    let mut bits = SecretBits(Bits::new());
     push_uint(&mut bits, share.id as u32, 15);
     push_uint(&mut bits, share.extendable as u32, 1);
     push_uint(&mut bits, share.iteration_exponent as u32, 4);
@@ -85,15 +131,15 @@ pub fn encode(share: &ShareData) -> Vec<String> {
     push_uint(&mut bits, 0, padding);
     push_bytes(&mut bits, &share.share_value);
 
-    let data_words = words_from_bits(&bits);
+    let data_words = Zeroizing::new(words_from_bits(&bits));
     let checksum = rs1024::create_checksum(share.extendable, &data_words);
     for word in checksum {
         push_uint(&mut bits, word as u32, 10);
     }
 
-    words_from_bits(&bits)
-        .into_iter()
-        .map(|w| wordlist::word_at(w).expect("word index always in range").to_string())
+    Zeroizing::new(words_from_bits(&bits))
+        .iter()
+        .map(|&w| wordlist::word_at(w).expect("word index always in range").to_string())
         .collect()
 }
 
@@ -104,15 +150,18 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
         return Err(Error::InvalidMnemonicWordCount(words.len()));
     }
 
-    let indices: Vec<u16> = words
-        .iter()
-        .map(|w| {
-            let lower = w.to_lowercase();
-            wordlist::index_of(&lower).ok_or(Error::UnknownWord(lower))
-        })
-        .collect::<Result<_, _>>()?;
+    // The word indices *are* the share, so they're secret too.
+    let indices: Zeroizing<Vec<u16>> = Zeroizing::new(
+        words
+            .iter()
+            .map(|w| {
+                let lower = w.to_lowercase();
+                wordlist::index_of(&lower).ok_or(Error::UnknownWord(lower))
+            })
+            .collect::<Result<_, _>>()?,
+    );
 
-    let bits = bits_from_words(&indices);
+    let bits = SecretBits(bits_from_words(&indices));
     let total_bits = bits.len();
 
     let extendable = read_uint(&bits, 15, 1) == 1;
@@ -136,7 +185,8 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
         return Err(Error::ShareValueTooShort(n * 8));
     }
 
-    let share_value: Vec<u8> = (0..n).map(|i| read_uint(&bits, HEADER_BITS + padding + i * 8, 8) as u8).collect();
+    let share_value: SecretBytes =
+        Zeroizing::new((0..n).map(|i| read_uint(&bits, HEADER_BITS + padding + i * 8, 8) as u8).collect());
 
     Ok(ShareData {
         id: read_uint(&bits, 0, 15) as u16,
@@ -165,7 +215,7 @@ mod tests {
             group_count: 5,
             member_index: 1,
             member_threshold: 4,
-            share_value: (0u8..32).collect(),
+            share_value: Zeroizing::new((0u8..32).collect()),
         }
     }
 
@@ -262,7 +312,7 @@ mod tests {
                     group_count: 16,
                     member_index: 15,
                     member_threshold,
-                    share_value: vec![0xAB; 32],
+                    share_value: Zeroizing::new(vec![0xAB; 32]),
                 };
                 let words = encode(&share);
                 let refs: Vec<&str> = words.iter().map(String::as_str).collect();

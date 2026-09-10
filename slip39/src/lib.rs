@@ -8,8 +8,14 @@ mod wordlist;
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use zeroize::Zeroizing;
+
 use codec::ShareData;
 pub use error::Error;
+
+/// Secret-bearing bytes (share values, group secrets, the encrypted and
+/// plaintext master secret, Feistel state), scrubbed on drop.
+pub(crate) type SecretBytes = Zeroizing<Vec<u8>>;
 
 /// A group's member threshold and member count (1..=16 each). See `split`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -206,7 +212,7 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> 
     // BTreeMap iterates in ascending group_index order, so stopping once
     // we have enough deterministically prefers the lowest-indexed groups
     // and simply never looks at surplus ones beyond that.
-    let mut group_points: Vec<(u8, Vec<u8>)> = Vec::with_capacity(group_threshold as usize);
+    let mut group_points: Vec<shamir::Point> = Vec::with_capacity(group_threshold as usize);
     for (group_index, mut members) in groups {
         let member_threshold = members[0].member_threshold;
         for m in &members[1..] {
@@ -228,7 +234,7 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> 
         members.sort_by_key(|m| m.member_index);
         members.truncate(member_threshold as usize);
 
-        let member_points: Vec<(u8, Vec<u8>)> = members.into_iter().map(|m| (m.member_index, m.share_value)).collect();
+        let member_points: Vec<shamir::Point> = members.into_iter().map(|m| (m.member_index, m.share_value)).collect();
         let group_secret = shamir::recover_secret(member_threshold, &member_points)?;
         group_points.push((group_index, group_secret));
 
@@ -240,7 +246,9 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> 
     let ems = shamir::recover_secret(group_threshold, &group_points)?;
     let ms = crypto::decrypt(&ems, passphrase, first.iteration_exponent, first.id, first.extendable);
 
-    Ok(ms.try_into().expect("already validated share length is 32 bytes"))
+    let mut secret = [0u8; 32];
+    secret.copy_from_slice(&ms); // length already validated as 32 bytes above
+    Ok(secret)
 }
 
 #[cfg(test)]
