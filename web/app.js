@@ -233,6 +233,7 @@ function renderSplitResults(groups) {
 
       const textarea = document.createElement("textarea");
       textarea.readOnly = true;
+      textarea.spellcheck = false;
       textarea.className = "mono-output";
       textarea.rows = 4; // 33 words needs 4 lines at this width, not 3 — same clipping bug as the BIP39 field earlier
       textarea.value = mnemonic;
