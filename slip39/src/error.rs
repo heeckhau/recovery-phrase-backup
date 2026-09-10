@@ -42,10 +42,10 @@ pub enum Error {
     MismatchedMemberThreshold { group_index: u8 },
     #[error("group {group_index}: two shares have the same member index {member_index}")]
     DuplicateMemberIndex { group_index: u8, member_index: u8 },
-    #[error("need shares from exactly {need} distinct groups, got {have}")]
-    WrongGroupCount { have: u8, need: u8 },
-    #[error("group {group_index}: need exactly {need} member shares, got {have}")]
-    WrongMemberShareCount { group_index: u8, have: u8, need: u8 },
+    #[error("need shares from at least {need} distinct groups, got {have}")]
+    NotEnoughGroups { have: u8, need: u8 },
+    #[error("group {group_index}: need at least {need} member shares, got {have}")]
+    NotEnoughMemberShares { group_index: u8, have: u8, need: u8 },
     #[error("no shares provided")]
     NoShares,
 }

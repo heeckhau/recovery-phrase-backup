@@ -110,6 +110,13 @@ pub fn split(
 /// from the shares themselves, so shares from other SLIP-39
 /// implementations (e.g. a Trezor, which may use `ext = 0`) work too.
 ///
+/// More shares/groups than strictly needed is fine — surplus is ignored
+/// deterministically (lowest group/member indices used first) rather than
+/// rejected, since every share has already been checked to share the same
+/// id/ext/iteration-exponent/group-threshold/count/length, so "extra"
+/// input is already confirmed to be genuinely part of the *same* backup,
+/// not a mixed-up foreign one.
+///
 /// A wrong `passphrase` is **not** detected here: SLIP-39's decryption is
 /// intentionally unauthenticated (a plausible-deniability property), so a
 /// wrong passphrase silently returns a different, wrong 32 bytes rather
@@ -156,12 +163,15 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> 
     }
 
     let group_threshold = first.group_threshold;
-    if groups.len() as u8 != group_threshold {
-        return Err(Error::WrongGroupCount { have: groups.len() as u8, need: group_threshold });
+    if (groups.len() as u8) < group_threshold {
+        return Err(Error::NotEnoughGroups { have: groups.len() as u8, need: group_threshold });
     }
 
-    let mut group_points: Vec<(u8, Vec<u8>)> = Vec::with_capacity(groups.len());
-    for (group_index, members) in groups {
+    // BTreeMap iterates in ascending group_index order, so stopping once
+    // we have enough deterministically prefers the lowest-indexed groups
+    // and simply never looks at surplus ones beyond that.
+    let mut group_points: Vec<(u8, Vec<u8>)> = Vec::with_capacity(group_threshold as usize);
+    for (group_index, mut members) in groups {
         let member_threshold = members[0].member_threshold;
         for m in &members[1..] {
             if m.member_threshold != member_threshold {
@@ -176,13 +186,19 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> 
             }
         }
 
-        if members.len() as u8 != member_threshold {
-            return Err(Error::WrongMemberShareCount { group_index, have: members.len() as u8, need: member_threshold });
+        if (members.len() as u8) < member_threshold {
+            return Err(Error::NotEnoughMemberShares { group_index, have: members.len() as u8, need: member_threshold });
         }
+        members.sort_by_key(|m| m.member_index);
+        members.truncate(member_threshold as usize);
 
         let member_points: Vec<(u8, Vec<u8>)> = members.into_iter().map(|m| (m.member_index, m.share_value)).collect();
         let group_secret = shamir::recover_secret(member_threshold, &member_points)?;
         group_points.push((group_index, group_secret));
+
+        if group_points.len() == group_threshold as usize {
+            break;
+        }
     }
 
     let ems = shamir::recover_secret(group_threshold, &group_points)?;
@@ -307,12 +323,38 @@ mod tests {
     }
 
     #[test]
-    fn rejects_wrong_group_count() {
+    fn rejects_not_enough_groups() {
         let ms = secret();
         let groups_spec = vec![GroupSpec { member_threshold: 1, member_count: 1 }, GroupSpec { member_threshold: 1, member_count: 1 }];
         let shares = split(&ms, 2, &groups_spec, "", 0).unwrap(); // needs both groups
         let only_one = [shares[0][0].as_str()];
-        assert_eq!(combine(&only_one, ""), Err(Error::WrongGroupCount { have: 1, need: 2 }));
+        assert_eq!(combine(&only_one, ""), Err(Error::NotEnoughGroups { have: 1, need: 2 }));
+    }
+
+    #[test]
+    fn ignores_surplus_groups_beyond_the_threshold() {
+        // 3 groups configured, but only 2 are required — bringing all 3
+        // group's worth of shares should still work, not error, since
+        // that's still unambiguously the same backup (checked via
+        // id/ext/e/group-threshold/count/length before this point).
+        let ms = secret();
+        let groups_spec = vec![
+            GroupSpec { member_threshold: 1, member_count: 1 },
+            GroupSpec { member_threshold: 1, member_count: 1 },
+            GroupSpec { member_threshold: 1, member_count: 1 },
+        ];
+        let shares = split(&ms, 2, &groups_spec, "", 0).unwrap();
+        let all_three = [shares[0][0].as_str(), shares[1][0].as_str(), shares[2][0].as_str()];
+        assert_eq!(combine(&all_three, "").unwrap(), ms);
+    }
+
+    #[test]
+    fn ignores_surplus_member_shares_beyond_the_threshold() {
+        // 2-of-3 group: bringing all 3 member shares should still work.
+        let ms = secret();
+        let shares = split(&ms, 1, &single_group(2, 3), "", 0).unwrap();
+        let all_three: Vec<&str> = shares[0].iter().map(String::as_str).collect();
+        assert_eq!(combine(&all_three, "").unwrap(), ms);
     }
 
     #[test]
@@ -331,7 +373,7 @@ mod tests {
         let ms = secret();
         let shares = split(&ms, 1, &single_group(3, 5), "", 0).unwrap();
         let too_few = [shares[0][0].as_str(), shares[0][1].as_str()];
-        assert_eq!(combine(&too_few, ""), Err(Error::WrongMemberShareCount { group_index: 0, have: 2, need: 3 }));
+        assert_eq!(combine(&too_few, ""), Err(Error::NotEnoughMemberShares { group_index: 0, have: 2, need: 3 }));
     }
 
     #[test]
