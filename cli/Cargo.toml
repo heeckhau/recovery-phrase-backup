@@ -12,3 +12,4 @@ path = "src/main.rs"
 pkc-core = { path = "../core" }
 pkc-slip39 = { path = "../slip39" }
 clap = { version = "4.6", features = ["derive"] }
+rpassword = "7.5"
