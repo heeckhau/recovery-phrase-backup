@@ -160,6 +160,66 @@
     color: var(--muted);
     line-height: 1.5;
   }
+  .page-tabs {
+    margin-top: 0;
+    font-size: 1rem;
+  }
+  select.inline {
+    width: auto;
+    display: inline-block;
+  }
+  .group-row, .mnemonic-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .mnemonic-row { align-items: flex-start; }
+  .group-row span { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+  .group-row .field-label, .mnemonic-row .field-label {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+  .mnemonic-row textarea { flex: 1; }
+  .btn-remove {
+    margin: 0;
+    width: auto;
+    padding: 0.4rem 0.6rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .btn-secondary {
+    margin-top: 0.5rem;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+  details.advanced summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-top: 1.25rem;
+  }
+  .results {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .results[hidden] { display: none; }
+  .group-result { margin-bottom: 1.25rem; }
+  .group-result:last-child { margin-bottom: 0; }
+  .group-result-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
 </style>
 </head>
 <body>
@@ -167,6 +227,12 @@
   <h1>Private Key Converter</h1>
   <p class="subtitle">Convert an Ethereum private key to every format, and derive a Bitcoin address too (same key, same curve).</p>
 
+  <div class="tabs page-tabs" id="page-tabs" role="tablist">
+    <button type="button" class="tab-button" id="page-tab-convert" role="tab" aria-selected="true" aria-controls="page-panel-convert">Convert</button>
+    <button type="button" class="tab-button" id="page-tab-slip39" role="tab" aria-selected="false" aria-controls="page-panel-slip39">SLIP-39 Backup</button>
+  </div>
+
+  <div id="page-panel-convert" role="tabpanel" aria-labelledby="page-tab-convert">
   <div class="card">
     <form id="convert-form">
       <label for="input-key">Private key (hex, WIF, or 24-word mnemonic)</label>
@@ -225,6 +291,86 @@
         <input type="text" readonly id="out-btc" class="mono-output">
       </div>
     </div>
+  </div>
+  </div>
+
+  <div id="page-panel-slip39" role="tabpanel" aria-labelledby="page-tab-slip39" hidden>
+  <div class="card">
+    <div class="tabs" id="slip39-tabs" role="tablist">
+      <button type="button" class="tab-button" id="tab-split" role="tab" aria-selected="true" aria-controls="panel-split">Split</button>
+      <button type="button" class="tab-button" id="tab-combine" role="tab" aria-selected="false" aria-controls="panel-combine">Combine</button>
+    </div>
+
+    <div class="tab-panel" id="panel-split" role="tabpanel" aria-labelledby="tab-split">
+      <p class="notice" style="margin-top:0">Split a private key into SLIP-39 mnemonic shares — recoverable from a threshold of groups, each needing a threshold of members. Same key, same curve as the Convert tab: paste any hex/WIF/mnemonic form of it.</p>
+
+      <form id="split-form">
+        <label for="split-key">Private key (hex, WIF, or mnemonic)</label>
+        <input type="text" id="split-key" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="the key you want to back up">
+
+        <label>Groups</label>
+        <div id="group-rows"></div>
+        <button type="button" id="add-group" class="btn-secondary">+ Add group</button>
+
+        <div class="field" id="group-threshold-field" hidden style="margin-top:1rem">
+          <label for="group-threshold" style="margin-top:0">Groups required to recover</label>
+          <select id="group-threshold" class="inline"></select>
+        </div>
+
+        <label for="split-passphrase">Passphrase (optional)</label>
+        <input type="text" id="split-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank for none">
+        <p class="notice" style="margin-top:0.35rem">SLIP-39 always encrypts, even with an empty passphrase. Whatever you set here, write it down with the shares — it is <strong>not verified</strong> when recovering (see Combine).</p>
+
+        <details class="advanced">
+          <summary>Advanced</summary>
+          <div class="field" style="margin-top:0.75rem">
+            <label for="iteration-exponent" style="margin-top:0">Iteration exponent</label>
+            <select id="iteration-exponent" class="inline"></select>
+            <p class="notice" style="margin-top:0.35rem">PBKDF2 cost is 2500 &times; 2^exponent. Higher is slower to brute-force but slower to recover too. 0 is fine for most uses.</p>
+          </div>
+        </details>
+
+        <button type="submit">Split</button>
+      </form>
+
+      <div class="error" id="split-error"></div>
+
+      <div class="results" id="split-results" hidden></div>
+    </div>
+
+    <div class="tab-panel" id="panel-combine" role="tabpanel" aria-labelledby="tab-combine" hidden>
+      <p class="notice" style="margin-top:0">Recombine enough shares (meeting the group and member thresholds they were split with) back into the original private key.</p>
+
+      <form id="combine-form">
+        <label>Mnemonic shares</label>
+        <div id="mnemonic-rows"></div>
+        <button type="button" id="add-mnemonic" class="btn-secondary">+ Add share</button>
+
+        <label for="combine-passphrase">Passphrase</label>
+        <input type="text" id="combine-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none was set">
+
+        <button type="submit">Combine</button>
+      </form>
+
+      <div class="error" id="combine-error"></div>
+
+      <div class="results" id="combine-results" hidden>
+        <div class="field">
+          <div class="field-label">Recovered private key (hex)</div>
+          <input type="text" readonly id="combine-out-hex" class="mono-output">
+        </div>
+        <div class="field">
+          <div class="field-label">Ethereum address</div>
+          <input type="text" readonly id="combine-out-eth" class="mono-output">
+        </div>
+        <div class="field">
+          <div class="field-label">Bitcoin address (P2PKH)</div>
+          <input type="text" readonly id="combine-out-btc" class="mono-output">
+        </div>
+        <p class="notice">A wrong passphrase is <strong>not</strong> reported as an error — recovery "succeeds" but silently produces the wrong key. Check that these addresses are the ones you expect before trusting this result.</p>
+      </div>
+    </div>
+  </div>
   </div>
 
   <p class="notice">
