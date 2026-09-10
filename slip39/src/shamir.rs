@@ -3,6 +3,7 @@
 // the two-level scheme (see lib.rs).
 use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
+use subtle::ConstantTimeEq;
 use zeroize::Zeroizing;
 
 use crate::error::Error;
@@ -112,7 +113,10 @@ pub fn recover_secret(threshold: u8, shares: &[Point]) -> Result<SecretBytes, Er
     let r = &d[4..];
     let expected_prefix = digest4(r, &secret);
 
-    if d[0..4] == expected_prefix {
+    // Constant-time comparison: this is a MAC-style integrity check, so
+    // the usual textbook mistake is comparing it with a short-circuiting
+    // `==`. (Lengths are both fixed at 4 bytes, not secret either way.)
+    if bool::from(d[0..4].ct_eq(&expected_prefix)) {
         Ok(secret)
     } else {
         Err(Error::ShareSetInconsistent)
