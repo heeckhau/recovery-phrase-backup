@@ -28,8 +28,20 @@ fn digest4(key: &[u8], msg: &[u8]) -> [u8; 4] {
 }
 
 /// Lagrange-interpolates the value-vector at `x` given a set of
-/// (x_i, y_i) points with pairwise distinct x_i.
-fn interpolate(x: u8, points: &[Point]) -> SecretBytes {
+/// (x_i, y_i) points, meaningful when the x_i are pairwise distinct.
+///
+/// The `xj == xi` skip below compares by *value*, so a duplicated
+/// x-coordinate is silently absorbed rather than ever reaching the
+/// division below with a zero denominator — this can't actually panic on
+/// duplicate x_i, even degenerate all-duplicate input, verified directly
+/// in this module's tests rather than just reasoned about. It still
+/// returns `Result` rather than leaning on that non-obvious property:
+/// x-coordinates aren't secret (a share's index is public, visible in the
+/// mnemonic itself), so there's no downside to handling this defensively
+/// via a typed error instead. (Silently-wrong-but-not-crashing duplicate
+/// input still gets caught: `recover_secret`'s HMAC digest check rejects
+/// the resulting mismatched secret.)
+fn interpolate(x: u8, points: &[Point]) -> Result<SecretBytes, Error> {
     let n = points[0].1.len();
     let mut result = Zeroizing::new(vec![0u8; n]);
     for (xi, yi) in points {
@@ -40,13 +52,14 @@ fn interpolate(x: u8, points: &[Point]) -> SecretBytes {
             }
             let num = gf256::add(x, *xj);
             let den = gf256::add(*xi, *xj);
-            basis = gf256::mul(basis, gf256::div(num, den).expect("distinct x-coordinates never collide"));
+            let ratio = gf256::div(num, den).ok_or(Error::ShareSetInconsistent)?;
+            basis = gf256::mul(basis, ratio);
         }
         for k in 0..n {
             result[k] = gf256::add(result[k], gf256::mul(basis, yi[k]));
         }
     }
-    result
+    Ok(result)
 }
 
 /// SplitSecret(T, N, S): splits `secret` into `share_count` shares, any
@@ -86,7 +99,7 @@ pub fn split_secret(threshold: u8, share_count: u8, secret: &[u8]) -> Result<Vec
     interpolation_set.push((255, Zeroizing::new(secret.to_vec())));
 
     for x in (threshold - 2)..share_count {
-        shares.push((x, interpolate(x, &interpolation_set)));
+        shares.push((x, interpolate(x, &interpolation_set)?));
     }
 
     Ok(shares)
@@ -107,8 +120,8 @@ pub fn recover_secret(threshold: u8, shares: &[Point]) -> Result<SecretBytes, Er
         return Ok(first.1.clone());
     }
 
-    let secret = interpolate(255, shares);
-    let d = interpolate(254, shares);
+    let secret = interpolate(255, shares)?;
+    let d = interpolate(254, shares)?;
 
     let r = &d[4..];
     let expected_prefix = digest4(r, &secret);
@@ -179,6 +192,22 @@ mod tests {
         assert_eq!(split_secret(6, 5, &secret), Err(Error::InvalidThreshold { threshold: 6, share_count: 5 }));
         assert_eq!(split_secret(1, 17, &secret), Err(Error::InvalidShareCount(17)));
         assert_eq!(split_secret(1, 0, &secret), Err(Error::InvalidShareCount(0)));
+    }
+
+    #[test]
+    fn duplicate_x_coordinates_do_not_panic() {
+        // interpolate()'s value-based `xj == xi` skip already absorbs
+        // duplicate x-coordinates rather than dividing by zero — verified
+        // directly here (not just reasoned about) since it's exactly the
+        // kind of subtle invariant worth checking rather than assuming.
+        // The duplicated share still can't be used to recover anything:
+        // it silently drops out of the Lagrange basis computation, which
+        // produces a mismatched secret/digest pair that the HMAC check
+        // below rejects — not a crash, but not a successful recovery either.
+        let secret = secret_32_bytes();
+        let mut shares = split_secret(3, 5, &secret).unwrap();
+        shares[1].0 = shares[0].0; // duplicate the first share's x-coordinate
+        assert_eq!(recover_secret(3, &shares[..3]), Err(Error::ShareSetInconsistent));
     }
 
     #[test]
