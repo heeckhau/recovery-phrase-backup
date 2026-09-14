@@ -150,13 +150,17 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
         return Err(Error::InvalidMnemonicWordCount(words.len()));
     }
 
-    // The word indices *are* the share, so they're secret too.
+    // The word indices *are* the share, so they're secret too. The error
+    // path below reports the word's 1-indexed *position* rather than the
+    // word itself — a mistyped word could plausibly be a near-miss on an
+    // actual share word, so echoing it back is best avoided.
     let indices: Zeroizing<Vec<u16>> = Zeroizing::new(
         words
             .iter()
-            .map(|w| {
+            .enumerate()
+            .map(|(i, w)| {
                 let lower = w.to_lowercase();
-                wordlist::index_of(&lower).ok_or(Error::UnknownWord(lower))
+                wordlist::index_of(&lower).ok_or(Error::UnknownWord(i + 1))
             })
             .collect::<Result<_, _>>()?,
     );
@@ -250,7 +254,7 @@ mod tests {
         let mut words = encode(&share);
         words[0] = "not-a-real-word".to_string();
         let refs: Vec<&str> = words.iter().map(String::as_str).collect();
-        assert_eq!(decode(&refs), Err(Error::UnknownWord("not-a-real-word".to_string())));
+        assert_eq!(decode(&refs), Err(Error::UnknownWord(1)));
     }
 
     #[test]

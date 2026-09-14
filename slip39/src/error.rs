@@ -14,8 +14,8 @@ pub enum Error {
     ShareSetInconsistent,
     #[error("expected at least {MIN_WORD_COUNT} words, got {0}")]
     InvalidMnemonicWordCount(usize),
-    #[error("\"{0}\" is not a word in the SLIP-39 wordlist")]
-    UnknownWord(String),
+    #[error("word {0} is not in the SLIP-39 wordlist")]
+    UnknownWord(usize),
     #[error("checksum does not match — check for a typo")]
     InvalidChecksum,
     #[error("padding bits are not all zero, or the padding is too long (tampered or corrupted share)")]
