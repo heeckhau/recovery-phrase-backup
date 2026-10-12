@@ -9,10 +9,12 @@
   createElement/textContent — checked, not just asserted), so nothing
   here should ever need to exploit script injection. This CSP just caps
   the blast radius if that ever regresses. 'wasm-unsafe-eval' is required
-  to instantiate the wasm module; 'unsafe-inline' on style-src covers the
-  inline <style> block and a few inline style= attributes (CSS injection
-  is a far weaker primitive than script injection, so this tradeoff is
-  deliberate — script-src stays strict with no such allowance).
+  to instantiate the wasm module. This is the development policy, for
+  serving web/ over HTTP; 'unsafe-inline' on style-src covers the page's
+  stylesheet. The release build (scripts/build.py) replaces it with a
+  stricter one: default-src 'none', and the inlined script and the
+  stylesheet allowed only by hash. So no element may carry a style=
+  attribute — use a class.
 -->
 <!-- frame-ancestors is deliberately omitted: it's HTTP-header-only per spec
      and browsers ignore (with a console warning) when set via <meta>, which
@@ -241,6 +243,14 @@
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
   }
+  /* Spacing tweaks as classes, not style= attributes, so the release
+     build's CSP can forbid inline styles. !important keeps the precedence
+     the inline styles had. */
+  .mt-0 { margin-top: 0 !important; }
+  .mt-035 { margin-top: 0.35rem !important; }
+  .mt-04 { margin-top: 0.4rem !important; }
+  .mt-075 { margin-top: 0.75rem !important; }
+  .mt-1 { margin-top: 1rem !important; }
 </style>
 </head>
 <body>
@@ -271,7 +281,7 @@
       <div class="field">
         <div class="field-label">Mnemonic (BIP39, 24 words)</div>
         <textarea readonly spellcheck="false" id="out-mnemonic" class="mono-output" rows="3"></textarea>
-        <p class="notice" style="margin-top:0.4rem">This encodes exactly this key's bytes as words — it is <strong>not</strong> a wallet seed phrase. Importing it into MetaMask or another HD wallet as a "recovery phrase" will derive different keys, not this one.</p>
+        <p class="notice mt-04">This encodes exactly this key's bytes as words — it is <strong>not</strong> a wallet seed phrase. Importing it into MetaMask or another HD wallet as a "recovery phrase" will derive different keys, not this one.</p>
       </div>
     </div>
 
@@ -301,9 +311,9 @@
         <input type="checkbox" id="input-compressed" checked>
         <label for="input-compressed">Compressed key</label>
       </div>
-      <p class="notice" style="margin-top:0.35rem">Only applies when the input is raw hex — pasting a WIF uses the network/format already encoded in it. Change either and re-convert to update the results below.</p>
+      <p class="notice mt-035">Only applies when the input is raw hex — pasting a WIF uses the network/format already encoded in it. Change either and re-convert to update the results below.</p>
 
-      <div class="field" style="margin-top:1rem">
+      <div class="field mt-1">
         <div class="field-label">WIF</div>
         <input type="text" readonly spellcheck="false" id="out-wif" class="mono-output">
       </div>
@@ -323,7 +333,7 @@
     </div>
 
     <div class="tab-panel" id="panel-split" role="tabpanel" aria-labelledby="tab-split">
-      <p class="notice" style="margin-top:0">Split a private key into SLIP-39 mnemonic shares — recoverable from a threshold of groups, each needing a threshold of members. Same key, same curve as the Convert tab: paste any hex/WIF/mnemonic form of it.</p>
+      <p class="notice mt-0">Split a private key into SLIP-39 mnemonic shares — recoverable from a threshold of groups, each needing a threshold of members. Same key, same curve as the Convert tab: paste any hex/WIF/mnemonic form of it.</p>
 
       <form id="split-form">
         <label for="split-key">Private key (hex, WIF, or mnemonic)</label>
@@ -333,21 +343,21 @@
         <div id="group-rows"></div>
         <button type="button" id="add-group" class="btn-secondary">+ Add group</button>
 
-        <div class="field" id="group-threshold-field" hidden style="margin-top:1rem">
-          <label for="group-threshold" style="margin-top:0">Groups required to recover</label>
+        <div class="field mt-1" id="group-threshold-field" hidden>
+          <label for="group-threshold" class="mt-0">Groups required to recover</label>
           <select id="group-threshold" class="inline"></select>
         </div>
 
         <label for="split-passphrase">Passphrase (optional)</label>
         <input type="text" id="split-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank for none">
-        <p class="notice" style="margin-top:0.35rem">SLIP-39 always encrypts, even with an empty passphrase. Whatever you set here, write it down with the shares — it is <strong>not verified</strong> when recovering (see Combine).</p>
+        <p class="notice mt-035">SLIP-39 always encrypts, even with an empty passphrase. Whatever you set here, write it down with the shares — it is <strong>not verified</strong> when recovering (see Combine).</p>
 
         <details class="advanced">
           <summary>Advanced</summary>
-          <div class="field" style="margin-top:0.75rem">
-            <label for="iteration-exponent" style="margin-top:0">Iteration exponent</label>
+          <div class="field mt-075">
+            <label for="iteration-exponent" class="mt-0">Iteration exponent</label>
             <select id="iteration-exponent" class="inline"></select>
-            <p class="notice" style="margin-top:0.35rem">PBKDF2 cost is 2500 &times; 2^exponent. Higher is slower to brute-force but slower to recover too. 0 is fine for most uses.</p>
+            <p class="notice mt-035">PBKDF2 cost is 2500 &times; 2^exponent. Higher is slower to brute-force but slower to recover too. 0 is fine for most uses.</p>
           </div>
         </details>
 
@@ -360,7 +370,7 @@
     </div>
 
     <div class="tab-panel" id="panel-combine" role="tabpanel" aria-labelledby="tab-combine" hidden>
-      <p class="notice" style="margin-top:0">Recombine enough shares (meeting the group and member thresholds they were split with) back into the original private key.</p>
+      <p class="notice mt-0">Recombine enough shares (meeting the group and member thresholds they were split with) back into the original private key.</p>
 
       <form id="combine-form">
         <label>Mnemonic shares</label>

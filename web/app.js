@@ -413,6 +413,7 @@ init()
     addMnemonicRow();
     addMnemonicRow();
 
+    // BEGIN dev-only (scripts/build.py strips this from the release file)
     // ?test prefills the well-known "private key = 1" vector and converts
     // it immediately, for quick manual/visual testing. Never a real key —
     // it's the most famous toy vector, so it demonstrably holds no funds.
@@ -420,6 +421,7 @@ init()
       keyInput.value = "0000000000000000000000000000000000000000000000000000000000000001";
       runConversion();
     }
+    // END dev-only
   })
   .catch((err) => {
     submitButton.textContent = "Failed to load";
