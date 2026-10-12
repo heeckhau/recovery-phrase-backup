@@ -126,7 +126,7 @@ vectors), clippy is clean, `wasm-pack build --target web` builds (383 KB `.wasm`
 5. **No tests on `wasm`, `web/app.js` or `cli`.** Acceptable for now: the risk sits in `core` and
    `slip39`, which are the tested parts.
 
-## Cross-tool recovery test suite (planned, 2026-10-12)
+## Cross-tool recovery test suite (built 2026-10-12)
 
 The official vectors prove `combine` decodes what the reference implementation encoded. They say
 nothing about the other direction — whether *our* shares recover elsewhere — and nothing at the
@@ -134,55 +134,58 @@ BIP39-phrase level, which is where the product lives. The suite closes both gaps
 concrete form of the "no lock-in" promise (ROADMAP, "Distribution"): a backup made here must be
 recoverable with tools that have nothing to do with this project, and vice versa.
 
-**Oracles** (each pinned to an exact version, recorded in every fixture):
-- `trezor/python-shamir-mnemonic` — the reference implementation (MIT). Byte level: its
-  `shamir create --master-secret <hex>` / its Python API.
-- `pjkundert/python-slip39` — `--using-bip39` backs up a phrase's entropy, so it covers the phrase
-  level. GPL-3.0: used only as an external program in the test harness, never linked, vendored or
-  shipped; the fixtures are its output data.
-- `gavincarr/seedkit` — Go CLI, BIP39 phrase → SLIP-39 shares → phrase. Phrase level.
-- `iancoleman/slip39` — optional, browser-only; lowest priority.
+**Run it**: `scripts/interop/run.sh` (regenerates the fixtures) or `run.sh --check-only`. It
+enters a nix shell pinned to one nixpkgs revision for Python and Go; needs nix and network on
+first run. Current result: 250/250 checks across 19 cases.
 
-**Directions.** Theirs → ours: every oracle's shares recover in `pkc-slip39` (and, once the phrase
-pipeline exists, in our CLI) to the same bytes and the same phrase. Ours → theirs: shares from
-`pkc slip39 split` recover in every oracle.
+**Oracles** (pinned; the version is recorded in each fixture):
+- `trezor/python-shamir-mnemonic` 0.3.0 — the reference implementation (MIT), through its Python
+  API. Byte level: every length 128–512 bits, both extendable values, iteration exponents 0–2,
+  with and without a passphrase.
+- `pjkundert/python-slip39` 14.1.0 — its BIP39 mode (12- and 24-word phrases) and its raw mode (a
+  512-bit seed). GPL-3.0: run only as an external program from the harness, in its own venv; never
+  linked, vendored or shipped. The fixtures are its output data.
+- `gavincarr/seedkit` v0.3.3 — Go CLI, BIP39 phrase → shares → phrase, at all five phrase
+  lengths, with and without a SLIP-39 passphrase. Its GitHub repository is no longer reachable;
+  the Go module proxy still serves v0.3.3, verified against Go's checksum database on install.
+- `iancoleman/slip39` — not included: browser-only, and it adds no parameter the three above
+  don't cover.
 
-**Matrix** (pairwise, not the full product):
-- Secret length: 128, 160, 192, 224, 256 bits — 12 to 24 words — plus 512 bits where an oracle
-  produces it (python-slip39's seed backups).
-- Scheme: 1-of-1; 2-of-3; multi-group (2 of: 2-of-3, 3-of-5, 1-of-1).
-- Recovery set: a minimal subset, and one with surplus shares (and surplus groups).
-- Passphrase: empty and non-empty printable ASCII.
-- Iteration exponent: 0 and each tool's default.
-- Extendable flag: 0 and 1 where the oracle can produce both (we always write 1).
+**Directions.** Theirs → ours: every oracle's shares recover in `pkc-slip39` to the same bytes,
+both live in the harness and from the committed fixtures in a plain `cargo test`
+(`slip39/tests/interop.rs`). Ours → theirs: shares from `pkc-slip39` recover in every oracle —
+live only, since it needs the oracles. For the phrase-level oracles the recovered BIP39 phrase is
+checked word for word, through each tool's own conversion.
 
-**Checks**, beyond "same bytes back":
-- **Phrase identity** for the phrase-level oracles: the recovered BIP39 phrase is word-for-word
-  the original, at every length.
-- **Wrong-passphrase agreement**: combining a valid share set with a wrong passphrase must yield
-  the *same* wrong bytes in every tool. Deterministic, and it pins our Feistel/PBKDF2 layer
-  against independent implementations rather than just against itself.
-- **Defaults on record**: each oracle's defaults (passphrase handling, extendable flag,
-  iteration exponent) written down from its own output, so the page's defaults (Decision D)
-  match the ecosystem by evidence, not assumption.
-- **Rejection agreement**: a tampered share (one word changed) is rejected by every tool.
-- **One known divergence, recorded rather than failed**: given more groups or member shares than
-  the thresholds need, our `combine` ignores the surplus, while the spec ("GM MUST be equal to
-  GT") says to abort — and the reference implementation is expected to, which the suite will
-  confirm rather than assume. Deliberate (commit `228e746`): the surplus is
-  checked to belong to the same backup first. The suite asserts that each tool behaves as
-  documented, so a change on either side shows up.
+**Checks** per case, in both directions where they apply: two different minimal recovery sets;
+a set with surplus groups and members; a wrong passphrase gives the *same* wrong bytes in both
+tools (pins our Feistel/PBKDF2 layer against independent implementations); a tampered share (two
+adjacent words swapped) is rejected by both; `inspect` reads back the tool's extendable flag and
+iteration exponent. Planting a bug in our salt derivation made 16 checks fail in each half.
 
-**Mechanics** — keep `cargo test` hermetic:
-- `scripts/interop/` holds the harness: a pinned Python venv and a pinned Go build, driven by one
-  script that runs the oracles and writes fixtures.
-- Theirs → ours runs from committed fixtures (`slip39/tests/interop/<tool>-<version>.json`:
-  scheme, passphrase, shares, expected secret and phrase) in a plain `cargo test`, no external
-  tools needed.
-- Ours → theirs needs the oracles live, so it runs in a CI job (and locally via the script),
-  generating fresh shares each run.
-- Regenerating fixtures for a new oracle version is a reviewed change, never automatic.
+**Findings** (recorded in the fixtures):
+- *Defaults*: all three tools default to `extendable = true` and **iteration exponent 1**; ours
+  (CLI and page) defaults to 0. Input for Decision D's defaults.
+- *Passphrase*: python-slip39's BIP39 mode always uses an empty SLIP-39 passphrase (a passphrase
+  there is the BIP39 one, for addresses only); seedkit's `-p` is the SLIP-39 passphrase.
+- *Lengths*: python-slip39 refuses to create shares for 160-, 192- and 224-bit secrets (15-, 18-
+  and 21-word phrases), but recovers ours at those lengths.
+- *Surplus shares*: the reference implementation and seedkit reject more groups or members than
+  the thresholds need, as the spec says ("GM MUST be equal to GT"); python-slip39 and
+  `pkc-slip39` ignore the surplus. Ours is deliberate (commit `228e746`): the surplus is checked
+  to belong to the same backup first. Each fixture records its tool's behaviour, and the harness
+  checks it, so a change on either side shows up.
 
-**When**: the byte-level half (python-shamir-mnemonic, plus the entropy level of the others)
-with Decision C, before `pkc-slip39` is published; the phrase-level half once the BIP39 phrase
-pipeline exists (ROADMAP, "Proposed next steps", steps 1 and 4).
+**Mechanics**:
+- `scripts/interop/run.py` drives everything: `oracle_shamir.py` and `oracle_slip39.py` (one
+  venv each — python-slip39 ships a fork under the reference's module name), the seedkit binary,
+  and `slip39/examples/interop.rs`, a small example binary exposing `split`/`combine`/`inspect`
+  over JSON lines. Examples are not part of the library.
+- Fixtures: `slip39/tests/interop/<tool>.json`. Secrets are derived from the case names and stay
+  fixed; shares are random, so regenerating rewrites them. Regenerating is a reviewed change,
+  never automatic.
+- Python dependencies are pinned as full transitive freezes (`requirements-*.txt`, installed with
+  `--no-deps`); versions, not hashes, since wheel hashes differ per platform.
+
+**Still to do**: run the live half in CI (ROADMAP step 3); the phrase level on *our* side, once
+the BIP39 phrase pipeline exists (step 4) — the fixtures already carry each case's phrase.

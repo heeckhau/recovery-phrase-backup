@@ -204,7 +204,9 @@ it). Active: latest release 14.1.0 on 2026-01-06 (PyPI).
 - *Create*: generates new seeds (`secrets.token_bytes`, optional extra
   entropy via `--entropy`, with an entropy-quality analysis that watermarks
   the PDF when the entropy looks weak), or backs up an existing phrase or a
-  128/256/512-bit hex secret.
+  128/256/512-bit hex secret. Only those three lengths: it refuses to
+  create shares for 15-, 18- and 21-word phrases (confirmed by the
+  cross-tool suite), though it recovers such shares made elsewhere.
 - *Output*: one PDF of cut-out cards in several sizes (business, credit,
   index, …), double-sided, with QR codes; group/threshold labels per card;
   a cover page carrying the BIP39 phrase. Cards show derived addresses and
@@ -212,7 +214,8 @@ it). Active: latest release 14.1.0 on 2026-01-06 (PyPI).
 - *Coins*: ETH, BTC (legacy, SegWit, native SegWit — the default), LTC,
   DOGE, BSC and XRP (beta), via `hdwallet`.
 - *Recovery*: `slip39-recovery` ignores invalid and duplicate shares and
-  can return the BIP39 phrase or the raw entropy.
+  can return the BIP39 phrase or the raw entropy. Like ours, it accepts
+  surplus shares, where the reference implementation rejects them.
 - *Extras*: BIP-38 and encrypted-JSON paper wallets, xpub output, an
   address-stream generator, serial-port output, and an "invoice" extra
   (web3, solc, a local Ethereum node).
@@ -252,9 +255,12 @@ it). Active: latest release 14.1.0 on 2026-01-06 (PyPI).
    a recovery test before finishing, labelled cards with instructions an
    heir can follow. The tool never creates a file holding enough shares to
    recover the phrase, and is designed so the safe path is the easy one.
-5. *Compatible, not competing.* Shares made here recover in python-slip39
-   and the reference implementation, and vice versa, tested — so choosing
-   this tool never locks anyone in.
+5. *Compatible, not competing.* Shares made here recover in python-slip39,
+   seedkit and the reference implementation, and theirs recover here —
+   tested both ways by the cross-tool suite (PLAN.md) — so choosing this
+   tool never locks anyone in.
+6. *Every phrase length.* All five BIP39 lengths, where python-slip39
+   handles only 12 and 24 words.
 
 **Gaps the comparison exposed in this plan** — its features, and one
 thing neither tool does — and what to do about each:
@@ -472,7 +478,10 @@ to be recovered by an heir in ten years, a trap. Proposal: default to no
 passphrase (the threshold is the security), keep the field behind
 "Advanced" with the trap spelled out, and print a verification fingerprint
 on every share card. (Deniability, the property the unauthenticated design
-buys, is not something this product promises.)
+buys, is not something this product promises.) Evidence from the
+cross-tool suite: python-slip39's BIP39 mode never sets a SLIP-39
+passphrase at all; and all three other tools default to iteration exponent
+1 where ours uses 0 — matching them is the obvious default.
 
 *The fingerprint* (settled 2026-10-12): the phrase's BIP32 master-key
 fingerprint — 4 bytes of hash160 of the master public key, with an empty
@@ -501,8 +510,10 @@ Then, in order:
    official 128-bit vectors flip from "rejected" to positive checks; and
    the byte-level half of the cross-tool recovery suite (PLAN.md) proves
    our shares and other tools' shares recover each other. Comes first
-   because it changes the public API. *API change and vectors: done
-   (2026-10-12). Cross-tool suite: next.*
+   because it changes the public API. *Done (2026-10-12): API, vectors,
+   and the suite — 250/250 checks against python-shamir-mnemonic,
+   python-slip39 and seedkit (`scripts/interop/run.sh`). Its CI job lands
+   with step 3.*
 2. **Publish `pkc-slip39` as its own crate** — LICENSE, README, `cargo
    publish`, now with an API that won't break immediately after. Small,
    fills a real gap, and the cheapest way to get outside eyes on the most
