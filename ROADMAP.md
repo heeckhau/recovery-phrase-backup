@@ -58,7 +58,7 @@ bindings and a new section of the web UI — no changes to Phase 1's code.
 
 Includes, as a companion feature once splitting works: a pen-and-paper-friendly
 way to record and recover shares — a `@media print` card layout in `web/`,
-exported via the browser's native "Print to PDF" (no new dependencies, no
+printed via the browser's native print dialog (no new dependencies, no
 secrets leaving the page). Real programmatic PDF generation (e.g. `printpdf`
 compiled to wasm, for QR codes/tighter layout) is a stretch goal after that.
 
@@ -70,9 +70,9 @@ it builds for `wasm32-unknown-unknown` but panics at render time
 (`std::time::Instant::now()`, ~112 call sites; would need e.g.
 `web-time` upstream), and yields a ~6 MB wasm. Before adopting, weigh
 audit cost (~231k lines in one young crate, first release 2026-02,
-rapid release cadence) against the auditability priority, and remember
-any PDF is the unencrypted-file problem the print hygiene section warns
-about.
+rapid release cadence) against the auditability priority. If a CLI
+`--pdf` lands, it writes one file per share and never all shares (or the
+phrase) in one file — see "Printing" in "Considerations — Distribution".
 
 Chosen as the next phase because it's a bounded extension of the existing
 architecture — no new curve, no new external ecosystem to learn — that
@@ -227,8 +227,10 @@ it). Active: latest release 14.1.0 on 2026-01-06 (PyPI).
   code is a harder thing to audit and to trust.
 - GPL-3.0 (one package index lists it as GPL-3.0 plus a proprietary
   license). No audit or reproducible build is advertised.
-- Output is a PDF file — the unencrypted-file problem the print hygiene
-  section warns about.
+- Output is one PDF holding every share — and, with `--using-bip39`, the
+  phrase itself on the cover page. That single file recovers everything,
+  which is exactly what splitting was meant to prevent (see "Printing" in
+  "Considerations — Distribution").
 
 **Where this project differs** (the pitch, in order of weight):
 1. *Runs anywhere offline with nothing to install.* One HTML file, any OS,
@@ -244,7 +246,8 @@ it). Active: latest release 14.1.0 on 2026-01-06 (PyPI).
    (Decision D): a found share reveals nothing about the funds.
 4. *The recovery process, not just the cards.* Per-share write-and-verify,
    a recovery test before finishing, labelled cards with instructions an
-   heir can follow, and no PDF ever written to disk.
+   heir can follow. The tool never creates a file holding enough shares to
+   recover the phrase, and is designed so the safe path is the easy one.
 5. *Compatible, not competing.* Shares made here recover in python-slip39
    and the reference implementation, and vice versa, tested — so choosing
    this tool never locks anyone in.
@@ -261,7 +264,8 @@ thing neither tool does — and what to do about each:
   single copy never exists at all. It needs trustworthy entropy and an
   entropy check; it is the strongest form of the product, but not v1.
 - *Deliberately not* — addresses or QR codes on cards (privacy; and QR
-  scanning needs a camera on the recovery machine); PDF output; paper
+  scanning needs a camera on the recovery machine); a single file holding
+  every share, or the phrase on any printed page; paper
   wallets; xpub, address streams, serial output, invoicing (not backup);
   multi-coin derivation beyond the address check; non-English wordlists
   (out of scope for now).
@@ -315,7 +319,9 @@ recommendation in this design, it is the premise.
 - **Print cards**: one share per page, labelled ("Share 2 of 3 — any 2
   recover"), numbered words, the fingerprint, and recovery instructions an
   heir can follow; plus a secret-free "how to recover" sheet. Offer blank
-  handwriting templates as well as filled cards.
+  handwriting templates as well as filled cards. Each share is printed on
+  its own, from its own wizard step — there is no "print all" — and the
+  phrase never appears on any printed page.
 - **Hygiene**: a "clear everything" button, clear on tab hide, no storage
   of any kind, no copy-to-clipboard for shares, a `navigator.onLine`
   warning banner. The `?test` prefill goes away in release builds.
@@ -342,15 +348,31 @@ recommendation in this design, it is the premise.
   (Tails) or a fresh browser profile with **no extensions** — extensions
   are the browser's real attack surface for a page like this, and they are
   the honest price of skipping a native app.
-- **No desktop app.** A backup tool writes nothing to disk — shares are
+- **No desktop app.** The tool itself writes nothing to disk — shares are
   printed or handwritten — so it needs no installers, no code signing, no
   per-OS builds. With validator keys out of scope nothing else would need
   one either; the only native path is the CLI.
-- **Printing is the one output, and where the hygiene lives.**
-  Print-to-PDF leaves an unencrypted file, often in a cloud-synced folder;
-  network printers spool jobs. Guidance inside the flow: print to a
-  directly connected printer or handwrite; never "save as PDF".
-  Handwriting-first templates make the safest path the default.
+- **Printing is the one output, and where the hygiene lives** (revised
+  2026-10-12). The risk is not a PDF as such; it is a *lasting copy of
+  enough shares to recover the phrase, in one place* — that undoes the
+  split. A file outlives the session in ways typing the phrase does not:
+  Desktop/Documents folders often sync to OneDrive or iCloud, backups and
+  recent-file lists keep copies, and infostealers search files for
+  recovery phrases. A single share in a file reveals nothing.
+  Two limits on what the page can promise: every browser's print dialog
+  offers "Save as PDF", so the page cannot prevent a file — it can only
+  avoid making one and warn; and printing itself spools the job to disk
+  (and some printers keep jobs or route them through a cloud service), so
+  "print" and "save as PDF" differ less than they seem. On a live USB
+  (Tails) all of this disappears at shutdown.
+  So the design aims at the specific risk rather than at files, without
+  friction that would push people to worse shortcuts (a phone photo of the
+  phrase): one share per print and no "print all", so a careless save
+  captures one harmless share; the phrase never on any printed page; a
+  short warning at the print step — a saved file is a copy that may sync
+  to the cloud, so print and don't keep it, and prefer a directly
+  connected printer; Tails recommended for the cautious; handwriting
+  templates as the alternative.
 - **No lock-in, and say so.** SLIP-39 is a standard:
   `python-shamir-mnemonic` recovers the secret without this tool, and
   entropy → BIP39 words is one library call. Document that procedure so
@@ -495,7 +517,8 @@ Then, in order:
    item, promoted: under this framing it is the product) — the flow in
    "Considerations" above, and a `@media print` layout per share with its
    label, threshold, the fingerprint, and plain-language instructions an
-   heir can follow without understanding any of this.
+   heir can follow without understanding any of this — printed one share
+   at a time, with the print-step warning.
 6. **Release**: a release job publishing the HTML with `SHA256SUMS` and a
    signature. Then v1 and EthStaker.
 7. **A rename** — `private-key-convertor` no longer describes the tool.
