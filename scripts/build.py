@@ -11,9 +11,14 @@ wasm-bindgen glue and app.js as one inline module script — and replace the
 page's development CSP with a strict one: default-src 'none', the script
 and the stylesheet allowed only by hash.
 
-Reproducible: the same commit gives byte-identical output on any machine.
-Paths that would otherwise leak into the wasm (the checkout and cargo's home
-directory) are remapped to fixed names. No wasm-opt: its output varies by
+Reproducible per platform: the same commit gives byte-identical output on
+any machine of the same host platform (checked: two Linux x86-64
+environments agree; macOS ARM, Linux ARM and Linux x86-64 each differ, since
+the host feeds into Cargo's crate hashes). The reference build is therefore
+scripts/build-reproducible.sh, which runs this script in one pinned Linux
+x86-64 container. Paths that would otherwise leak into the wasm (the
+checkout, cargo's home directory, the toolchain's rust-src) are remapped to
+fixed names. No wasm-opt: its output varies by
 version, and the size it saves doesn't justify another tool to trust.
 
 Every text transformation below asserts the exact shape it expects, so a
