@@ -79,3 +79,103 @@ pub fn convert(input: &str, network: Network, format: KeyFormat) -> Result<Conve
 - `cd wasm && wasm-pack build --target web --out-dir ../web/pkg` builds cleanly.
 - Serve `web/` over HTTP (e.g. `python3 -m http.server` from that directory — opening `index.html` directly via `file://` will not work, browsers block wasm fetches over that protocol) and manually run each test vector above through the page, confirming the displayed WIF/addresses match.
 - `cargo run -p pkc-cli -- <same inputs>` matches the browser output.
+
+## Review — 2026-09-14
+
+State of the code as reviewed (every crate, the web page, the CLI), after Phase 1 and the Phase 2
+crate/wasm/cli/web work. `cargo test --workspace` passes (25 `core`, 52 `slip39` unit, 1 official
+vectors), clippy is clean, `wasm-pack build --target web` builds (383 KB `.wasm`).
+
+### Holds up
+
+- **Architecture.** `core` has no UI dependency; `cli` and `wasm` are thin adapters; the page is
+  vanilla JS. This is what lets the page, the build and the distribution change shape (see
+  ROADMAP) without touching the code that matters.
+- **Secret handling.** `PrivateKey` is zeroized with a redacting `Debug`; the scalar range is
+  validated through `k256`; WIF and mnemonic checksums are enforced; SLIP-39 keeps share values,
+  group secrets, the EMS and the Feistel state in `Zeroizing`, down to the `bitvec` buffer
+  (`SecretBits`); the share digest is compared in constant time; the CLI warns on argv secrets and
+  prompts with hidden input; the page carries a CSP and never sets HTML from a string.
+- **`pkc-slip39`.** All 45 official Trezor vectors pass; the GF(256) tables are checked
+  exhaustively against the direct multiplication; `ext=0/1` handling (empty salt vs
+  `"shamir" || id`; `shamir_extendable` vs `shamir` in RS1024) matches the reference
+  implementation. There is still no audited, permissively licensed Rust SLIP-39 crate, so this one
+  has value on its own, independent of the rest of the tool.
+
+### Findings
+
+1. **The raw-entropy "mnemonic" collides with seed phrases.** `to_mnemonic` encodes the 32 key
+   bytes as 24 BIP39 words — reversible, but indistinguishable from a wallet seed phrase, and the
+   page's warning is the only thing separating the two. Once real seed-phrase inputs exist (BIP44
+   addresses, where the words *are* the seed) one input box carrying both meanings is a
+   loss-of-funds UX. Needs a semantic decision before any seed-phrase feature lands (ROADMAP,
+   Decision A, which also lays out the replacements: hex/WIF stay the interchange formats for a
+   raw key, and a 1-of-1 SLIP-39 mnemonic — different wordlist, stronger checksum, a standard —
+   takes over the "key as checksummed words on paper" job).
+2. **SLIP-39 splits a secp256k1 key, not a seed.** Splitting a seed phrase's entropy makes the
+   shares recover the 24 words and therefore every key derived from them; splitting one raw key
+   covers only that key. Same decision as (1).
+3. **No BIP32/BIP44 derivation.** Seed phrase → `m/44'/60'/0'/0/i` Ethereum addresses is the most
+   common thing people open iancoleman's tool for, and is absent. Bitcoin is legacy P2PKH only
+   (no P2WPKH / Taproot).
+4. **The trust story is not built, and for this tool it is the product.** No README, no LICENSE
+   file (declared `MIT OR Apache-2.0`; `wasm-pack` warns), no CI, no reproducible single-file
+   build, no signed release. `web/` needs a local HTTP server (module script + wasm fetch fail on
+   `file://`) — a step back from the one-file-opens-from-disk model of
+   `reference/bip39-standalone.html` + `.asc`, which is the bar to meet.
+5. **No tests on `wasm`, `web/app.js` or `cli`.** Acceptable for now: the risk sits in `core` and
+   `slip39`, which are the tested parts.
+
+## Cross-tool recovery test suite (planned, 2026-10-12)
+
+The official vectors prove `combine` decodes what the reference implementation encoded. They say
+nothing about the other direction — whether *our* shares recover elsewhere — and nothing at the
+BIP39-phrase level, which is where the product lives. The suite closes both gaps, and is the
+concrete form of the "no lock-in" promise (ROADMAP, "Distribution"): a backup made here must be
+recoverable with tools that have nothing to do with this project, and vice versa.
+
+**Oracles** (each pinned to an exact version, recorded in every fixture):
+- `trezor/python-shamir-mnemonic` — the reference implementation (MIT). Byte level: its
+  `shamir create --master-secret <hex>` / its Python API.
+- `pjkundert/python-slip39` — `--using-bip39` backs up a phrase's entropy, so it covers the phrase
+  level. GPL-3.0: used only as an external program in the test harness, never linked, vendored or
+  shipped; the fixtures are its output data.
+- `gavincarr/seedkit` — Go CLI, BIP39 phrase → SLIP-39 shares → phrase. Phrase level.
+- `iancoleman/slip39` — optional, browser-only; lowest priority.
+
+**Directions.** Theirs → ours: every oracle's shares recover in `pkc-slip39` (and, once the phrase
+pipeline exists, in our CLI) to the same bytes and the same phrase. Ours → theirs: shares from
+`pkc slip39 split` recover in every oracle.
+
+**Matrix** (pairwise, not the full product):
+- Secret length: 128, 160, 192, 224, 256 bits — 12 to 24 words. 256 only until Decision C lands.
+- Scheme: 1-of-1; 2-of-3; multi-group (2 of: 2-of-3, 3-of-5, 1-of-1).
+- Recovery set: a minimal subset, and one with surplus shares (and surplus groups).
+- Passphrase: empty and non-empty printable ASCII.
+- Iteration exponent: 0 and each tool's default.
+- Extendable flag: 0 and 1 where the oracle can produce both (we always write 1).
+
+**Checks**, beyond "same bytes back":
+- **Phrase identity** for the phrase-level oracles: the recovered BIP39 phrase is word-for-word
+  the original, at every length.
+- **Wrong-passphrase agreement**: combining a valid share set with a wrong passphrase must yield
+  the *same* wrong bytes in every tool. Deterministic, and it pins our Feistel/PBKDF2 layer
+  against independent implementations rather than just against itself.
+- **Defaults on record**: each oracle's defaults (passphrase handling, extendable flag,
+  iteration exponent) written down from its own output, so the page's defaults (Decision D)
+  match the ecosystem by evidence, not assumption.
+- **Rejection agreement**: a tampered share (one word changed) is rejected by every tool.
+
+**Mechanics** — keep `cargo test` hermetic:
+- `scripts/interop/` holds the harness: a pinned Python venv and a pinned Go build, driven by one
+  script that runs the oracles and writes fixtures.
+- Theirs → ours runs from committed fixtures (`slip39/tests/interop/<tool>-<version>.json`:
+  scheme, passphrase, shares, expected secret and phrase) in a plain `cargo test`, no external
+  tools needed.
+- Ours → theirs needs the oracles live, so it runs in a CI job (and locally via the script),
+  generating fresh shares each run.
+- Regenerating fixtures for a new oracle version is a reviewed change, never automatic.
+
+**When**: the byte-level half (python-shamir-mnemonic, plus the entropy level of the others)
+with Decision C, before `pkc-slip39` is published; the phrase-level half once the BIP39 phrase
+pipeline exists (ROADMAP, "Proposed next steps", steps 1 and 4).
