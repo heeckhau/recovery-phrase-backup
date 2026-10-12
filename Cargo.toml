@@ -6,3 +6,13 @@ members = ["core", "cli", "wasm", "slip39"]
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+
+# The release HTML's wasm (scripts/build.py): small, and one codegen unit
+# for reproducible output. A separate profile keeps the CLI's release build
+# as it is.
+[profile.html]
+inherits = "release"
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
+strip = true
