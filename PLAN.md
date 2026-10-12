@@ -168,7 +168,8 @@ pipeline exists, in our CLI) to the same bytes and the same phrase. Ours → the
 - **Rejection agreement**: a tampered share (one word changed) is rejected by every tool.
 - **One known divergence, recorded rather than failed**: given more groups or member shares than
   the thresholds need, our `combine` ignores the surplus, while the spec ("GM MUST be equal to
-  GT") and the reference implementation abort. Deliberate (commit `228e746`): the surplus is
+  GT") says to abort — and the reference implementation is expected to, which the suite will
+  confirm rather than assume. Deliberate (commit `228e746`): the surplus is
   checked to belong to the same backup first. The suite asserts that each tool behaves as
   documented, so a change on either side shows up.
 
