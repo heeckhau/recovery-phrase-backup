@@ -97,7 +97,7 @@ pub fn slip39_split(
 /// Which group/member a single SLIP-39 share is, and the thresholds it
 /// was split with — all 1-indexed for display. None of this is sensitive;
 /// it's decoded straight from the mnemonic's own plaintext structure.
-#[wasm_bindgen(getter_with_clone)]
+#[wasm_bindgen]
 pub struct JsShareInfo {
     pub group_number: u32,
     pub group_count: u32,

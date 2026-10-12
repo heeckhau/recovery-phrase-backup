@@ -1,0 +1,7 @@
+# Pinned so the release HTML is reproducible: the same commit built with
+# this toolchain gives byte-identical output (see scripts/build.py).
+[toolchain]
+channel = "1.99.0"
+components = ["clippy", "rustfmt"]
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"
