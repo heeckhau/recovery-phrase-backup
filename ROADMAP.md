@@ -347,9 +347,9 @@ recommendation in this design, it is the premise.
   `file://` (an inline module script works there; only cross-file imports
   break — wasm-bindgen's `initSync` takes the bytes directly), CSP
   tightened to `default-src 'none'` plus a build-time script hash and
-  `wasm-unsafe-eval`. Roughly 600 KB. Reproducible: pin the toolchain,
-  `wasm-pack` and `wasm-opt` (or drop `wasm-opt`, whose output varies by
-  version), publish on GitHub Releases with `SHA256SUMS` and a signature.
+  `wasm-unsafe-eval`. 516 KB as built (step 3). Reproducible: pinned
+  toolchain, no wasm-pack or wasm-opt, published on GitHub Releases with
+  `SHA256SUMS` and a signature.
   The user flow is iancoleman's: download once, verify, disconnect, open —
   and keep the file.
 - **Don't host the real thing casually.** A hosted copy undermines the
@@ -528,7 +528,18 @@ Then, in order:
    `rust-toolchain.toml`, pinned `wasm-pack`/`wasm-opt`, the inlining
    script, a reproducibility check (build twice, compare hashes), and CI
    running tests, clippy, `cargo audit`, the wasm build and the cross-tool
-   suite. Signing waits for step 6.
+   suite. Signing waits for step 6. *Done (2026-10-12):* Rust pinned to
+   1.99.0; `python3 scripts/build.py` writes
+   `dist/private-key-convertor.html` (516 KB), which opens from `file://`
+   under `default-src 'none'` with the script and stylesheet allowed only
+   by hash, and `--verify-reproducible` rebuilds from clean and compares
+   bytes. wasm-pack and wasm-opt are both gone from the release path —
+   cargo plus `wasm-bindgen` pinned to `Cargo.lock` does the same job with
+   two fewer tools to trust. Local paths are remapped out of the wasm,
+   including the toolchain's `rust-src`, which otherwise leaks the
+   builder's home directory. The `?test` prefill is stripped from the
+   release file. CI (`.github/workflows/ci.yml`, actions pinned by
+   commit) runs all of the above.
 4. **Land Decisions A and D in the core and the page**: a real
    seed-phrase pipeline replacing the raw-entropy BIP39 input, at all five
    lengths; the converter out of the page; the passphrase behind
