@@ -1,0 +1,286 @@
+{
+ "tool": "seedkit",
+ "version": "v0.3.3",
+ "generated": "2026-10-12",
+ "generator": "scripts/interop/run.py",
+ "defaults": {
+  "extendable": true,
+  "iteration_exponent": 1
+ },
+ "surplus_accepted_by_tool": false,
+ "notes": "BIP39 phrase in and out; -p is the SLIP-39 passphrase. Secrets here are recovered as phrase, then entropy, through seedkit's own commands.",
+ "cases": [
+  {
+   "name": "12-words-2of3",
+   "secret_hex": "1bd971063a6b7bfa8866be77cdb3a664",
+   "bip39_phrase": "bridge slide dose inquiry response wool canoe style jelly horn trumpet siren",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "2ff729a4c69e55ba552a7c39842d3ce2",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "ocean aquatic academic acid burning ambition execute silent typical downtown alpha orbit sympathy strike debris welfare squeeze champion trend seafood",
+     "ocean aquatic academic agency crisis multiple canyon curly impact bulge increase thunder database desktop tracks public reward bolt thumb inherit",
+     "ocean aquatic academic always dress deadline lecture raspy snapshot jerky universe kitchen rhyme breathe observe smart losing national river apart"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "ocean aquatic academic acid burning ambition execute silent typical downtown alpha orbit sympathy strike debris welfare squeeze champion trend seafood",
+     "ocean aquatic academic always dress deadline lecture raspy snapshot jerky universe kitchen rhyme breathe observe smart losing national river apart"
+    ],
+    [
+     "ocean aquatic academic agency crisis multiple canyon curly impact bulge increase thunder database desktop tracks public reward bolt thumb inherit",
+     "ocean aquatic academic always dress deadline lecture raspy snapshot jerky universe kitchen rhyme breathe observe smart losing national river apart"
+    ]
+   ],
+   "surplus_set": [
+    "ocean aquatic academic acid burning ambition execute silent typical downtown alpha orbit sympathy strike debris welfare squeeze champion trend seafood",
+    "ocean aquatic academic agency crisis multiple canyon curly impact bulge increase thunder database desktop tracks public reward bolt thumb inherit",
+    "ocean aquatic academic always dress deadline lecture raspy snapshot jerky universe kitchen rhyme breathe observe smart losing national river apart"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "ocean aquatic academic acid burning execute ambition silent typical downtown alpha orbit sympathy strike debris welfare squeeze champion trend seafood",
+    "ocean aquatic academic always dress deadline lecture raspy snapshot jerky universe kitchen rhyme breathe observe smart losing national river apart"
+   ]
+  },
+  {
+   "name": "15-words-multi-pass",
+   "secret_hex": "c377b727d261f6bc703ca5b1cd6fdaf80c9f191d",
+   "bip39_phrase": "sell sad size pill buyer funny science net range hidden wall useless size milk jacket",
+   "passphrase": "TREZOR",
+   "wrong_passphrase": "TREZORx",
+   "wrong_secret_hex": "454a43d67364971f8ce49b1863033c0da529bcda",
+   "group_threshold": 2,
+   "groups": [
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "patent industry acrobat leaf upgrade perfect mustang luck cylinder guest filter race sidewalk hush pharmacy deploy yield darkness marvel decision cards example withdraw",
+     "patent industry acrobat lily estimate paces heat library unfold exercise gesture texture formal cradle humidity gasoline aircraft boundary timely body coal desire huge",
+     "patent industry acrobat lungs orbit spine roster exhaust rainbow center mandate browser vampire saver client finance beam frozen escape wealthy diet various election"
+    ],
+    [
+     "patent industry beard learn often finger race together realize perfect coastal devote artwork marvel soldier legend spit credit primary adorn orange medal fantasy",
+     "patent industry beard lips glasses elegant racism increase moisture dance stay realize syndrome extend income density easel always license permit stilt branch cause",
+     "patent industry beard luxury coding lying testify profile ranked adapt mule rocky famous mailman nervous railroad analysis inform deal plains ivory careful edge",
+     "patent industry beard march task paid texture divorce metric mailman hairy early legal fitness divorce alto theory fishing cards august drove maiden deliver",
+     "patent industry beard method river testify either racism medical faint calcium emperor bolt capital extend drink domain dish smoking sprinkle ranked analysis lyrics"
+    ],
+    [
+     "patent industry ceramic leader party cover presence loyalty strike symbolic gesture ajar crunch lily raisin midst mule desire should location velvet verify plastic"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "patent industry acrobat leaf upgrade perfect mustang luck cylinder guest filter race sidewalk hush pharmacy deploy yield darkness marvel decision cards example withdraw",
+     "patent industry acrobat lily estimate paces heat library unfold exercise gesture texture formal cradle humidity gasoline aircraft boundary timely body coal desire huge",
+     "patent industry beard learn often finger race together realize perfect coastal devote artwork marvel soldier legend spit credit primary adorn orange medal fantasy",
+     "patent industry beard lips glasses elegant racism increase moisture dance stay realize syndrome extend income density easel always license permit stilt branch cause",
+     "patent industry beard luxury coding lying testify profile ranked adapt mule rocky famous mailman nervous railroad analysis inform deal plains ivory careful edge"
+    ],
+    [
+     "patent industry beard luxury coding lying testify profile ranked adapt mule rocky famous mailman nervous railroad analysis inform deal plains ivory careful edge",
+     "patent industry beard march task paid texture divorce metric mailman hairy early legal fitness divorce alto theory fishing cards august drove maiden deliver",
+     "patent industry beard method river testify either racism medical faint calcium emperor bolt capital extend drink domain dish smoking sprinkle ranked analysis lyrics",
+     "patent industry ceramic leader party cover presence loyalty strike symbolic gesture ajar crunch lily raisin midst mule desire should location velvet verify plastic"
+    ]
+   ],
+   "surplus_set": [
+    "patent industry acrobat leaf upgrade perfect mustang luck cylinder guest filter race sidewalk hush pharmacy deploy yield darkness marvel decision cards example withdraw",
+    "patent industry acrobat lily estimate paces heat library unfold exercise gesture texture formal cradle humidity gasoline aircraft boundary timely body coal desire huge",
+    "patent industry acrobat lungs orbit spine roster exhaust rainbow center mandate browser vampire saver client finance beam frozen escape wealthy diet various election",
+    "patent industry beard learn often finger race together realize perfect coastal devote artwork marvel soldier legend spit credit primary adorn orange medal fantasy",
+    "patent industry beard lips glasses elegant racism increase moisture dance stay realize syndrome extend income density easel always license permit stilt branch cause",
+    "patent industry beard luxury coding lying testify profile ranked adapt mule rocky famous mailman nervous railroad analysis inform deal plains ivory careful edge",
+    "patent industry beard march task paid texture divorce metric mailman hairy early legal fitness divorce alto theory fishing cards august drove maiden deliver",
+    "patent industry beard method river testify either racism medical faint calcium emperor bolt capital extend drink domain dish smoking sprinkle ranked analysis lyrics",
+    "patent industry ceramic leader party cover presence loyalty strike symbolic gesture ajar crunch lily raisin midst mule desire should location velvet verify plastic"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "patent industry acrobat leaf upgrade mustang perfect luck cylinder guest filter race sidewalk hush pharmacy deploy yield darkness marvel decision cards example withdraw",
+    "patent industry acrobat lily estimate paces heat library unfold exercise gesture texture formal cradle humidity gasoline aircraft boundary timely body coal desire huge",
+    "patent industry beard learn often finger race together realize perfect coastal devote artwork marvel soldier legend spit credit primary adorn orange medal fantasy",
+    "patent industry beard lips glasses elegant racism increase moisture dance stay realize syndrome extend income density easel always license permit stilt branch cause",
+    "patent industry beard luxury coding lying testify profile ranked adapt mule rocky famous mailman nervous railroad analysis inform deal plains ivory careful edge"
+   ]
+  },
+  {
+   "name": "18-words-1of1",
+   "secret_hex": "05d7993a10d46f3ab635efe4436a477fd1276ee0c77bb368",
+   "bip39_phrase": "alarm rubber excess canvas eight outer sugar sadness tone brave mushroom zero bar resist loan urge recall dream",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "d46aa224222014ad773210b6efba6efb6a99dd84fb79db9b",
+   "group_threshold": 1,
+   "groups": [
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "chemical cleanup academic academic acquire system marathon paper edge writing domestic facility screw sniff theory step cards flavor platform furl pajamas fraction election lungs coastal wrap evidence"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "chemical cleanup academic academic acquire system marathon paper edge writing domestic facility screw sniff theory step cards flavor platform furl pajamas fraction election lungs coastal wrap evidence"
+    ]
+   ],
+   "surplus_set": null,
+   "surplus_accepted_by_tool": null,
+   "tampered_set": [
+    "chemical cleanup academic academic acquire marathon system paper edge writing domestic facility screw sniff theory step cards flavor platform furl pajamas fraction election lungs coastal wrap evidence"
+   ]
+  },
+  {
+   "name": "21-words-2of3-pass",
+   "secret_hex": "4122e7ef359854d5d389c06d9340053fe6f3b5bdf5f0a57dbffec322",
+   "bip39_phrase": "donkey blame wink hen luxury helmet evolve day horn old access lemon hundred suspect water safe pistol unknown zero main catch",
+   "passphrase": "TREZOR",
+   "wrong_passphrase": "TREZORx",
+   "wrong_secret_hex": "f7c25ef02125473685fcdd612bbba0076d7a4d27e88a4549dd54f98d",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "drink aquatic academic acid adjust manual profile vegan episode shelter expect pleasure soldier drove remove aviation salon bike knit fluff anatomy wrap royal force remind cradle album advocate hawk already",
+     "drink aquatic academic agency admit dish crazy adorn apart main lecture warn webcam company numerous eraser weapon identify dynamic view guitar exercise detect infant blanket again prepare become lunar analysis",
+     "drink aquatic academic always advocate timber phantom amount says exercise spelling aunt unfair bucket large lizard public gross webcam bulge silent obesity herald album march glen spine scholar gross crazy"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "drink aquatic academic acid adjust manual profile vegan episode shelter expect pleasure soldier drove remove aviation salon bike knit fluff anatomy wrap royal force remind cradle album advocate hawk already",
+     "drink aquatic academic always advocate timber phantom amount says exercise spelling aunt unfair bucket large lizard public gross webcam bulge silent obesity herald album march glen spine scholar gross crazy"
+    ],
+    [
+     "drink aquatic academic agency admit dish crazy adorn apart main lecture warn webcam company numerous eraser weapon identify dynamic view guitar exercise detect infant blanket again prepare become lunar analysis",
+     "drink aquatic academic always advocate timber phantom amount says exercise spelling aunt unfair bucket large lizard public gross webcam bulge silent obesity herald album march glen spine scholar gross crazy"
+    ]
+   ],
+   "surplus_set": [
+    "drink aquatic academic acid adjust manual profile vegan episode shelter expect pleasure soldier drove remove aviation salon bike knit fluff anatomy wrap royal force remind cradle album advocate hawk already",
+    "drink aquatic academic agency admit dish crazy adorn apart main lecture warn webcam company numerous eraser weapon identify dynamic view guitar exercise detect infant blanket again prepare become lunar analysis",
+    "drink aquatic academic always advocate timber phantom amount says exercise spelling aunt unfair bucket large lizard public gross webcam bulge silent obesity herald album march glen spine scholar gross crazy"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "drink aquatic academic acid adjust profile manual vegan episode shelter expect pleasure soldier drove remove aviation salon bike knit fluff anatomy wrap royal force remind cradle album advocate hawk already",
+    "drink aquatic academic always advocate timber phantom amount says exercise spelling aunt unfair bucket large lizard public gross webcam bulge silent obesity herald album march glen spine scholar gross crazy"
+   ]
+  },
+  {
+   "name": "24-words-multi",
+   "secret_hex": "18fabeeb640376dcd1bb177e5e456d55c6123549e522da086d9178020e118230",
+   "bip39_phrase": "body sting river siege danger hover eight glass layer vendor forget process gentle boy chest picture sure drop gold useless can angle angle admit",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "1bacac128412356da69d858a9ab6636cea370fc0317e27e7ab8138857c3e6556",
+   "group_threshold": 2,
+   "groups": [
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "dough agency acrobat leaf arcade mouse document secret pistol talent multiple unfair glen blue gather usher predator presence pitch penalty talent view fragment reward pipeline vocal dive alcohol quarter owner arena glasses hand",
+     "dough agency acrobat lily acne oasis bucket junk writing aviation main plot recover wrist cowboy increase lily ounce says stay mule umbrella alcohol upstairs ending obesity garbage enemy craft leader headset formal kind",
+     "dough agency acrobat lungs aircraft evaluate keyboard spelling airline laser privacy grownup indicate ecology vegan ounce finance explain language friar frequent aircraft traffic escape gray pistol viral lobe national glen bundle income undergo"
+    ],
+    [
+     "dough agency beard learn august extra zero tendency smoking payment auction deal exchange vegan fragment tidy numerous wolf capacity daughter friar energy object bedroom script username stick intimate industry station traffic heat isolate",
+     "dough agency beard lips arcade zero bracelet element boundary class olympic capital expand making wrap have exact hazard garbage upgrade mandate living organize photo bracelet graduate enlarge cover glasses radar jerky tendency diagnose",
+     "dough agency beard luxury arcade holy music roster have again criminal champion training viral debut device deal ounce daughter admit guard pistol mouse acrobat scandal ending slush ancestor spend become debut dive skunk",
+     "dough agency beard march august salary large glad priority listen regular aviation tricycle material mild render ticket anatomy holiday swing prune harvest miracle reaction blimp space fumes finger satoshi impulse parcel race level",
+     "dough agency beard method adequate pulse mountain mule provide rebound crazy funding vampire verdict facility square security makeup national clock sympathy wealthy learn anxiety firefly tenant ecology ocean cultural advance romp orange machine"
+    ],
+    [
+     "dough agency ceramic leader amount income tricycle round treat describe replace sled blessing hush violence video dragon tenant execute slush pitch club hospital mayor elbow similar game arena presence enjoy item average fiscal"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "dough agency acrobat leaf arcade mouse document secret pistol talent multiple unfair glen blue gather usher predator presence pitch penalty talent view fragment reward pipeline vocal dive alcohol quarter owner arena glasses hand",
+     "dough agency acrobat lily acne oasis bucket junk writing aviation main plot recover wrist cowboy increase lily ounce says stay mule umbrella alcohol upstairs ending obesity garbage enemy craft leader headset formal kind",
+     "dough agency beard learn august extra zero tendency smoking payment auction deal exchange vegan fragment tidy numerous wolf capacity daughter friar energy object bedroom script username stick intimate industry station traffic heat isolate",
+     "dough agency beard lips arcade zero bracelet element boundary class olympic capital expand making wrap have exact hazard garbage upgrade mandate living organize photo bracelet graduate enlarge cover glasses radar jerky tendency diagnose",
+     "dough agency beard luxury arcade holy music roster have again criminal champion training viral debut device deal ounce daughter admit guard pistol mouse acrobat scandal ending slush ancestor spend become debut dive skunk"
+    ],
+    [
+     "dough agency beard luxury arcade holy music roster have again criminal champion training viral debut device deal ounce daughter admit guard pistol mouse acrobat scandal ending slush ancestor spend become debut dive skunk",
+     "dough agency beard march august salary large glad priority listen regular aviation tricycle material mild render ticket anatomy holiday swing prune harvest miracle reaction blimp space fumes finger satoshi impulse parcel race level",
+     "dough agency beard method adequate pulse mountain mule provide rebound crazy funding vampire verdict facility square security makeup national clock sympathy wealthy learn anxiety firefly tenant ecology ocean cultural advance romp orange machine",
+     "dough agency ceramic leader amount income tricycle round treat describe replace sled blessing hush violence video dragon tenant execute slush pitch club hospital mayor elbow similar game arena presence enjoy item average fiscal"
+    ]
+   ],
+   "surplus_set": [
+    "dough agency acrobat leaf arcade mouse document secret pistol talent multiple unfair glen blue gather usher predator presence pitch penalty talent view fragment reward pipeline vocal dive alcohol quarter owner arena glasses hand",
+    "dough agency acrobat lily acne oasis bucket junk writing aviation main plot recover wrist cowboy increase lily ounce says stay mule umbrella alcohol upstairs ending obesity garbage enemy craft leader headset formal kind",
+    "dough agency acrobat lungs aircraft evaluate keyboard spelling airline laser privacy grownup indicate ecology vegan ounce finance explain language friar frequent aircraft traffic escape gray pistol viral lobe national glen bundle income undergo",
+    "dough agency beard learn august extra zero tendency smoking payment auction deal exchange vegan fragment tidy numerous wolf capacity daughter friar energy object bedroom script username stick intimate industry station traffic heat isolate",
+    "dough agency beard lips arcade zero bracelet element boundary class olympic capital expand making wrap have exact hazard garbage upgrade mandate living organize photo bracelet graduate enlarge cover glasses radar jerky tendency diagnose",
+    "dough agency beard luxury arcade holy music roster have again criminal champion training viral debut device deal ounce daughter admit guard pistol mouse acrobat scandal ending slush ancestor spend become debut dive skunk",
+    "dough agency beard march august salary large glad priority listen regular aviation tricycle material mild render ticket anatomy holiday swing prune harvest miracle reaction blimp space fumes finger satoshi impulse parcel race level",
+    "dough agency beard method adequate pulse mountain mule provide rebound crazy funding vampire verdict facility square security makeup national clock sympathy wealthy learn anxiety firefly tenant ecology ocean cultural advance romp orange machine",
+    "dough agency ceramic leader amount income tricycle round treat describe replace sled blessing hush violence video dragon tenant execute slush pitch club hospital mayor elbow similar game arena presence enjoy item average fiscal"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "dough agency acrobat leaf arcade document mouse secret pistol talent multiple unfair glen blue gather usher predator presence pitch penalty talent view fragment reward pipeline vocal dive alcohol quarter owner arena glasses hand",
+    "dough agency acrobat lily acne oasis bucket junk writing aviation main plot recover wrist cowboy increase lily ounce says stay mule umbrella alcohol upstairs ending obesity garbage enemy craft leader headset formal kind",
+    "dough agency beard learn august extra zero tendency smoking payment auction deal exchange vegan fragment tidy numerous wolf capacity daughter friar energy object bedroom script username stick intimate industry station traffic heat isolate",
+    "dough agency beard lips arcade zero bracelet element boundary class olympic capital expand making wrap have exact hazard garbage upgrade mandate living organize photo bracelet graduate enlarge cover glasses radar jerky tendency diagnose",
+    "dough agency beard luxury arcade holy music roster have again criminal champion training viral debut device deal ounce daughter admit guard pistol mouse acrobat scandal ending slush ancestor spend become debut dive skunk"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,296 @@
+{
+ "tool": "python-slip39",
+ "version": "14.1.0",
+ "generated": "2026-10-12",
+ "generator": "scripts/interop/run.py",
+ "defaults": {
+  "extendable": true,
+  "iteration_exponent": 1,
+  "slip39_passphrase_in_bip39_mode": "always empty"
+ },
+ "surplus_accepted_by_tool": true,
+ "notes": "BIP39 mode shares the phrase's entropy with an empty SLIP-39 passphrase (a passphrase there is the BIP39 one, for addresses only); the 512-bit case uses its raw mode.",
+ "unsupported_secret_bits": [
+  160,
+  192,
+  224
+ ],
+ "recovers_our_shares_of_unsupported_lengths": {
+  "160": true,
+  "192": true,
+  "224": true
+ },
+ "cases": [
+  {
+   "name": "12-words-2of3-defaults",
+   "secret_hex": "0ef1cfe5495be3e8b6f04b68e32a7778",
+   "bip39_phrase": "auction mobile welcome naive sail violin swift annual happy bone oven vacuum",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "2a3c3f9bd9d014b666e797f583af035a",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "express birthday academic acid earth racism easel rocky cylinder python slush nervous leaves genius mule broken aspect trust evaluate slush",
+     "express birthday academic agency agree injury frost spelling pile diet hush album scholar problem listen grill apart recover element deliver",
+     "express birthday academic always aviation curious yelp seafood worthy parcel rebound agree silver thorn steady endorse short obtain vintage payment"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "express birthday academic acid earth racism easel rocky cylinder python slush nervous leaves genius mule broken aspect trust evaluate slush",
+     "express birthday academic always aviation curious yelp seafood worthy parcel rebound agree silver thorn steady endorse short obtain vintage payment"
+    ],
+    [
+     "express birthday academic agency agree injury frost spelling pile diet hush album scholar problem listen grill apart recover element deliver",
+     "express birthday academic always aviation curious yelp seafood worthy parcel rebound agree silver thorn steady endorse short obtain vintage payment"
+    ]
+   ],
+   "surplus_set": [
+    "express birthday academic acid earth racism easel rocky cylinder python slush nervous leaves genius mule broken aspect trust evaluate slush",
+    "express birthday academic agency agree injury frost spelling pile diet hush album scholar problem listen grill apart recover element deliver",
+    "express birthday academic always aviation curious yelp seafood worthy parcel rebound agree silver thorn steady endorse short obtain vintage payment"
+   ],
+   "surplus_accepted_by_tool": true,
+   "tampered_set": [
+    "express birthday academic acid earth easel racism rocky cylinder python slush nervous leaves genius mule broken aspect trust evaluate slush",
+    "express birthday academic always aviation curious yelp seafood worthy parcel rebound agree silver thorn steady endorse short obtain vintage payment"
+   ]
+  },
+  {
+   "name": "12-words-multi-e0",
+   "secret_hex": "5a414f5ca01266265516d7f4844c1382",
+   "bip39_phrase": "fog apology strong dizzy chapter basket february sustain virus carbon agent airport",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "b0b679f12a4a73857bd67c75774556ef",
+   "group_threshold": 2,
+   "groups": [
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 0,
+   "mnemonics": [
+    [
+     "obesity olympic acrobat leaf custody scroll aquatic unhappy dryer jewelry beard slavery glimpse priority float paid negative priest laundry inside",
+     "obesity olympic acrobat lily crucial elegant width gather voice sack paper eyebrow withdraw silver review join payroll intend kitchen strategy",
+     "obesity olympic acrobat lungs charity spirit ticket famous guilt behavior capacity tolerate olympic genre wrist fantasy pink idea lawsuit station"
+    ],
+    [
+     "obesity olympic beard learn devote huge glen finance elephant starting owner dining prevent walnut average browser quick usual hospital involve",
+     "obesity olympic beard lips burden drove declare angel exchange orbit salary cowboy writing window visual pumps heat airport identify always",
+     "obesity olympic beard luxury client exchange luck prayer golden desire airline moisture negative shaped spew duckling tricycle muscle predator breathe",
+     "obesity olympic beard march amount careful spit victim harvest ladybug forbid marvel silent should cultural museum detect geology race grumpy",
+     "obesity olympic beard method cylinder airport aquatic disaster priest sled package prevent amazing endless predator stay staff result pumps float"
+    ],
+    [
+     "obesity olympic ceramic leader deadline alcohol domestic item indicate overall merchant payroll unhappy victim either ladybug alive disease making plunge"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "obesity olympic acrobat leaf custody scroll aquatic unhappy dryer jewelry beard slavery glimpse priority float paid negative priest laundry inside",
+     "obesity olympic acrobat lily crucial elegant width gather voice sack paper eyebrow withdraw silver review join payroll intend kitchen strategy",
+     "obesity olympic beard learn devote huge glen finance elephant starting owner dining prevent walnut average browser quick usual hospital involve",
+     "obesity olympic beard lips burden drove declare angel exchange orbit salary cowboy writing window visual pumps heat airport identify always",
+     "obesity olympic beard luxury client exchange luck prayer golden desire airline moisture negative shaped spew duckling tricycle muscle predator breathe"
+    ],
+    [
+     "obesity olympic beard luxury client exchange luck prayer golden desire airline moisture negative shaped spew duckling tricycle muscle predator breathe",
+     "obesity olympic beard march amount careful spit victim harvest ladybug forbid marvel silent should cultural museum detect geology race grumpy",
+     "obesity olympic beard method cylinder airport aquatic disaster priest sled package prevent amazing endless predator stay staff result pumps float",
+     "obesity olympic ceramic leader deadline alcohol domestic item indicate overall merchant payroll unhappy victim either ladybug alive disease making plunge"
+    ]
+   ],
+   "surplus_set": [
+    "obesity olympic acrobat leaf custody scroll aquatic unhappy dryer jewelry beard slavery glimpse priority float paid negative priest laundry inside",
+    "obesity olympic acrobat lily crucial elegant width gather voice sack paper eyebrow withdraw silver review join payroll intend kitchen strategy",
+    "obesity olympic acrobat lungs charity spirit ticket famous guilt behavior capacity tolerate olympic genre wrist fantasy pink idea lawsuit station",
+    "obesity olympic beard learn devote huge glen finance elephant starting owner dining prevent walnut average browser quick usual hospital involve",
+    "obesity olympic beard lips burden drove declare angel exchange orbit salary cowboy writing window visual pumps heat airport identify always",
+    "obesity olympic beard luxury client exchange luck prayer golden desire airline moisture negative shaped spew duckling tricycle muscle predator breathe",
+    "obesity olympic beard march amount careful spit victim harvest ladybug forbid marvel silent should cultural museum detect geology race grumpy",
+    "obesity olympic beard method cylinder airport aquatic disaster priest sled package prevent amazing endless predator stay staff result pumps float",
+    "obesity olympic ceramic leader deadline alcohol domestic item indicate overall merchant payroll unhappy victim either ladybug alive disease making plunge"
+   ],
+   "surplus_accepted_by_tool": true,
+   "tampered_set": [
+    "obesity olympic acrobat leaf custody aquatic scroll unhappy dryer jewelry beard slavery glimpse priority float paid negative priest laundry inside",
+    "obesity olympic acrobat lily crucial elegant width gather voice sack paper eyebrow withdraw silver review join payroll intend kitchen strategy",
+    "obesity olympic beard learn devote huge glen finance elephant starting owner dining prevent walnut average browser quick usual hospital involve",
+    "obesity olympic beard lips burden drove declare angel exchange orbit salary cowboy writing window visual pumps heat airport identify always",
+    "obesity olympic beard luxury client exchange luck prayer golden desire airline moisture negative shaped spew duckling tricycle muscle predator breathe"
+   ]
+  },
+  {
+   "name": "24-words-1of1-noext",
+   "secret_hex": "770b96857117623fb64336ba21f19e5f17a917acd16296a559a76369604eea65",
+   "bip39_phrase": "jacket frequent pattern timber involve cabin suit grocery riot auto guide sail kind mesh rebuild clump note client hawk short noodle cherry praise rotate",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "160bce2df44ec5ae8d716f7df4315b7a6da9484a25c5b1d2617bac4ce633aa0e",
+   "group_threshold": 1,
+   "groups": [
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": false,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "unusual steady academic academic apart answer spine desert rebound rebound deploy enforce genuine champion problem injury cleanup union leaves result ruin answer debut indicate coastal decent afraid painting advance blanket jewelry wits boring"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "unusual steady academic academic apart answer spine desert rebound rebound deploy enforce genuine champion problem injury cleanup union leaves result ruin answer debut indicate coastal decent afraid painting advance blanket jewelry wits boring"
+    ]
+   ],
+   "surplus_set": null,
+   "surplus_accepted_by_tool": null,
+   "tampered_set": [
+    "unusual steady academic academic apart spine answer desert rebound rebound deploy enforce genuine champion problem injury cleanup union leaves result ruin answer debut indicate coastal decent afraid painting advance blanket jewelry wits boring"
+   ]
+  },
+  {
+   "name": "24-words-multi",
+   "secret_hex": "f9469b1d4f81a633532dc604e7d8ca8c1e7c80addedc5d19300a8b746028ab4e",
+   "bip39_phrase": "welcome crumble shrug pair bounce boost erosion rhythm agent disagree crawl blouse treat doctor resist swear fringe sister actor black ecology begin pudding swarm",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "6f78dfd3b9c86627da1eb35a7738633ca74c2dccd60ac9754fef42bc60cb901c",
+   "group_threshold": 2,
+   "groups": [
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "fragment desert acrobat leaf arcade medical main laundry havoc picture change gather already kernel filter cultural isolate cowboy shrimp junction remove language machine universe cage drove flip prevent pitch main client home duration",
+     "fragment desert acrobat lily ancestor envelope beam gums bishop argue idle steady junk mandate living priest document living alarm diagnose voter unhappy party satisfy likely editor verdict writing render mailman tricycle alarm health",
+     "fragment desert acrobat lungs adapt academic permit display diminish inherit legs bedroom unknown canyon unhappy educate wolf devote equation medical desire paid taste rainbow depict elevator blanket goat drove making burden plan omit"
+    ],
+    [
+     "fragment desert beard learn admit plastic learn threaten standard estate talent stay loyalty steady branch document tactics scandal broken upstairs brother laden deadline bedroom together calcium snake public surprise flavor race surprise husband",
+     "fragment desert beard lips acid database artwork answer organize froth debris advocate news beyond ranked chew license mailman focus ancient believe slush wealthy grill yoga total alarm havoc artwork music glimpse else season",
+     "fragment desert beard luxury ancestor calcium forward trouble evil program mineral body blanket work fatigue paid program mortgage smell trip become guest voting scout density broken orange swimming gray withdraw pecan manager answer",
+     "fragment desert beard march ambition nylon sprinkle aircraft alcohol regular language slice answer dictate wrist loyalty vanish submit mental axis building suitable champion purchase crucial testify erode alcohol radar dress increase best result",
+     "fragment desert beard method aircraft curly gums salt ladle health fluff gums priest much pharmacy modify husband staff umbrella society activity shame class wireless modify single magazine playoff devote civil steady extend boundary"
+    ],
+    [
+     "fragment desert ceramic leader acne ancestor terminal rainbow darkness various evidence ordinary gums thorn cargo main escape papa submit demand huge sweater primary presence march cargo stay ranked voter stick dance darkness glen"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "fragment desert acrobat leaf arcade medical main laundry havoc picture change gather already kernel filter cultural isolate cowboy shrimp junction remove language machine universe cage drove flip prevent pitch main client home duration",
+     "fragment desert acrobat lily ancestor envelope beam gums bishop argue idle steady junk mandate living priest document living alarm diagnose voter unhappy party satisfy likely editor verdict writing render mailman tricycle alarm health",
+     "fragment desert beard learn admit plastic learn threaten standard estate talent stay loyalty steady branch document tactics scandal broken upstairs brother laden deadline bedroom together calcium snake public surprise flavor race surprise husband",
+     "fragment desert beard lips acid database artwork answer organize froth debris advocate news beyond ranked chew license mailman focus ancient believe slush wealthy grill yoga total alarm havoc artwork music glimpse else season",
+     "fragment desert beard luxury ancestor calcium forward trouble evil program mineral body blanket work fatigue paid program mortgage smell trip become guest voting scout density broken orange swimming gray withdraw pecan manager answer"
+    ],
+    [
+     "fragment desert beard luxury ancestor calcium forward trouble evil program mineral body blanket work fatigue paid program mortgage smell trip become guest voting scout density broken orange swimming gray withdraw pecan manager answer",
+     "fragment desert beard march ambition nylon sprinkle aircraft alcohol regular language slice answer dictate wrist loyalty vanish submit mental axis building suitable champion purchase crucial testify erode alcohol radar dress increase best result",
+     "fragment desert beard method aircraft curly gums salt ladle health fluff gums priest much pharmacy modify husband staff umbrella society activity shame class wireless modify single magazine playoff devote civil steady extend boundary",
+     "fragment desert ceramic leader acne ancestor terminal rainbow darkness various evidence ordinary gums thorn cargo main escape papa submit demand huge sweater primary presence march cargo stay ranked voter stick dance darkness glen"
+    ]
+   ],
+   "surplus_set": [
+    "fragment desert acrobat leaf arcade medical main laundry havoc picture change gather already kernel filter cultural isolate cowboy shrimp junction remove language machine universe cage drove flip prevent pitch main client home duration",
+    "fragment desert acrobat lily ancestor envelope beam gums bishop argue idle steady junk mandate living priest document living alarm diagnose voter unhappy party satisfy likely editor verdict writing render mailman tricycle alarm health",
+    "fragment desert acrobat lungs adapt academic permit display diminish inherit legs bedroom unknown canyon unhappy educate wolf devote equation medical desire paid taste rainbow depict elevator blanket goat drove making burden plan omit",
+    "fragment desert beard learn admit plastic learn threaten standard estate talent stay loyalty steady branch document tactics scandal broken upstairs brother laden deadline bedroom together calcium snake public surprise flavor race surprise husband",
+    "fragment desert beard lips acid database artwork answer organize froth debris advocate news beyond ranked chew license mailman focus ancient believe slush wealthy grill yoga total alarm havoc artwork music glimpse else season",
+    "fragment desert beard luxury ancestor calcium forward trouble evil program mineral body blanket work fatigue paid program mortgage smell trip become guest voting scout density broken orange swimming gray withdraw pecan manager answer",
+    "fragment desert beard march ambition nylon sprinkle aircraft alcohol regular language slice answer dictate wrist loyalty vanish submit mental axis building suitable champion purchase crucial testify erode alcohol radar dress increase best result",
+    "fragment desert beard method aircraft curly gums salt ladle health fluff gums priest much pharmacy modify husband staff umbrella society activity shame class wireless modify single magazine playoff devote civil steady extend boundary",
+    "fragment desert ceramic leader acne ancestor terminal rainbow darkness various evidence ordinary gums thorn cargo main escape papa submit demand huge sweater primary presence march cargo stay ranked voter stick dance darkness glen"
+   ],
+   "surplus_accepted_by_tool": true,
+   "tampered_set": [
+    "fragment desert acrobat leaf arcade main medical laundry havoc picture change gather already kernel filter cultural isolate cowboy shrimp junction remove language machine universe cage drove flip prevent pitch main client home duration",
+    "fragment desert acrobat lily ancestor envelope beam gums bishop argue idle steady junk mandate living priest document living alarm diagnose voter unhappy party satisfy likely editor verdict writing render mailman tricycle alarm health",
+    "fragment desert beard learn admit plastic learn threaten standard estate talent stay loyalty steady branch document tactics scandal broken upstairs brother laden deadline bedroom together calcium snake public surprise flavor race surprise husband",
+    "fragment desert beard lips acid database artwork answer organize froth debris advocate news beyond ranked chew license mailman focus ancient believe slush wealthy grill yoga total alarm havoc artwork music glimpse else season",
+    "fragment desert beard luxury ancestor calcium forward trouble evil program mineral body blanket work fatigue paid program mortgage smell trip become guest voting scout density broken orange swimming gray withdraw pecan manager answer"
+   ]
+  },
+  {
+   "name": "512-raw-2of3-pass",
+   "secret_hex": "bf80c49d987a28e759dc58474abdc9becac8543ee1a74dd7448b9048644349b464768550bd8a202f236add0e5d931ad8b3f3e55f5818f96950fc7ac8a15502f4",
+   "passphrase": "TREZOR",
+   "wrong_passphrase": "TREZORx",
+   "wrong_secret_hex": "e7fbffe5820888b2e549a8874247b2aea798b9bbdbb98b4f5270668d6aa25847077c852a1f79afe736e67c6f0edd990c930688d4e4998938ba95fb1a46eebb1c",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 0,
+   "mnemonics": [
+    [
+     "step single academic acid academic enemy western debris unusual ruler beam quick treat failure unwrap chew mustang costume intend recover general repair snake adorn vintage spend enforce lyrics shrimp necklace tricycle sniff hobo editor cage observe satisfy valid playoff standard valuable example revenue iris shaped surface auction imply suitable round slavery dream minister scramble champion sniff guest shelter fridge",
+     "step single academic agency academic watch cluster sniff company clock seafood insect twice fridge ceramic yoga column thank forecast capital cover legs syndrome aquatic veteran royal weapon depict deadline dilemma briefing texture false briefing legend greatest emphasis scared clothes injury become careful desktop overall knife blind raspy shaped emphasis teaspoon frequent kidney briefing similar ugly duration jacket employer increase",
+     "step single academic always acid dwarf that indicate graduate amount retailer dynamic unfair clogs glimpse flexible ugly squeeze medal impulse usual shaped heat taste voting wrap crisis junior bundle safari rocky upstairs bike vanish diminish teammate spider observe peasant blimp cricket unknown avoid cinema repair elite task lend wits likely unknown result ordinary pumps bumpy lying faint sidewalk round"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "step single academic acid academic enemy western debris unusual ruler beam quick treat failure unwrap chew mustang costume intend recover general repair snake adorn vintage spend enforce lyrics shrimp necklace tricycle sniff hobo editor cage observe satisfy valid playoff standard valuable example revenue iris shaped surface auction imply suitable round slavery dream minister scramble champion sniff guest shelter fridge",
+     "step single academic always acid dwarf that indicate graduate amount retailer dynamic unfair clogs glimpse flexible ugly squeeze medal impulse usual shaped heat taste voting wrap crisis junior bundle safari rocky upstairs bike vanish diminish teammate spider observe peasant blimp cricket unknown avoid cinema repair elite task lend wits likely unknown result ordinary pumps bumpy lying faint sidewalk round"
+    ],
+    [
+     "step single academic agency academic watch cluster sniff company clock seafood insect twice fridge ceramic yoga column thank forecast capital cover legs syndrome aquatic veteran royal weapon depict deadline dilemma briefing texture false briefing legend greatest emphasis scared clothes injury become careful desktop overall knife blind raspy shaped emphasis teaspoon frequent kidney briefing similar ugly duration jacket employer increase",
+     "step single academic always acid dwarf that indicate graduate amount retailer dynamic unfair clogs glimpse flexible ugly squeeze medal impulse usual shaped heat taste voting wrap crisis junior bundle safari rocky upstairs bike vanish diminish teammate spider observe peasant blimp cricket unknown avoid cinema repair elite task lend wits likely unknown result ordinary pumps bumpy lying faint sidewalk round"
+    ]
+   ],
+   "surplus_set": [
+    "step single academic acid academic enemy western debris unusual ruler beam quick treat failure unwrap chew mustang costume intend recover general repair snake adorn vintage spend enforce lyrics shrimp necklace tricycle sniff hobo editor cage observe satisfy valid playoff standard valuable example revenue iris shaped surface auction imply suitable round slavery dream minister scramble champion sniff guest shelter fridge",
+    "step single academic agency academic watch cluster sniff company clock seafood insect twice fridge ceramic yoga column thank forecast capital cover legs syndrome aquatic veteran royal weapon depict deadline dilemma briefing texture false briefing legend greatest emphasis scared clothes injury become careful desktop overall knife blind raspy shaped emphasis teaspoon frequent kidney briefing similar ugly duration jacket employer increase",
+    "step single academic always acid dwarf that indicate graduate amount retailer dynamic unfair clogs glimpse flexible ugly squeeze medal impulse usual shaped heat taste voting wrap crisis junior bundle safari rocky upstairs bike vanish diminish teammate spider observe peasant blimp cricket unknown avoid cinema repair elite task lend wits likely unknown result ordinary pumps bumpy lying faint sidewalk round"
+   ],
+   "surplus_accepted_by_tool": true,
+   "tampered_set": [
+    "step single academic acid academic western enemy debris unusual ruler beam quick treat failure unwrap chew mustang costume intend recover general repair snake adorn vintage spend enforce lyrics shrimp necklace tricycle sniff hobo editor cage observe satisfy valid playoff standard valuable example revenue iris shaped surface auction imply suitable round slavery dream minister scramble champion sniff guest shelter fridge",
+    "step single academic always acid dwarf that indicate graduate amount retailer dynamic unfair clogs glimpse flexible ugly squeeze medal impulse usual shaped heat taste voting wrap crisis junior bundle safari rocky upstairs bike vanish diminish teammate spider observe peasant blimp cricket unknown avoid cinema repair elite task lend wits likely unknown result ordinary pumps bumpy lying faint sidewalk round"
+   ]
+  }
+ ]
+}

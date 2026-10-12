@@ -1,0 +1,473 @@
+{
+ "tool": "python-shamir-mnemonic",
+ "version": "0.3.0",
+ "generated": "2026-10-12",
+ "generator": "scripts/interop/run.py",
+ "defaults": {
+  "extendable": true,
+  "iteration_exponent": 1
+ },
+ "surplus_accepted_by_tool": false,
+ "notes": "Reference implementation; byte level. Rejects surplus groups/shares, as the spec says.",
+ "cases": [
+  {
+   "name": "128-1of1-e0-ext",
+   "secret_hex": "15ebdcadbdb41a50cbfe4ee35bf008a5",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "d297d646c02dc3c569e84da71df78377",
+   "group_threshold": 1,
+   "groups": [
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 0,
+   "mnemonics": [
+    [
+     "craft crunch academic academic curious vegan pumps muscle muscle secret hamster physics quantity deploy lift capture rival flavor knife filter"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "craft crunch academic academic curious vegan pumps muscle muscle secret hamster physics quantity deploy lift capture rival flavor knife filter"
+    ]
+   ],
+   "surplus_set": null,
+   "surplus_accepted_by_tool": null,
+   "tampered_set": [
+    "craft crunch academic academic curious pumps vegan muscle muscle secret hamster physics quantity deploy lift capture rival flavor knife filter"
+   ]
+  },
+  {
+   "name": "160-2of3-pass-e1-noext",
+   "secret_hex": "7c9d1f8f423db713685f14b695de63ec34101bb0",
+   "passphrase": "TREZOR",
+   "wrong_passphrase": "TREZORx",
+   "wrong_secret_hex": "efad2c1c3069f31cbea22ac1aa74ad4898f4362c",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": false,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "warn steady academic acid shame fishing drug hawk disease triumph gravity indicate satisfy fitness usher firm temple zero ladybug season blue forget frost",
+     "warn steady academic agency emerald pink preach license talent civil insect focus practice suitable industry evoke season destroy oral nail twin deploy aircraft",
+     "warn steady academic always silent profile parking yelp uncover bishop emerald hanger best expect webcam gesture primary hormone animal grill material railroad engage"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "warn steady academic acid shame fishing drug hawk disease triumph gravity indicate satisfy fitness usher firm temple zero ladybug season blue forget frost",
+     "warn steady academic always silent profile parking yelp uncover bishop emerald hanger best expect webcam gesture primary hormone animal grill material railroad engage"
+    ],
+    [
+     "warn steady academic agency emerald pink preach license talent civil insect focus practice suitable industry evoke season destroy oral nail twin deploy aircraft",
+     "warn steady academic always silent profile parking yelp uncover bishop emerald hanger best expect webcam gesture primary hormone animal grill material railroad engage"
+    ]
+   ],
+   "surplus_set": [
+    "warn steady academic acid shame fishing drug hawk disease triumph gravity indicate satisfy fitness usher firm temple zero ladybug season blue forget frost",
+    "warn steady academic agency emerald pink preach license talent civil insect focus practice suitable industry evoke season destroy oral nail twin deploy aircraft",
+    "warn steady academic always silent profile parking yelp uncover bishop emerald hanger best expect webcam gesture primary hormone animal grill material railroad engage"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "warn steady academic acid shame drug fishing hawk disease triumph gravity indicate satisfy fitness usher firm temple zero ladybug season blue forget frost",
+    "warn steady academic always silent profile parking yelp uncover bishop emerald hanger best expect webcam gesture primary hormone animal grill material railroad engage"
+   ]
+  },
+  {
+   "name": "192-multi-e1-ext",
+   "secret_hex": "b8c62d58efa8f36399e196a7931cc078794ab318afd8cfa9",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "65efb25fa3b9754865f13e2e24af4fdef2e90fc04b3331e2",
+   "group_threshold": 2,
+   "groups": [
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "timber desert acrobat leaf acne goat easel satoshi ticket afraid cargo leaves inform metric receiver soul modern timely spine insect decorate satisfy wavy slavery license peanut lift",
+     "timber desert acrobat lily acid grownup sack group dive client steady luck agree camera pregnant fragment forward tackle club display dryer biology that detailed huge luck mason",
+     "timber desert acrobat lungs academic alcohol solution argue endless clock champion mayor moment manager military aunt brave mustang depict ultimate cowboy hamster helpful research aspect sugar trouble"
+    ],
+    [
+     "timber desert beard learn academic greatest carve cause velvet romp flavor knit starting liquid true obesity tofu fridge trust manager usual stick perfect evoke shadow density lizard",
+     "timber desert beard lips acid adequate improve spray froth elephant mason main beard racism huge juice involve explain envelope helpful task drift insect aircraft prisoner thorn broken",
+     "timber desert beard luxury acquire jury tricycle mild dining sniff game furl quarter kidney writing enlarge tolerate husband mountain force insect anxiety grasp ruin mother alpha language",
+     "timber desert beard march acne calcium loyalty grasp nervous family listen platform insect example jump pistol intimate glad diet reunion forward unwrap race lungs vegan software tension",
+     "timber desert beard method acid aunt wisdom identify finance pancake script software wrote lamp diminish helpful aide twice adult epidemic program careful segment huge snapshot theater answer"
+    ],
+    [
+     "timber desert ceramic leader acid advance evening facility secret mental tracks library game depict holiday regret keyboard black orange mouse ounce frozen peasant satoshi owner avoid describe"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "timber desert acrobat leaf acne goat easel satoshi ticket afraid cargo leaves inform metric receiver soul modern timely spine insect decorate satisfy wavy slavery license peanut lift",
+     "timber desert acrobat lily acid grownup sack group dive client steady luck agree camera pregnant fragment forward tackle club display dryer biology that detailed huge luck mason",
+     "timber desert beard learn academic greatest carve cause velvet romp flavor knit starting liquid true obesity tofu fridge trust manager usual stick perfect evoke shadow density lizard",
+     "timber desert beard lips acid adequate improve spray froth elephant mason main beard racism huge juice involve explain envelope helpful task drift insect aircraft prisoner thorn broken",
+     "timber desert beard luxury acquire jury tricycle mild dining sniff game furl quarter kidney writing enlarge tolerate husband mountain force insect anxiety grasp ruin mother alpha language"
+    ],
+    [
+     "timber desert beard luxury acquire jury tricycle mild dining sniff game furl quarter kidney writing enlarge tolerate husband mountain force insect anxiety grasp ruin mother alpha language",
+     "timber desert beard march acne calcium loyalty grasp nervous family listen platform insect example jump pistol intimate glad diet reunion forward unwrap race lungs vegan software tension",
+     "timber desert beard method acid aunt wisdom identify finance pancake script software wrote lamp diminish helpful aide twice adult epidemic program careful segment huge snapshot theater answer",
+     "timber desert ceramic leader acid advance evening facility secret mental tracks library game depict holiday regret keyboard black orange mouse ounce frozen peasant satoshi owner avoid describe"
+    ]
+   ],
+   "surplus_set": [
+    "timber desert acrobat leaf acne goat easel satoshi ticket afraid cargo leaves inform metric receiver soul modern timely spine insect decorate satisfy wavy slavery license peanut lift",
+    "timber desert acrobat lily acid grownup sack group dive client steady luck agree camera pregnant fragment forward tackle club display dryer biology that detailed huge luck mason",
+    "timber desert acrobat lungs academic alcohol solution argue endless clock champion mayor moment manager military aunt brave mustang depict ultimate cowboy hamster helpful research aspect sugar trouble",
+    "timber desert beard learn academic greatest carve cause velvet romp flavor knit starting liquid true obesity tofu fridge trust manager usual stick perfect evoke shadow density lizard",
+    "timber desert beard lips acid adequate improve spray froth elephant mason main beard racism huge juice involve explain envelope helpful task drift insect aircraft prisoner thorn broken",
+    "timber desert beard luxury acquire jury tricycle mild dining sniff game furl quarter kidney writing enlarge tolerate husband mountain force insect anxiety grasp ruin mother alpha language",
+    "timber desert beard march acne calcium loyalty grasp nervous family listen platform insect example jump pistol intimate glad diet reunion forward unwrap race lungs vegan software tension",
+    "timber desert beard method acid aunt wisdom identify finance pancake script software wrote lamp diminish helpful aide twice adult epidemic program careful segment huge snapshot theater answer",
+    "timber desert ceramic leader acid advance evening facility secret mental tracks library game depict holiday regret keyboard black orange mouse ounce frozen peasant satoshi owner avoid describe"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "timber desert acrobat leaf acne easel goat satoshi ticket afraid cargo leaves inform metric receiver soul modern timely spine insect decorate satisfy wavy slavery license peanut lift",
+    "timber desert acrobat lily acid grownup sack group dive client steady luck agree camera pregnant fragment forward tackle club display dryer biology that detailed huge luck mason",
+    "timber desert beard learn academic greatest carve cause velvet romp flavor knit starting liquid true obesity tofu fridge trust manager usual stick perfect evoke shadow density lizard",
+    "timber desert beard lips acid adequate improve spray froth elephant mason main beard racism huge juice involve explain envelope helpful task drift insect aircraft prisoner thorn broken",
+    "timber desert beard luxury acquire jury tricycle mild dining sniff game furl quarter kidney writing enlarge tolerate husband mountain force insect anxiety grasp ruin mother alpha language"
+   ]
+  },
+  {
+   "name": "224-2of3-e0-noext",
+   "secret_hex": "04f900d3cd38868cad1dcdc9cc186fcc33561dde55ee430aa048d8cc",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "f81d25e8f302c9c86f4a572897be53dd36f75d01423b4fdab31054cf",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": false,
+   "iteration_exponent": 0,
+   "mnemonics": [
+    [
+     "cause guest academic acid acquire superior oasis trip very involve senior easy diminish group bumpy surprise verdict zero makeup carbon wisdom scout spark born rebound mobile raspy human subject eraser",
+     "cause guest academic agency acid license learn demand briefing agency believe index webcam theory evidence shadow story station modify payroll alarm require pancake dough tofu main escape senior emission kind",
+     "cause guest academic always adapt justice hunting edge change ceramic knife coal salary tackle repeat victim payroll auction ivory lawsuit garlic news python explain biology provide shaped practice leaves teacher"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "cause guest academic acid acquire superior oasis trip very involve senior easy diminish group bumpy surprise verdict zero makeup carbon wisdom scout spark born rebound mobile raspy human subject eraser",
+     "cause guest academic always adapt justice hunting edge change ceramic knife coal salary tackle repeat victim payroll auction ivory lawsuit garlic news python explain biology provide shaped practice leaves teacher"
+    ],
+    [
+     "cause guest academic agency acid license learn demand briefing agency believe index webcam theory evidence shadow story station modify payroll alarm require pancake dough tofu main escape senior emission kind",
+     "cause guest academic always adapt justice hunting edge change ceramic knife coal salary tackle repeat victim payroll auction ivory lawsuit garlic news python explain biology provide shaped practice leaves teacher"
+    ]
+   ],
+   "surplus_set": [
+    "cause guest academic acid acquire superior oasis trip very involve senior easy diminish group bumpy surprise verdict zero makeup carbon wisdom scout spark born rebound mobile raspy human subject eraser",
+    "cause guest academic agency acid license learn demand briefing agency believe index webcam theory evidence shadow story station modify payroll alarm require pancake dough tofu main escape senior emission kind",
+    "cause guest academic always adapt justice hunting edge change ceramic knife coal salary tackle repeat victim payroll auction ivory lawsuit garlic news python explain biology provide shaped practice leaves teacher"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "cause guest academic acid acquire oasis superior trip very involve senior easy diminish group bumpy surprise verdict zero makeup carbon wisdom scout spark born rebound mobile raspy human subject eraser",
+    "cause guest academic always adapt justice hunting edge change ceramic knife coal salary tackle repeat victim payroll auction ivory lawsuit garlic news python explain biology provide shaped practice leaves teacher"
+   ]
+  },
+  {
+   "name": "256-multi-pass-e0-ext",
+   "secret_hex": "dc919f50cb7c1bed338e9b0f9b8aa2d185cdc9295ef50605a5cfee833b549d9a",
+   "passphrase": "TREZOR",
+   "wrong_passphrase": "TREZORx",
+   "wrong_secret_hex": "7c2c647c4199e1d8c35fac3e9fe0f7a556837770029f6c6e42b949efc4cc780e",
+   "group_threshold": 2,
+   "groups": [
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 0,
+   "mnemonics": [
+    [
+     "finger fragment acrobat leaf analysis grin example weapon wisdom cradle devote welcome security senior nuclear fiscal miracle fused artwork pupal leaf lend emission glasses mineral racism science freshman talent true makeup heat nail",
+     "finger fragment acrobat lily argue similar example human mixture rich syndrome duckling isolate impulse geology early quick genre example dilemma wrist smith traveler rebound library exclude jury zero flea amuse density educate clay",
+     "finger fragment acrobat lungs acquire junk exact smug leaf security work imply plan dough inform listen soldier grasp memory recover hobo strategy aircraft pickup race acrobat party capital genre hamster plot veteran royal"
+    ],
+    [
+     "finger fragment beard learn antenna civil safari kitchen disaster mental withdraw perfect exceed breathe shaped kind hand desktop loyalty intimate maiden check cover cowboy trial dramatic vampire frozen member biology year born mineral",
+     "finger fragment beard lips advocate threaten pink humidity pipeline playoff pharmacy again knit typical taxi angry timely stilt talent twin elephant decent trust orange cowboy eclipse geology careful finance nuclear liberty strike walnut",
+     "finger fragment beard luxury ancestor quiet failure spelling shrimp eclipse curly elder research coastal staff ocean ultimate adjust oasis typical benefit carpet prospect acrobat video thorn category hanger hanger season branch treat join",
+     "finger fragment beard march adequate inform dough round formal gray island that mansion spelling writing unfair glen unusual salary identify strategy armed imply radar desert network quiet course quiet erode golden column axis",
+     "finger fragment beard method amount drift warmth jacket findings brother short miracle traffic threaten system fragment slim review earth pitch fishing relate brave slice eyebrow careful spit flash expand moment amount parking capture"
+    ],
+    [
+     "finger fragment ceramic leader alpha gasoline romantic perfect explain invasion spine loyalty similar segment deny airport heat ugly rescue crystal timber mental elephant sniff sweater device losing spill excuse traveler suitable miracle exceed"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "finger fragment acrobat leaf analysis grin example weapon wisdom cradle devote welcome security senior nuclear fiscal miracle fused artwork pupal leaf lend emission glasses mineral racism science freshman talent true makeup heat nail",
+     "finger fragment acrobat lily argue similar example human mixture rich syndrome duckling isolate impulse geology early quick genre example dilemma wrist smith traveler rebound library exclude jury zero flea amuse density educate clay",
+     "finger fragment beard learn antenna civil safari kitchen disaster mental withdraw perfect exceed breathe shaped kind hand desktop loyalty intimate maiden check cover cowboy trial dramatic vampire frozen member biology year born mineral",
+     "finger fragment beard lips advocate threaten pink humidity pipeline playoff pharmacy again knit typical taxi angry timely stilt talent twin elephant decent trust orange cowboy eclipse geology careful finance nuclear liberty strike walnut",
+     "finger fragment beard luxury ancestor quiet failure spelling shrimp eclipse curly elder research coastal staff ocean ultimate adjust oasis typical benefit carpet prospect acrobat video thorn category hanger hanger season branch treat join"
+    ],
+    [
+     "finger fragment beard luxury ancestor quiet failure spelling shrimp eclipse curly elder research coastal staff ocean ultimate adjust oasis typical benefit carpet prospect acrobat video thorn category hanger hanger season branch treat join",
+     "finger fragment beard march adequate inform dough round formal gray island that mansion spelling writing unfair glen unusual salary identify strategy armed imply radar desert network quiet course quiet erode golden column axis",
+     "finger fragment beard method amount drift warmth jacket findings brother short miracle traffic threaten system fragment slim review earth pitch fishing relate brave slice eyebrow careful spit flash expand moment amount parking capture",
+     "finger fragment ceramic leader alpha gasoline romantic perfect explain invasion spine loyalty similar segment deny airport heat ugly rescue crystal timber mental elephant sniff sweater device losing spill excuse traveler suitable miracle exceed"
+    ]
+   ],
+   "surplus_set": [
+    "finger fragment acrobat leaf analysis grin example weapon wisdom cradle devote welcome security senior nuclear fiscal miracle fused artwork pupal leaf lend emission glasses mineral racism science freshman talent true makeup heat nail",
+    "finger fragment acrobat lily argue similar example human mixture rich syndrome duckling isolate impulse geology early quick genre example dilemma wrist smith traveler rebound library exclude jury zero flea amuse density educate clay",
+    "finger fragment acrobat lungs acquire junk exact smug leaf security work imply plan dough inform listen soldier grasp memory recover hobo strategy aircraft pickup race acrobat party capital genre hamster plot veteran royal",
+    "finger fragment beard learn antenna civil safari kitchen disaster mental withdraw perfect exceed breathe shaped kind hand desktop loyalty intimate maiden check cover cowboy trial dramatic vampire frozen member biology year born mineral",
+    "finger fragment beard lips advocate threaten pink humidity pipeline playoff pharmacy again knit typical taxi angry timely stilt talent twin elephant decent trust orange cowboy eclipse geology careful finance nuclear liberty strike walnut",
+    "finger fragment beard luxury ancestor quiet failure spelling shrimp eclipse curly elder research coastal staff ocean ultimate adjust oasis typical benefit carpet prospect acrobat video thorn category hanger hanger season branch treat join",
+    "finger fragment beard march adequate inform dough round formal gray island that mansion spelling writing unfair glen unusual salary identify strategy armed imply radar desert network quiet course quiet erode golden column axis",
+    "finger fragment beard method amount drift warmth jacket findings brother short miracle traffic threaten system fragment slim review earth pitch fishing relate brave slice eyebrow careful spit flash expand moment amount parking capture",
+    "finger fragment ceramic leader alpha gasoline romantic perfect explain invasion spine loyalty similar segment deny airport heat ugly rescue crystal timber mental elephant sniff sweater device losing spill excuse traveler suitable miracle exceed"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "finger fragment acrobat leaf analysis example grin weapon wisdom cradle devote welcome security senior nuclear fiscal miracle fused artwork pupal leaf lend emission glasses mineral racism science freshman talent true makeup heat nail",
+    "finger fragment acrobat lily argue similar example human mixture rich syndrome duckling isolate impulse geology early quick genre example dilemma wrist smith traveler rebound library exclude jury zero flea amuse density educate clay",
+    "finger fragment beard learn antenna civil safari kitchen disaster mental withdraw perfect exceed breathe shaped kind hand desktop loyalty intimate maiden check cover cowboy trial dramatic vampire frozen member biology year born mineral",
+    "finger fragment beard lips advocate threaten pink humidity pipeline playoff pharmacy again knit typical taxi angry timely stilt talent twin elephant decent trust orange cowboy eclipse geology careful finance nuclear liberty strike walnut",
+    "finger fragment beard luxury ancestor quiet failure spelling shrimp eclipse curly elder research coastal staff ocean ultimate adjust oasis typical benefit carpet prospect acrobat video thorn category hanger hanger season branch treat join"
+   ]
+  },
+  {
+   "name": "256-1of1-e2-noext",
+   "secret_hex": "ea744f13e7987ec94180d07f7d1a2784af0a49d60a2f28ebd0bad63d6969d56e",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "80dc41d7db98b1b956a5ea1c352813563fbd79f36d5a270e97c03f11f149497c",
+   "group_threshold": 1,
+   "groups": [
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": false,
+   "iteration_exponent": 2,
+   "mnemonics": [
+    [
+     "unwrap eclipse academic academic actress package equation society kidney agency exclude costume pencil sprinkle smoking elite wrist wrist forward ranked aide increase making western necklace beyond adequate alien black agency deal disease dress"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "unwrap eclipse academic academic actress package equation society kidney agency exclude costume pencil sprinkle smoking elite wrist wrist forward ranked aide increase making western necklace beyond adequate alien black agency deal disease dress"
+    ]
+   ],
+   "surplus_set": null,
+   "surplus_accepted_by_tool": null,
+   "tampered_set": [
+    "unwrap eclipse academic academic actress equation package society kidney agency exclude costume pencil sprinkle smoking elite wrist wrist forward ranked aide increase making western necklace beyond adequate alien black agency deal disease dress"
+   ]
+  },
+  {
+   "name": "512-2of3-pass-e0-ext",
+   "secret_hex": "7a031063c92b37c39a53f13a3ff9089d9f00291e0097c3f2c791d545b07ea05f7003ade85742121e2e5bddd5d36482d5293a01b97d9eea0820a93895e381b2b0",
+   "passphrase": "TREZOR",
+   "wrong_passphrase": "TREZORx",
+   "wrong_secret_hex": "7bed476428bd52ccf3767ab4e7cc38715d7a84723837cd069d621dd8211e53ca4287257d68a613d3142f25e4268c19039d58dc9f0b72ab54ffd7855bc6bf4248",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 0,
+   "mnemonics": [
+    [
+     "climate wisdom academic acid academic minister moment grant photo fitness escape legend knit viral standard primary pile shelter symbolic hybrid change humidity squeeze evil pitch adequate aspect chemical unhappy activity true security damage revenue bulb category software alpha march bulge champion damage apart usual analysis shadow elevator auction best silent civil material false stay hanger display guard sweater genius",
+     "climate wisdom academic agency acid pencil tendency patrol royal bolt script predator remind depend debris gather coastal stadium mortgage advance bulb ancestor change cowboy desktop priest diagnose thunder loan plains inform hearing hush legend tolerate library script darkness testify snake unwrap lawsuit force alien become similar cover traveler sled national museum juice distance lunch froth curly surprise mother knife",
+     "climate wisdom academic always acne window smith transfer have regret election fatigue union beam plains dilemma result pacific unfold beard flash percent disease roster mandate float talent herd duration faint science bucket minister pistol upstairs teammate yelp dragon editor exercise photo taught pajamas flexible distance similar diminish ending railroad cards episode cleanup lilac biology adapt beam empty river ceiling"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "climate wisdom academic acid academic minister moment grant photo fitness escape legend knit viral standard primary pile shelter symbolic hybrid change humidity squeeze evil pitch adequate aspect chemical unhappy activity true security damage revenue bulb category software alpha march bulge champion damage apart usual analysis shadow elevator auction best silent civil material false stay hanger display guard sweater genius",
+     "climate wisdom academic always acne window smith transfer have regret election fatigue union beam plains dilemma result pacific unfold beard flash percent disease roster mandate float talent herd duration faint science bucket minister pistol upstairs teammate yelp dragon editor exercise photo taught pajamas flexible distance similar diminish ending railroad cards episode cleanup lilac biology adapt beam empty river ceiling"
+    ],
+    [
+     "climate wisdom academic agency acid pencil tendency patrol royal bolt script predator remind depend debris gather coastal stadium mortgage advance bulb ancestor change cowboy desktop priest diagnose thunder loan plains inform hearing hush legend tolerate library script darkness testify snake unwrap lawsuit force alien become similar cover traveler sled national museum juice distance lunch froth curly surprise mother knife",
+     "climate wisdom academic always acne window smith transfer have regret election fatigue union beam plains dilemma result pacific unfold beard flash percent disease roster mandate float talent herd duration faint science bucket minister pistol upstairs teammate yelp dragon editor exercise photo taught pajamas flexible distance similar diminish ending railroad cards episode cleanup lilac biology adapt beam empty river ceiling"
+    ]
+   ],
+   "surplus_set": [
+    "climate wisdom academic acid academic minister moment grant photo fitness escape legend knit viral standard primary pile shelter symbolic hybrid change humidity squeeze evil pitch adequate aspect chemical unhappy activity true security damage revenue bulb category software alpha march bulge champion damage apart usual analysis shadow elevator auction best silent civil material false stay hanger display guard sweater genius",
+    "climate wisdom academic agency acid pencil tendency patrol royal bolt script predator remind depend debris gather coastal stadium mortgage advance bulb ancestor change cowboy desktop priest diagnose thunder loan plains inform hearing hush legend tolerate library script darkness testify snake unwrap lawsuit force alien become similar cover traveler sled national museum juice distance lunch froth curly surprise mother knife",
+    "climate wisdom academic always acne window smith transfer have regret election fatigue union beam plains dilemma result pacific unfold beard flash percent disease roster mandate float talent herd duration faint science bucket minister pistol upstairs teammate yelp dragon editor exercise photo taught pajamas flexible distance similar diminish ending railroad cards episode cleanup lilac biology adapt beam empty river ceiling"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "climate wisdom academic acid academic moment minister grant photo fitness escape legend knit viral standard primary pile shelter symbolic hybrid change humidity squeeze evil pitch adequate aspect chemical unhappy activity true security damage revenue bulb category software alpha march bulge champion damage apart usual analysis shadow elevator auction best silent civil material false stay hanger display guard sweater genius",
+    "climate wisdom academic always acne window smith transfer have regret election fatigue union beam plains dilemma result pacific unfold beard flash percent disease roster mandate float talent herd duration faint science bucket minister pistol upstairs teammate yelp dragon editor exercise photo taught pajamas flexible distance similar diminish ending railroad cards episode cleanup lilac biology adapt beam empty river ceiling"
+   ]
+  },
+  {
+   "name": "128-multi-pass-e0-noext",
+   "secret_hex": "453527224abf641678fe0c368ccda2fc",
+   "passphrase": "TREZOR",
+   "wrong_passphrase": "TREZORx",
+   "wrong_secret_hex": "c5314ef7e5108175a97934df061d343d",
+   "group_threshold": 2,
+   "groups": [
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "extendable": false,
+   "iteration_exponent": 0,
+   "mnemonics": [
+    [
+     "presence painting acrobat leaf crisis response mild easy remember hobo trash space sunlight junior problem manual weapon engage jerky listen",
+     "presence painting acrobat lily black payment modern rebuild holiday sidewalk uncover daughter hybrid hamster graduate walnut segment kind necklace emission",
+     "presence painting acrobat lungs being learn work cards beam discuss memory distance angel freshman fatal spend says standard beam remember"
+    ],
+    [
+     "presence painting beard learn class public pipeline spelling knit therapy smith object slush screw biology acrobat museum hesitate guilt nylon",
+     "presence painting beard lips amazing laden lyrics sweater away dough quarter true lilac traffic patrol holiday dryer secret tidy emphasis",
+     "presence painting beard luxury deliver solution corner miracle writing champion mixture aunt cause being exhaust award much reaction already estate",
+     "presence painting beard march brother cargo amuse orbit mobile wrist unhappy large hawk dream walnut glen dwarf calcium main move",
+     "presence painting beard method album spray prayer disease acne unfold fake knit punish glimpse grocery penalty news champion legal fused"
+    ],
+    [
+     "presence painting ceramic leader born main legend depend dwarf wrap expect desire gravity script strike froth username intend prevent repeat"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "presence painting acrobat leaf crisis response mild easy remember hobo trash space sunlight junior problem manual weapon engage jerky listen",
+     "presence painting acrobat lily black payment modern rebuild holiday sidewalk uncover daughter hybrid hamster graduate walnut segment kind necklace emission",
+     "presence painting beard learn class public pipeline spelling knit therapy smith object slush screw biology acrobat museum hesitate guilt nylon",
+     "presence painting beard lips amazing laden lyrics sweater away dough quarter true lilac traffic patrol holiday dryer secret tidy emphasis",
+     "presence painting beard luxury deliver solution corner miracle writing champion mixture aunt cause being exhaust award much reaction already estate"
+    ],
+    [
+     "presence painting beard luxury deliver solution corner miracle writing champion mixture aunt cause being exhaust award much reaction already estate",
+     "presence painting beard march brother cargo amuse orbit mobile wrist unhappy large hawk dream walnut glen dwarf calcium main move",
+     "presence painting beard method album spray prayer disease acne unfold fake knit punish glimpse grocery penalty news champion legal fused",
+     "presence painting ceramic leader born main legend depend dwarf wrap expect desire gravity script strike froth username intend prevent repeat"
+    ]
+   ],
+   "surplus_set": [
+    "presence painting acrobat leaf crisis response mild easy remember hobo trash space sunlight junior problem manual weapon engage jerky listen",
+    "presence painting acrobat lily black payment modern rebuild holiday sidewalk uncover daughter hybrid hamster graduate walnut segment kind necklace emission",
+    "presence painting acrobat lungs being learn work cards beam discuss memory distance angel freshman fatal spend says standard beam remember",
+    "presence painting beard learn class public pipeline spelling knit therapy smith object slush screw biology acrobat museum hesitate guilt nylon",
+    "presence painting beard lips amazing laden lyrics sweater away dough quarter true lilac traffic patrol holiday dryer secret tidy emphasis",
+    "presence painting beard luxury deliver solution corner miracle writing champion mixture aunt cause being exhaust award much reaction already estate",
+    "presence painting beard march brother cargo amuse orbit mobile wrist unhappy large hawk dream walnut glen dwarf calcium main move",
+    "presence painting beard method album spray prayer disease acne unfold fake knit punish glimpse grocery penalty news champion legal fused",
+    "presence painting ceramic leader born main legend depend dwarf wrap expect desire gravity script strike froth username intend prevent repeat"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "presence painting acrobat leaf crisis mild response easy remember hobo trash space sunlight junior problem manual weapon engage jerky listen",
+    "presence painting acrobat lily black payment modern rebuild holiday sidewalk uncover daughter hybrid hamster graduate walnut segment kind necklace emission",
+    "presence painting beard learn class public pipeline spelling knit therapy smith object slush screw biology acrobat museum hesitate guilt nylon",
+    "presence painting beard lips amazing laden lyrics sweater away dough quarter true lilac traffic patrol holiday dryer secret tidy emphasis",
+    "presence painting beard luxury deliver solution corner miracle writing champion mixture aunt cause being exhaust award much reaction already estate"
+   ]
+  },
+  {
+   "name": "256-2of3-defaults",
+   "secret_hex": "e766bbd63ce4fdf40f6473e8d15b3b5cee901e84ffbcf6d62c2c0fa4c1168c7c",
+   "passphrase": "",
+   "wrong_passphrase": "wrong",
+   "wrong_secret_hex": "839d0cc2f79ed9740aee65fbd6ea86140f508dca5202ad263fa9a565277ee5d8",
+   "group_threshold": 1,
+   "groups": [
+    [
+     2,
+     3
+    ]
+   ],
+   "extendable": true,
+   "iteration_exponent": 1,
+   "mnemonics": [
+    [
+     "smear vexed academic acid album kernel disaster born walnut bracelet view hearing mortgage superior mayor meaning escape switch jury aide plan sidewalk video endorse ruin class amount making diminish easel nervous laden beaver",
+     "smear vexed academic agency aircraft result calcium burning thumb type charity aquatic valuable tracks acid category bulb density decorate document fancy pupal voice kitchen flea broken hospital hanger tidy diet daughter diploma strike",
+     "smear vexed academic always acne video husky glad smug grocery endorse skin union timber lyrics station formal else unwrap bedroom zero review various force famous snake secret climate chew custody skin luck retreat"
+    ]
+   ],
+   "recovery_sets": [
+    [
+     "smear vexed academic acid album kernel disaster born walnut bracelet view hearing mortgage superior mayor meaning escape switch jury aide plan sidewalk video endorse ruin class amount making diminish easel nervous laden beaver",
+     "smear vexed academic always acne video husky glad smug grocery endorse skin union timber lyrics station formal else unwrap bedroom zero review various force famous snake secret climate chew custody skin luck retreat"
+    ],
+    [
+     "smear vexed academic agency aircraft result calcium burning thumb type charity aquatic valuable tracks acid category bulb density decorate document fancy pupal voice kitchen flea broken hospital hanger tidy diet daughter diploma strike",
+     "smear vexed academic always acne video husky glad smug grocery endorse skin union timber lyrics station formal else unwrap bedroom zero review various force famous snake secret climate chew custody skin luck retreat"
+    ]
+   ],
+   "surplus_set": [
+    "smear vexed academic acid album kernel disaster born walnut bracelet view hearing mortgage superior mayor meaning escape switch jury aide plan sidewalk video endorse ruin class amount making diminish easel nervous laden beaver",
+    "smear vexed academic agency aircraft result calcium burning thumb type charity aquatic valuable tracks acid category bulb density decorate document fancy pupal voice kitchen flea broken hospital hanger tidy diet daughter diploma strike",
+    "smear vexed academic always acne video husky glad smug grocery endorse skin union timber lyrics station formal else unwrap bedroom zero review various force famous snake secret climate chew custody skin luck retreat"
+   ],
+   "surplus_accepted_by_tool": false,
+   "tampered_set": [
+    "smear vexed academic acid album disaster kernel born walnut bracelet view hearing mortgage superior mayor meaning escape switch jury aide plan sidewalk video endorse ruin class amount making diminish easel nervous laden beaver",
+    "smear vexed academic always acne video husky glad smug grocery endorse skin union timber lyrics station formal else unwrap bedroom zero review various force famous snake secret climate chew custody skin luck retreat"
+   ]
+  }
+ ]
+}

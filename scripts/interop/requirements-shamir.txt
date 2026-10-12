@@ -1,0 +1,2 @@
+# Pinned for scripts/interop (python-shamir-mnemonic oracle). Full transitive set; installed with --no-deps.
+shamir-mnemonic==0.3.0
