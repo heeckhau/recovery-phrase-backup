@@ -35,21 +35,30 @@ fn validate_passphrase(passphrase: &str) -> Result<(), Error> {
 }
 
 /// Splits `master_secret` into mnemonic shares across `groups`, `group_threshold`
-/// of which are needed to recover it. Always encodes `ext = 1` (extendable),
-/// per the spec's reference `GenerateShares`. `passphrase` may be empty —
-/// SLIP-39 always encrypts regardless — but must be printable ASCII.
-/// `iteration_exponent` (0..=15) sets the PBKDF2 cost to `2500 << e`; 0 is
-/// the spec's default.
+/// of which are needed to recover it. `master_secret` may be any length
+/// SLIP-39 allows: at least 128 bits and a multiple of 16 bits (16, 20,
+/// 24, 28 or 32 bytes for BIP39 entropy; 64 bytes for a BIP32 seed). Always
+/// encodes `ext = 1` (extendable), per the spec's reference `GenerateShares`.
+/// `passphrase` may be empty — SLIP-39 always encrypts regardless — but must
+/// be printable ASCII. `iteration_exponent` (0..=15) sets the PBKDF2 cost to
+/// `2500 << e`; 0 is the spec's default.
 ///
 /// Returns one `Vec<String>` of member mnemonics per group, in the same
 /// order as `groups`.
 pub fn split(
-    master_secret: &[u8; 32],
+    master_secret: &[u8],
     group_threshold: u8,
     groups: &[GroupSpec],
     passphrase: &str,
     iteration_exponent: u8,
 ) -> Result<Vec<Vec<String>>, Error> {
+    // Checked here, before encryption: the Feistel network splits the
+    // secret into two equal halves and would silently mangle an odd length.
+    let bits = master_secret.len() * 8;
+    if bits < 128 || !bits.is_multiple_of(16) {
+        return Err(Error::InvalidSecretLength(bits));
+    }
+
     validate_passphrase(passphrase)?;
 
     if iteration_exponent > 15 {
@@ -148,9 +157,10 @@ pub fn inspect(mnemonic: &str) -> Result<ShareInfo, Error> {
 }
 
 /// Recombines a flat, order-independent list of mnemonic shares (any mix
-/// of groups) into the original 32-byte master secret. Reads `id`/`ext`/`e`
-/// from the shares themselves, so shares from other SLIP-39
-/// implementations (e.g. a Trezor, which may use `ext = 0`) work too.
+/// of groups) into the original master secret, at whatever length it was
+/// split with. Reads `id`/`ext`/`e` from the shares themselves, so shares
+/// from other SLIP-39 implementations (e.g. a Trezor, which may use
+/// `ext = 0`) work too.
 ///
 /// More shares/groups than strictly needed is fine — surplus is ignored
 /// deterministically (lowest group/member indices used first) rather than
@@ -161,9 +171,9 @@ pub fn inspect(mnemonic: &str) -> Result<ShareInfo, Error> {
 ///
 /// A wrong `passphrase` is **not** detected here: SLIP-39's decryption is
 /// intentionally unauthenticated (a plausible-deniability property), so a
-/// wrong passphrase silently returns a different, wrong 32 bytes rather
-/// than an error. `Ok` only means the shares were self-consistent.
-pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> {
+/// wrong passphrase silently returns different, wrong bytes rather than an
+/// error. `Ok` only means the shares were self-consistent.
+pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<Zeroizing<Vec<u8>>, Error> {
     validate_passphrase(passphrase)?;
 
     if mnemonics.is_empty() {
@@ -193,10 +203,6 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> 
         if share.share_value.len() != first.share_value.len() {
             return Err(Error::MismatchedShares { field: "share length" });
         }
-    }
-
-    if first.share_value.len() != 32 {
-        return Err(Error::UnsupportedSecretLength(first.share_value.len() * 8));
     }
 
     let mut groups: BTreeMap<u8, Vec<ShareData>> = BTreeMap::new();
@@ -244,11 +250,7 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<[u8; 32], Error> 
     }
 
     let ems = shamir::recover_secret(group_threshold, &group_points)?;
-    let ms = crypto::decrypt(&ems, passphrase, first.iteration_exponent, first.id, first.extendable);
-
-    let mut secret = [0u8; 32];
-    secret.copy_from_slice(&ms); // length already validated as 32 bytes above
-    Ok(secret)
+    Ok(crypto::decrypt(&ems, passphrase, first.iteration_exponent, first.id, first.extendable))
 }
 
 #[cfg(test)]
@@ -298,7 +300,7 @@ mod tests {
         assert_eq!(groups[0].len(), 3);
 
         let chosen: Vec<&str> = groups[0][..2].iter().map(String::as_str).collect();
-        assert_eq!(combine(&chosen, "TREZOR").unwrap(), ms);
+        assert_eq!(*combine(&chosen, "TREZOR").unwrap(), ms);
     }
 
     #[test]
@@ -316,7 +318,7 @@ mod tests {
         // Use group 0's single share plus 3-of-5 from group 1.
         let mut chosen: Vec<&str> = vec![shares[0][0].as_str()];
         chosen.extend(shares[1][..3].iter().map(String::as_str));
-        assert_eq!(combine(&chosen, "").unwrap(), ms);
+        assert_eq!(*combine(&chosen, "").unwrap(), ms);
     }
 
     #[test]
@@ -325,7 +327,7 @@ mod tests {
         let groups = split(&ms, 1, &single_group(2, 3), "right", 0).unwrap();
         let chosen: Vec<&str> = groups[0][..2].iter().map(String::as_str).collect();
         let recovered = combine(&chosen, "wrong").unwrap();
-        assert_ne!(recovered, ms);
+        assert_ne!(*recovered, ms);
     }
 
     #[test]
@@ -412,7 +414,7 @@ mod tests {
         ];
         let shares = split(&ms, 2, &groups_spec, "", 0).unwrap();
         let all_three = [shares[0][0].as_str(), shares[1][0].as_str(), shares[2][0].as_str()];
-        assert_eq!(combine(&all_three, "").unwrap(), ms);
+        assert_eq!(*combine(&all_three, "").unwrap(), ms);
     }
 
     #[test]
@@ -421,7 +423,7 @@ mod tests {
         let ms = secret();
         let shares = split(&ms, 1, &single_group(2, 3), "", 0).unwrap();
         let all_three: Vec<&str> = shares[0].iter().map(String::as_str).collect();
-        assert_eq!(combine(&all_three, "").unwrap(), ms);
+        assert_eq!(*combine(&all_three, "").unwrap(), ms);
     }
 
     #[test]
@@ -456,9 +458,32 @@ mod tests {
     }
 
     #[test]
-    fn rejects_shares_from_a_non_256_bit_backup() {
+    fn recovers_a_128_bit_backup() {
         // Official vectors.json "1. Valid mnemonic without sharing (128 bits)".
         let mnemonic = "duckling enlarge academic academic agency result length solution fridge kidney coal piece deal husband erode duke ajar critical decision keyboard";
-        assert_eq!(combine(&[mnemonic], "TREZOR"), Err(Error::UnsupportedSecretLength(128)));
+        let expected = [0xbb, 0x54, 0xaa, 0xc4, 0xb8, 0x9d, 0xc8, 0x68, 0xba, 0x37, 0xd9, 0xcc, 0x21, 0xb2, 0xce, 0xce];
+        assert_eq!(*combine(&[mnemonic], "TREZOR").unwrap(), expected);
+    }
+
+    #[test]
+    fn round_trips_every_bip39_length_and_a_bip32_seed() {
+        // 12/15/18/21/24-word BIP39 entropy, and a 512-bit BIP32 seed (what
+        // python-slip39 shares when backing up a seed rather than entropy).
+        for len in [16, 20, 24, 28, 32, 64] {
+            let ms: Vec<u8> = (0..len as u8).map(|i| i.wrapping_mul(37).wrapping_add(11)).collect();
+            let groups_spec = vec![GroupSpec { member_threshold: 2, member_count: 3 }, GroupSpec { member_threshold: 1, member_count: 1 }];
+            let shares = split(&ms, 2, &groups_spec, "TREZOR", 0).unwrap();
+
+            let chosen = [shares[0][0].as_str(), shares[0][2].as_str(), shares[1][0].as_str()];
+            assert_eq!(*combine(&chosen, "TREZOR").unwrap(), ms, "{len}-byte secret");
+        }
+    }
+
+    #[test]
+    fn rejects_secret_lengths_slip39_does_not_allow() {
+        let groups_spec = single_group(1, 1);
+        assert_eq!(split(&[0u8; 14], 1, &groups_spec, "", 0), Err(Error::InvalidSecretLength(112)), "under 128 bits");
+        assert_eq!(split(&[0u8; 17], 1, &groups_spec, "", 0), Err(Error::InvalidSecretLength(136)), "not a multiple of 16 bits");
+        assert_eq!(split(&[0u8; 33], 1, &groups_spec, "", 0), Err(Error::InvalidSecretLength(264)), "odd byte count");
     }
 }

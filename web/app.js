@@ -283,6 +283,9 @@ const combineResults = document.getElementById("combine-results");
 const mnemonicRowsContainer = document.getElementById("mnemonic-rows");
 const addMnemonicButton = document.getElementById("add-mnemonic");
 
+const combineHexLabel = document.getElementById("combine-out-hex-label");
+const combineEthField = document.getElementById("combine-field-eth");
+const combineBtcField = document.getElementById("combine-field-btc");
 const combineOutputs = {
   hex: document.getElementById("combine-out-hex"),
   eth: document.getElementById("combine-out-eth"),
@@ -375,10 +378,18 @@ combineForm.addEventListener("submit", (event) => {
 
   try {
     const hex = slip39_combine(mnemonics, combinePassphraseInput.value);
-    const derived = convert(hex, "mainnet", true);
+    // Only a 32-byte secret can be a private key; shares from other tools
+    // may hold e.g. 16-byte BIP39 entropy, which has no addresses to show.
+    const isKey = hex.length === 64;
     combineOutputs.hex.value = hex;
-    combineOutputs.eth.value = derived.eth_address;
-    combineOutputs.btc.value = derived.btc_address;
+    combineHexLabel.textContent = isKey ? "Recovered private key (hex)" : `Recovered secret (hex, ${hex.length * 4} bits — not a private key)`;
+    combineEthField.hidden = !isKey;
+    combineBtcField.hidden = !isKey;
+    if (isKey) {
+      const derived = convert(hex, "mainnet", true);
+      combineOutputs.eth.value = derived.eth_address;
+      combineOutputs.btc.value = derived.btc_address;
+    }
     combineResults.hidden = false;
   } catch (err) {
     showError(combineErrorBox, String(err));

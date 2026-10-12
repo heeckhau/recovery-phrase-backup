@@ -121,11 +121,13 @@ pub fn slip39_inspect(mnemonic: &str) -> Result<JsShareInfo, JsValue> {
     })
 }
 
-/// Recombines SLIP-39 mnemonic shares into the original private key's hex.
-/// A wrong `passphrase` is not detected as an error here — SLIP-39
-/// decryption is intentionally unauthenticated, so it silently returns a
-/// different, wrong key instead. Callers should show the derived
-/// addresses so the user can visually confirm they recognize them.
+/// Recombines SLIP-39 mnemonic shares into the original secret's hex, at
+/// whatever length it was split with — 32 bytes for a private key, other
+/// lengths for e.g. BIP39 entropy from another tool. A wrong `passphrase`
+/// is not detected as an error here — SLIP-39 decryption is intentionally
+/// unauthenticated, so it silently returns different, wrong bytes instead.
+/// Callers should show the derived addresses so the user can visually
+/// confirm they recognize them.
 #[wasm_bindgen]
 pub fn slip39_combine(mnemonics: Vec<String>, passphrase: &str) -> Result<String, JsValue> {
     let refs: Vec<&str> = mnemonics.iter().map(String::as_str).collect();

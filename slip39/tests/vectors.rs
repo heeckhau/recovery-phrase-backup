@@ -10,11 +10,8 @@
 // spec's own "Test vectors" section. expected_bip32_xprv is unused here —
 // BIP32 derivation is out of scope for this crate.
 //
-// The suite includes both 128-bit and 256-bit vectors; this crate's public
-// API only supports 256-bit secrets (see PLAN.md — matches this tool's
-// secp256k1 keys). For the 128-bit *valid* vectors, the correct, intended
-// behavior is a clean `Error::UnsupportedSecretLength` rejection rather
-// than a secret match — checked explicitly below, not skipped.
+// The suite includes both 128-bit and 256-bit vectors; every valid one
+// must recover its exact secret.
 
 use serde::Deserialize;
 
@@ -44,20 +41,8 @@ fn official_test_vectors() {
         }
 
         let expected = hex_decode(&expected_secret_hex);
-        if expected.len() != 32 {
-            match result {
-                Err(pkc_slip39::Error::UnsupportedSecretLength(bits)) if bits == expected.len() * 8 => {}
-                other => failures.push(format!(
-                    "{description}: expected Err(UnsupportedSecretLength({} bits)) since this is a {}-bit vector, got {other:?}",
-                    expected.len() * 8,
-                    expected.len() * 8
-                )),
-            }
-            continue;
-        }
-
         match result {
-            Ok(actual) if actual.to_vec() == expected => {}
+            Ok(actual) if *actual == expected => {}
             Ok(actual) => failures.push(format!("{description}: got {actual:02x?}, expected {expected:02x?}")),
             Err(e) => failures.push(format!("{description}: expected Ok({expected_secret_hex}), got Err({e})")),
         }

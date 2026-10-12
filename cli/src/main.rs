@@ -237,7 +237,13 @@ fn run_slip39_combine(args: Slip39CombineArgs) -> Result<(), String> {
 
     let refs: Vec<&str> = mnemonics.iter().map(String::as_str).collect();
     let secret = pkc_slip39::combine(&refs, &passphrase).map_err(|e| e.to_string())?;
-    println!("Private key: {}", hex_encode(&secret));
+    if secret.len() == 32 {
+        println!("Private key: {}", hex_encode(&secret));
+    } else {
+        // Only a 32-byte secret can be a secp256k1 key; other lengths are
+        // e.g. a BIP39 phrase's entropy or a BIP32 seed from another tool.
+        println!("Secret ({} bits): {}", secret.len() * 8, hex_encode(&secret));
+    }
     Ok(())
 }
 

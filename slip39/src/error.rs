@@ -34,8 +34,6 @@ pub enum Error {
     InvalidIterationExponent(u8),
     #[error("passphrase contains a character that is not printable ASCII (code point {0})")]
     InvalidPassphrase(u32),
-    #[error("this only supports 256-bit secrets; these shares decode to {0} bits")]
-    UnsupportedSecretLength(usize),
     #[error("shares have different {field}s — they aren't all from the same backup")]
     MismatchedShares { field: &'static str },
     #[error("group {group_index}: shares disagree on the member threshold")]
