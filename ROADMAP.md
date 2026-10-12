@@ -481,7 +481,8 @@ on every share card. (Deniability, the property the unauthenticated design
 buys, is not something this product promises.) Evidence from the
 cross-tool suite: python-slip39's BIP39 mode never sets a SLIP-39
 passphrase at all; and all three other tools default to iteration exponent
-1 where ours uses 0 — matching them is the obvious default.
+1 where ours used 0. Settled 2026-10-12: the CLI and the page now default
+to 1 (the spec itself sets no default).
 
 *The fingerprint* (settled 2026-10-12): the phrase's BIP32 master-key
 fingerprint — 4 bytes of hash160 of the master public key, with an empty
@@ -514,10 +515,13 @@ Then, in order:
    and the suite — 250/250 checks against python-shamir-mnemonic,
    python-slip39 and seedkit (`scripts/interop/run.sh`). Its CI job lands
    with step 3.*
-2. **Publish `pkc-slip39` as its own crate** — LICENSE, README, `cargo
-   publish`, now with an API that won't break immediately after. Small,
-   fills a real gap, and the cheapest way to get outside eyes on the most
-   sensitive code.
+2. **Publish `pkc-slip39` as its own crate** — *postponed (2026-10-12).*
+   Nothing needs it published: the workspace builds it locally, and the
+   outside eyes it was meant to attract come from the step 6 reviews
+   instead. Publishing to crates.io is public and permanent, so it waits
+   until the API has been through the phrase pipeline (step 4) and there
+   is a reason to. The LICENSE files it would have added move to step 6,
+   which needs them for the release anyway.
 3. **The single-file build and CI**, before any page rewrite, because it
    shapes how the page code is written (`file://`, inlined wasm through
    `initSync`, `default-src 'none'` CSP with a build-time script hash):
@@ -543,8 +547,9 @@ Then, in order:
    page and the build by several other LLMs, each given the code and the
    threat model (offline, single file, real recovery phrases); findings and
    the fixes for them recorded in the repo (e.g. `reviews/`), with the
-   reviewing model and the commit reviewed. Then a release job publishing
-   the HTML with `SHA256SUMS` and a signature, v1, and EthStaker.
+   reviewing model and the commit reviewed. Then LICENSE files, a README,
+   a release job publishing the HTML with `SHA256SUMS` and a signature,
+   v1, and EthStaker.
 7. **A rename** — `private-key-convertor` no longer describes the tool.
 
 ## Prior art consulted
