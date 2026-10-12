@@ -164,28 +164,107 @@ in the plan):
 - Answer "just buy a Trezor" up front: no hardware purchase, works for the
   phrase you already have, open and verifiable, and Ledger/MetaMask users
   have no Shamir option at all.
+- Answer "just use python-slip39" up front too — see "Comparison with
+  python-slip39" below.
 
-**Is there enough value?** (To revisit.) As a public good,
-yes; as a business, no. The gap is narrower than "no tool exists". Tools
-that back up an existing BIP39 phrase with SLIP-39 already exist:
-`python-slip39` (Python, GPL-3.0, a desktop GUI and PDF cards), `seedkit`
-(a Go CLI whose README says it is unaudited) and `iancoleman/slip39` (a web
-tool). As of 2026-10-12, none of them advertises an audit or ships as a
-reproducible, signed single file that opens offline, and none is designed
+**Is there enough value?** (To revisit.) As a public good, yes; as a
+business, no — and there is no funding plan (dropped 2026-10-12): this is
+built and maintained as a personal open-source project. The gap is
+narrower than "no tool exists". Tools that back up an existing BIP39
+phrase with SLIP-39 already exist: `python-slip39` (compared in detail
+below), `seedkit` (a Go CLI whose README says it is unaudited) and
+`iancoleman/slip39` (a web tool). As of 2026-10-12, none of them ships as
+a reproducible, signed single file that opens offline, and none is designed
 around a recovery an heir can carry out. That is the gap: real, but it has
-to be argued rather than assumed, and the pitch has to say why this over
-those. Beyond that, the code that matters already exists and is verified,
-and the scope is small and chain-agnostic. Nobody pays for backup tools, but this
-is what Ethereum public-goods funding is for (EF ESP, EthStaker,
-RetroPGF-style rounds), and an audit is the one thing that funding would
-need to cover. The real cost is trust: reproducible builds, signatures,
-official vectors and an audit are launch requirements, not polish, and a
-backup bug surfaces years later at the worst moment — so this comes with
-an open-ended maintenance commitment. Low-regret test: ship a v1 that does
-only the backup loop as a single signed file, put it in front of
-self-custody communities (EthStaker first, because it is reachable), and
-apply for audit funding; if after 3–6 months there is no endorsement and
-no funding interest, stop — something useful will have been built anyway.
+to be argued rather than assumed. Beyond that, the code that matters
+already exists and is verified, and the scope is small and chain-agnostic.
+The real cost is trust: reproducible builds, signatures, the official
+vectors and the cross-tool suite are launch requirements, not polish, and a
+backup bug surfaces years later at the worst moment — so this comes with an
+open-ended maintenance commitment. An external audit would be welcome, but
+without funding there is no path to paying for one; whether v1 waits for
+one is open. Low-regret test: ship a v1 that does only the backup loop as a
+single signed file and put it in front of self-custody communities
+(EthStaker first, because it is reachable); if after 3–6 months nobody
+endorses or uses it, stop — something useful will have been built anyway.
+
+## Comparison with python-slip39 (researched 2026-10-12)
+
+[`pjkundert/python-slip39`](https://github.com/pjkundert/python-slip39) is
+the closest existing tool: it backs up an existing BIP39 phrase's entropy
+as SLIP-39 shares (`--using-bip39`), the same scheme as Decision A, so the
+two should recover each other's shares (the cross-tool suite will prove
+it). Active: latest release 14.1.0 on 2026-01-06 (PyPI).
+
+**What it does:**
+- *Create*: generates new seeds (`secrets.token_bytes`, optional extra
+  entropy via `--entropy`, with an entropy-quality analysis that watermarks
+  the PDF when the entropy looks weak), or backs up an existing phrase or a
+  128/256/512-bit hex secret.
+- *Output*: one PDF of cut-out cards in several sizes (business, credit,
+  index, …), double-sided, with QR codes; group/threshold labels per card;
+  a cover page carrying the BIP39 phrase. Cards show derived addresses and
+  QR codes unless `--anonymous` is set.
+- *Coins*: ETH, BTC (legacy, SegWit, native SegWit — the default), LTC,
+  DOGE, BSC and XRP (beta), via `hdwallet`.
+- *Recovery*: `slip39-recovery` ignores invalid and duplicate shares and
+  can return the BIP39 phrase or the raw entropy.
+- *Extras*: BIP-38 and encrypted-JSON paper wallets, xpub output, an
+  address-stream generator, serial-port output, and an "invoice" extra
+  (web3, solc, a local Ethereum node).
+- *Distribution*: `pip install slip39`, or a desktop app built with
+  PyInstaller on FreeSimpleGUI/Tk. Since v14 the packaged app supports only
+  macOS on Apple Silicon; elsewhere it is pip or Nix from source.
+
+**Trust chain, the part that matters most for a backup tool:**
+- Core dependencies include the author's own forks of the libraries that
+  do the sensitive work — `shamir-mnemonic-slip39` (of Trezor's reference
+  implementation), `hdwallet-slip39` (a 200+-coin HD wallet library),
+  `tabulate-slip39` — plus `crypto-licensing`, a module for "Ed25519-signed
+  license checking and automatic issuance after cryptocurrency payment".
+  Some advanced features need a paid license tied to an agent identity and
+  a machine ID; a secret-handling tool that carries payment and licensing
+  code is a harder thing to audit and to trust.
+- GPL-3.0 (one package index lists it as GPL-3.0 plus a proprietary
+  license). No audit or reproducible build is advertised.
+- Output is a PDF file — the unencrypted-file problem the print hygiene
+  section warns about.
+
+**Where this project differs** (the pitch, in order of weight):
+1. *Runs anywhere offline with nothing to install.* One HTML file, any OS,
+   any modern browser, including Tails, Linux and Intel Macs — where
+   python-slip39 needs pip or Nix, which in practice means a network
+   connection on the very machine that should never have one.
+2. *A short trust chain you can check.* A small Rust codebase on a handful
+   of mostly RustCrypto crates, an independent SLIP-39 implementation (not a
+   wrapper of the reference), reproducible build, published hash and
+   signature, MIT/Apache-2.0. No licensing, payment or network code at
+   all.
+3. *Private cards by default.* A fingerprint, never an address or QR code
+   (Decision D): a found share reveals nothing about the funds.
+4. *The recovery process, not just the cards.* Per-share write-and-verify,
+   a recovery test before finishing, labelled cards with instructions an
+   heir can follow, and no PDF ever written to disk.
+5. *Compatible, not competing.* Shares made here recover in python-slip39
+   and the reference implementation, and vice versa, tested — so choosing
+   this tool never locks anyone in.
+
+**Gaps the comparison exposed in this plan** — its features, and one
+thing neither tool does — and what to do about each:
+- *Adopt* — guidance on the original phrase after splitting (python-slip39's
+  README doesn't cover this either; a backup that leaves the single
+  original copy in a drawer hasn't removed the risk); BIP39-passphrase ("25th word")
+  awareness; the on-screen address check in the formats people recognise,
+  including Bitcoin native SegWit (m/84'); a warning for weak or known
+  phrases (test vectors, repeated words). See "Considerations — UI".
+- *Consider for later* — generating a new phrase directly as shares, so a
+  single copy never exists at all. It needs trustworthy entropy and an
+  entropy check; it is the strongest form of the product, but not v1.
+- *Deliberately not* — addresses or QR codes on cards (privacy; and QR
+  scanning needs a camera on the recovery machine); PDF output; paper
+  wallets; xpub, address streams, serial output, invoicing (not backup);
+  multi-coin derivation beyond the address check; non-English wordlists
+  (out of scope for now).
 
 ## Considerations — UI and distribution under the product framing (2026-09-16, thinking in progress)
 
@@ -209,6 +288,21 @@ recommendation in this design, it is the premise.
   confirms they typed the right phrase — on screen only, never on a card
   (Decision D). Paste stays possible but is not the primary path —
   clipboards leak.
+- **The address check speaks the user's format**: Ethereum
+  (m/44'/60'/0'/0/0) and Bitcoin native SegWit (m/84'), not only legacy
+  P2PKH, which few Bitcoin users would recognise as theirs.
+- **The BIP39 passphrase ("25th word")**: an optional field used *only*
+  for the address check, so users who have one see their real address.
+  It is not part of the backup, and the page says so plainly: the shares
+  recover the words; the 25th word needs its own backup.
+- **Weak or known phrases get a warning** — published test vectors
+  ("abandon … about"), repeated words, obviously low-entropy input —
+  before anything is split.
+- **What to do with the original.** After a verified backup, the wizard
+  raises a question python-slip39's README never addresses: a backup that leaves the
+  single original copy in a drawer hasn't removed the risk it exists to
+  remove. It explains the trade-off and lets the user choose; it doesn't
+  pretend the original is gone.
 - **Wizard, not a form**, because the process is the product: choose a
   scheme from plain-language presets ("2 of 3: any two shares recover; one
   alone reveals nothing", "3 of 5"), groups and passphrase behind
@@ -403,8 +497,7 @@ Then, in order:
    label, threshold, the fingerprint, and plain-language instructions an
    heir can follow without understanding any of this.
 6. **Release**: a release job publishing the HTML with `SHA256SUMS` and a
-   signature. Then v1, EthStaker, and the audit-funding application
-   described above.
+   signature. Then v1 and EthStaker.
 7. **A rename** — `private-key-convertor` no longer describes the tool.
 
 ## Prior art consulted
@@ -412,4 +505,4 @@ Then, in order:
 - [`reference/bip39-standalone.html`](reference/bip39-standalone.html) — `iancoleman/bip39` (MIT), UX reference for mnemonic/entropy input and multi-format output.
 - `iancoleman.io/shamir39` — considered and rejected as the Phase 2 scheme (see above); UX reference only.
 - [`stake-house/wagyu-key-gen`](https://github.com/stake-house/wagyu-key-gen) — target functionality of the dropped validator-key phases (see "Out of scope").
-- Other tools that back up a BIP39 phrase with SLIP-39, used as oracles by the cross-tool recovery suite (PLAN.md): [`trezor/python-shamir-mnemonic`](https://github.com/trezor/python-shamir-mnemonic) (reference implementation, MIT), [`pjkundert/python-slip39`](https://github.com/pjkundert/python-slip39) (`--using-bip39`, GUI and PDF cards, GPL-3.0), [`gavincarr/seedkit`](https://pkg.go.dev/github.com/gavincarr/seedkit) (Go CLI, MIT, unaudited), [`iancoleman/slip39`](https://github.com/iancoleman/slip39) (web tool).
+- Other tools that back up a BIP39 phrase with SLIP-39, used as oracles by the cross-tool recovery suite (PLAN.md): [`trezor/python-shamir-mnemonic`](https://github.com/trezor/python-shamir-mnemonic) (reference implementation, MIT), [`pjkundert/python-slip39`](https://github.com/pjkundert/python-slip39) (`--using-bip39`, GUI and PDF cards, GPL-3.0; see "Comparison with python-slip39"), [`gavincarr/seedkit`](https://pkg.go.dev/github.com/gavincarr/seedkit) (Go CLI, MIT, unaudited), [`iancoleman/slip39`](https://github.com/iancoleman/slip39) (web tool).
