@@ -148,7 +148,8 @@ pipeline exists, in our CLI) to the same bytes and the same phrase. Ours → the
 `pkc slip39 split` recover in every oracle.
 
 **Matrix** (pairwise, not the full product):
-- Secret length: 128, 160, 192, 224, 256 bits — 12 to 24 words. 256 only until Decision C lands.
+- Secret length: 128, 160, 192, 224, 256 bits — 12 to 24 words — plus 512 bits where an oracle
+  produces it (python-slip39's seed backups).
 - Scheme: 1-of-1; 2-of-3; multi-group (2 of: 2-of-3, 3-of-5, 1-of-1).
 - Recovery set: a minimal subset, and one with surplus shares (and surplus groups).
 - Passphrase: empty and non-empty printable ASCII.
@@ -165,6 +166,11 @@ pipeline exists, in our CLI) to the same bytes and the same phrase. Ours → the
   iteration exponent) written down from its own output, so the page's defaults (Decision D)
   match the ecosystem by evidence, not assumption.
 - **Rejection agreement**: a tampered share (one word changed) is rejected by every tool.
+- **One known divergence, recorded rather than failed**: given more groups or member shares than
+  the thresholds need, our `combine` ignores the surplus, while the spec ("GM MUST be equal to
+  GT") and the reference implementation abort. Deliberate (commit `228e746`): the surplus is
+  checked to belong to the same backup first. The suite asserts that each tool behaves as
+  documented, so a change on either side shows up.
 
 **Mechanics** — keep `cargo test` hermetic:
 - `scripts/interop/` holds the harness: a pinned Python venv and a pinned Go build, driven by one

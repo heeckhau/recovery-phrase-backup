@@ -394,7 +394,8 @@ pipeline.
 The findings behind these are in [`PLAN.md`](PLAN.md), "Review". Four
 decisions come first because they drive everything after them: A and B
 from the code review, C and D from the product framing above. B is
-settled (2026-10-12); A, C and D are still proposals.
+and C are settled (2026-10-12); A and D are still proposals, apart from
+D's fingerprint.
 
 **Decision A — what 24 words mean.** Proposal: 24 words always means a
 BIP39 seed phrase (entropy → PBKDF2 seed → BIP32/44 for ETH/BTC). Drop
@@ -451,15 +452,18 @@ backup and recovery, plus the CLI. No desktop app: with validator keys out
 of scope nothing writes keystores or deposit files. The hex/WIF converter
 stays in the CLI and is left out of the HTML.
 
-**Decision C — every BIP39 length, not just 24 words.** Proposal: accept
-12/15/18/21/24-word phrases (128/160/192/224/256-bit entropy). MetaMask's
-default is 12 words, so a 24-word-only tool excludes most of the target
-audience. SLIP-39 supports any secret that is a multiple of 16 bits and at
-least 128 bits, and `pkc-slip39`'s internal `split_secret` already does;
-only the public `split`/`combine` API is pinned to 32 bytes (and the
-official 128-bit vectors are currently asserted to be *rejected* — those
-assertions flip to positive checks). Recovery shows the phrase at its
-original length.
+**Decision C — every BIP39 length, not just 24 words.** Settled
+2026-10-12. The product accepts 12/15/18/21/24-word phrases
+(128/160/192/224/256-bit entropy): MetaMask's default is 12 words, so a
+24-word-only tool excludes most of the target audience. Recovery shows the
+phrase at its original length. The crate is more general than the product:
+`pkc-slip39` accepts every length SLIP-39 allows (at least 128 bits, a
+multiple of 16), including 512-bit BIP32 seeds that other tools such as
+python-slip39 can produce, so it never refuses shares another tool made
+validly. The five BIP39 lengths are a product rule, enforced where phrases
+are entered (step 4), not in the library. Done in the crate (commit
+`a04a520`); lifting the old 256-bit restriction also exposed a missing
+"group threshold ≤ group count" check, now fixed (`7a0ac57`).
 
 **Decision D — SLIP-39's own passphrase.** SLIP-39 encrypts the secret
 under a passphrase that is separate from BIP39's "25th word", and a wrong
@@ -493,11 +497,12 @@ the right phrase; that address is never printed.
 Then, in order:
 
 1. **Decision C in `pkc-slip39`, plus the cross-tool suite** — the public
-   `split`/`combine` take and return 16–32-byte secrets; the official
-   128-bit vectors flip from "rejected" to positive checks; and the
-   byte-level half of the cross-tool recovery suite (PLAN.md) proves our
-   shares and other tools' shares recover each other. Comes first because
-   it changes the public API.
+   `split`/`combine` take and return secrets of any SLIP-39 length; the
+   official 128-bit vectors flip from "rejected" to positive checks; and
+   the byte-level half of the cross-tool recovery suite (PLAN.md) proves
+   our shares and other tools' shares recover each other. Comes first
+   because it changes the public API. *API change and vectors: done
+   (2026-10-12). Cross-tool suite: next.*
 2. **Publish `pkc-slip39` as its own crate** — LICENSE, README, `cargo
    publish`, now with an API that won't break immediately after. Small,
    fills a real gap, and the cheapest way to get outside eyes on the most
