@@ -41,7 +41,8 @@ fn validate_passphrase(passphrase: &str) -> Result<(), Error> {
 /// encodes `ext = 1` (extendable), per the spec's reference `GenerateShares`.
 /// `passphrase` may be empty — SLIP-39 always encrypts regardless — but must
 /// be printable ASCII. `iteration_exponent` (0..=15) sets the PBKDF2 cost to
-/// `2500 << e`; 0 is the spec's default.
+/// `2500 << e` per Feistel round. The spec sets no default; the reference
+/// implementation and other tools use 1.
 ///
 /// Returns one `Vec<String>` of member mnemonics per group, in the same
 /// order as `groups`.

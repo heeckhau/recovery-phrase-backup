@@ -122,7 +122,9 @@ function fillNumericOptions(select, min, max, defaultValue) {
   select.value = String(defaultValue);
 }
 
-fillNumericOptions(iterationExponentSelect, 0, 15, 0);
+// 1 matches the reference implementation, python-slip39 and seedkit (the
+// spec sets no default).
+fillNumericOptions(iterationExponentSelect, 0, 15, 1);
 
 function relabelGroupRows() {
   const rows = groupRowsContainer.querySelectorAll(".group-row");

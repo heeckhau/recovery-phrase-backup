@@ -88,9 +88,10 @@ struct Slip39SplitArgs {
     #[arg(long)]
     passphrase_prompt: bool,
 
-    /// PBKDF2 cost is 2500 << this value (0..=15). Higher is slower but
-    /// more resistant to brute-forcing a guessed passphrase.
-    #[arg(long, default_value_t = 0)]
+    /// PBKDF2 cost is 2500 << this value per round (0..=15). Higher is
+    /// slower but more resistant to brute-forcing a guessed passphrase. The
+    /// default, 1, matches the reference implementation and other tools.
+    #[arg(long, default_value_t = 1)]
     iteration_exponent: u8,
 }
 
