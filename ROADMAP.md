@@ -181,9 +181,13 @@ already exists and is verified, and the scope is small and chain-agnostic.
 The real cost is trust: reproducible builds, signatures, the official
 vectors and the cross-tool suite are launch requirements, not polish, and a
 backup bug surfaces years later at the worst moment — so this comes with an
-open-ended maintenance commitment. An external audit would be welcome, but
-without funding there is no path to paying for one; whether v1 waits for
-one is open. Low-regret test: ship a v1 that does only the backup loop as a
+open-ended maintenance commitment. v1 does not wait for an external audit
+(decided 2026-10-12): instead, independent reviews by several other LLMs
+before release (step 6). Those reviews are published with their findings
+and fixes, and the project never calls itself "audited" — an LLM review is
+a useful second pair of eyes, not a professional audit, and claiming
+otherwise would spend the trust the rest of the plan is built to earn. A
+human audit stays welcome if one ever becomes possible. Low-regret test: ship a v1 that does only the backup loop as a
 single signed file and put it in front of self-custody communities
 (EthStaker first, because it is reachable); if after 3–6 months nobody
 endorses or uses it, stop — something useful will have been built anyway.
@@ -519,8 +523,12 @@ Then, in order:
    label, threshold, the fingerprint, and plain-language instructions an
    heir can follow without understanding any of this — printed one share
    at a time, with the print-step warning.
-6. **Release**: a release job publishing the HTML with `SHA256SUMS` and a
-   signature. Then v1 and EthStaker.
+6. **Independent review, then release.** Reviews of `pkc-slip39`, the
+   page and the build by several other LLMs, each given the code and the
+   threat model (offline, single file, real recovery phrases); findings and
+   the fixes for them recorded in the repo (e.g. `reviews/`), with the
+   reviewing model and the commit reviewed. Then a release job publishing
+   the HTML with `SHA256SUMS` and a signature, v1, and EthStaker.
 7. **A rename** — `private-key-convertor` no longer describes the tool.
 
 ## Prior art consulted
