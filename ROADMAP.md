@@ -540,6 +540,16 @@ Then, in order:
    builder's home directory. The `?test` prefill is stripped from the
    release file. CI (`.github/workflows/ci.yml`, actions pinned by
    commit) runs all of the above.
+   *Reproducible per platform, so one reference platform.* Builds are
+   byte-identical on the same host platform but not across platforms
+   (macOS ARM, Linux ARM and Linux x86-64 each gave a different file):
+   the host feeds into Cargo's crate hashes, which order functions and
+   data in the wasm. So the reference build is
+   `scripts/build-reproducible.sh` — `build.py` in one Linux x86-64
+   container pinned by digest. CI runs exactly that, and the same
+   container under emulation on a Mac gives CI's bytes
+   (`08a7de19…` for commit `6d66e00`). Release verification (step 6)
+   means: run that script, compare the hash.
 4. **Land Decisions A and D in the core and the page**: a real
    seed-phrase pipeline replacing the raw-entropy BIP39 input, at all five
    lengths; the converter out of the page; the passphrase behind
