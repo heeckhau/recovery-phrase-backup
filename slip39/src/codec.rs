@@ -189,6 +189,12 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
         return Err(Error::ShareValueTooShort(n * 8));
     }
 
+    let group_threshold = read_uint(&bits, 24, 4) as u8 + 1;
+    let group_count = read_uint(&bits, 28, 4) as u8 + 1;
+    if group_threshold > group_count {
+        return Err(Error::InvalidGroupThreshold { group_threshold, group_count });
+    }
+
     let share_value: SecretBytes =
         Zeroizing::new((0..n).map(|i| read_uint(&bits, HEADER_BITS + padding + i * 8, 8) as u8).collect());
 
@@ -197,8 +203,8 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
         extendable,
         iteration_exponent: read_uint(&bits, 16, 4) as u8,
         group_index: read_uint(&bits, 20, 4) as u8,
-        group_threshold: read_uint(&bits, 24, 4) as u8 + 1,
-        group_count: read_uint(&bits, 28, 4) as u8 + 1,
+        group_threshold,
+        group_count,
         member_index: read_uint(&bits, 32, 4) as u8,
         member_threshold: read_uint(&bits, 36, 4) as u8 + 1,
         share_value,
@@ -246,6 +252,16 @@ mod tests {
         };
         let refs: Vec<&str> = words.iter().map(String::as_str).collect();
         assert_eq!(decode(&refs).unwrap(), share);
+    }
+
+    #[test]
+    fn rejects_group_threshold_above_group_count() {
+        // Well-formed bits with a valid checksum, but a group threshold no
+        // group count can satisfy — the spec requires G >= GT.
+        let share = ShareData { group_threshold: 4, group_count: 3, ..sample_share() };
+        let words = encode(&share);
+        let refs: Vec<&str> = words.iter().map(String::as_str).collect();
+        assert_eq!(decode(&refs), Err(Error::InvalidGroupThreshold { group_threshold: 4, group_count: 3 }));
     }
 
     #[test]
