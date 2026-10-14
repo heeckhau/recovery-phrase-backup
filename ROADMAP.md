@@ -40,7 +40,9 @@ format alongside hex/WIF — a private key's 32 bytes used directly as BIP39
 entropy, which is reversible but is **not** the "mnemonic → PBKDF2 seed →
 BIP32 HD wallet" pipeline actual wallets use, so it doesn't import into
 MetaMask etc. as a recovery phrase. This is a plain, non-redundant single
-phrase — see Phase 2 for redundant, split backup shares.
+phrase — see Phase 2 for redundant, split backup shares. (Removed
+2026-10-14 by Decision A: words now always mean a wallet's BIP39 phrase,
+and the converter is CLI-only.)
 **Status: done.**
 
 ### Phase 2 — SLIP-0039 Shamir Secret Sharing
@@ -556,7 +558,18 @@ Then, in order:
    replacement in the CLI. Add BIP32/BIP44 derivation (RustCrypto `bip32` on
    the existing `k256`) for the fingerprint (BIP32) and the on-screen
    address check (BIP44). The phrase-level half
-   of the cross-tool suite lands here.
+   of the cross-tool suite lands here. *Done (2026-10-14):* `pkc-core`'s
+   `Phrase` (all five lengths; fingerprint and first ETH / native SegWit
+   addresses, checked against BIP-84's vector, the `73c5da0a` fingerprint
+   and MetaMask's first account) replaces the raw-entropy encoding, and
+   key parsing rejects words outright. The page is now "back up / recover a
+   phrase", with a live fingerprint-and-address check before splitting, an
+   optional BIP39 passphrase that only affects that check, and the SLIP-39
+   passphrase behind Advanced, empty by default. The CLI's `slip39 split`
+   takes a phrase or a raw key and says which; the 1-of-1 words backup is
+   `--group-threshold 1 --group 1:1`. Cross-tool suite: 266/266, including
+   phrase identity both ways. Left for step 5: the weak-phrase warning and
+   the "what to do with the original" guidance (wizard steps).
 5. **The wizard, print cards and recovery instructions** (the open Phase 2
    item, promoted: under this framing it is the product) — the flow in
    "Considerations" above, and a `@media print` layout per share with its

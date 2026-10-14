@@ -136,7 +136,7 @@ recoverable with tools that have nothing to do with this project, and vice versa
 
 **Run it**: `scripts/interop/run.sh` (regenerates the fixtures) or `run.sh --check-only`. It
 enters a nix shell pinned to one nixpkgs revision for Python and Go; needs nix and network on
-first run. Current result: 250/250 checks across 19 cases.
+first run. Current result: 266/266 checks across 19 cases.
 
 **Oracles** (pinned; the version is recorded in each fixture):
 - `trezor/python-shamir-mnemonic` 0.3.0 — the reference implementation (MIT), through its Python
@@ -187,5 +187,7 @@ iteration exponent. Planting a bug in our salt derivation made 16 checks fail in
 - Python dependencies are pinned as full transitive freezes (`requirements-*.txt`, installed with
   `--no-deps`); versions, not hashes, since wheel hashes differ per platform.
 
-**Still to do**: run the live half in CI (ROADMAP step 3); the phrase level on *our* side, once
-the BIP39 phrase pipeline exists (step 4) — the fixtures already carry each case's phrase.
+**Phrase level** (added 2026-10-14, with ROADMAP step 4): for python-slip39's BIP39 mode and
+seedkit, our side now works from the words too — their shares recover to the original phrase
+through `pkc_core::Phrase`, and ours are split from the phrase itself — both live and in
+`cargo test`. The live half runs in CI (`.github/workflows/ci.yml`).
