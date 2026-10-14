@@ -6,7 +6,7 @@ pub enum Error {
     InvalidHexLength(usize),
     #[error("input contains a character that is not valid hex")]
     InvalidHexChar,
-    #[error("WIF checksum does not match — check for a typo")]
+    #[error("WIF checksum does not match; check for a typo")]
     InvalidWifChecksum,
     #[error("decoded WIF payload has an unexpected length")]
     InvalidWifLength,
@@ -20,6 +20,6 @@ pub enum Error {
     InvalidPhrase(String),
     #[error("a BIP39 phrase encodes 16, 20, 24, 28 or 32 bytes of entropy, got {0}")]
     InvalidPhraseEntropyLength(usize),
-    #[error("this looks like a recovery phrase, not a private key — a phrase is backed up as a whole, see `pkc slip39 split`")]
+    #[error("this looks like a recovery phrase, not a private key. A phrase is backed up as a whole: see `pkc slip39 split`")]
     InputIsAPhrase,
 }

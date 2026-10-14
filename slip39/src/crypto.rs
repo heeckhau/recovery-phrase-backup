@@ -1,6 +1,6 @@
 // Encryption/decryption of the master secret: a 4-round Feistel network
 // with PBKDF2-HMAC-SHA256 as the round function. Applied even when the
-// passphrase is empty — SLIP-39 always encrypts. See the spec's
+// passphrase is empty: SLIP-39 always encrypts. See the spec's
 // "Encryption of the master secret" / "Decryption of the master secret".
 use pbkdf2::pbkdf2_hmac;
 use sha2::Sha256;

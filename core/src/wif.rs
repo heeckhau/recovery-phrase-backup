@@ -17,7 +17,7 @@ pub struct ParsedKey {
 /// Parses a raw 32-byte hex private key (optionally `0x`-prefixed) or a
 /// Base58Check-encoded WIF private key, validating the WIF checksum (the
 /// legacy tool this replaces didn't). Words are rejected as a recovery
-/// phrase — see [`crate::Phrase`].
+/// phrase: see [`crate::Phrase`].
 pub fn parse_private_key(input: &str) -> Result<ParsedKey, Error> {
     let trimmed = input.trim();
 

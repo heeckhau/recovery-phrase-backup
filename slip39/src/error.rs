@@ -16,7 +16,7 @@ pub enum Error {
     InvalidMnemonicWordCount(usize),
     #[error("word {0} is not in the SLIP-39 wordlist")]
     UnknownWord(usize),
-    #[error("checksum does not match — check for a typo")]
+    #[error("checksum does not match; check for a typo")]
     InvalidChecksum,
     #[error("padding bits are not all zero, or the padding is too long (tampered or corrupted share)")]
     InvalidPadding,
@@ -34,7 +34,7 @@ pub enum Error {
     InvalidIterationExponent(u8),
     #[error("passphrase contains a character that is not printable ASCII (code point {0})")]
     InvalidPassphrase(u32),
-    #[error("shares have different {field}s — they aren't all from the same backup")]
+    #[error("shares have different {field}s, so they aren't all from the same backup")]
     MismatchedShares { field: &'static str },
     #[error("group {group_index}: shares disagree on the member threshold")]
     MismatchedMemberThreshold { group_index: u8 },

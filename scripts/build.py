@@ -6,8 +6,8 @@ disk (file://) with no network access.
 
 Steps: compile pkc-wasm with the pinned toolchain (rust-toolchain.toml) and
 the `html` profile; run wasm-bindgen, pinned to the version in Cargo.lock;
-then inline everything into web/index.html — the wasm as base64, the
-wasm-bindgen glue and app.js as one inline module script — and replace the
+then inline everything into web/index.html (the wasm as base64, the
+wasm-bindgen glue and app.js as one inline module script) and replace the
 page's development CSP with a strict one: default-src 'none', the script
 and the stylesheet allowed only by hash.
 
@@ -89,7 +89,7 @@ def build_wasm(target_dir):
     cargo_home = Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo")).resolve()
     sysroot, commit = rustc_info()
     # With the rust-src component installed, rustc swaps the canonical
-    # /rustc/<commit>/ paths of std for the local copy's — which names the
+    # /rustc/<commit>/ paths of std for the local copy's: which names the
     # machine and differs per host. Map them back.
     rust_src = sysroot / "lib" / "rustlib" / "src" / "rust"
     rustflags = " ".join([

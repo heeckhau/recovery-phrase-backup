@@ -13,7 +13,7 @@ use zeroize::Zeroizing;
 use codec::ShareData;
 pub use error::Error;
 
-/// The 1024-word SLIP-39 wordlist, in order — e.g. for autocomplete in a UI.
+/// The 1024-word SLIP-39 wordlist, in order: e.g. for autocomplete in a UI.
 pub fn wordlist() -> &'static [&'static str] {
     wordlist::words()
 }
@@ -44,7 +44,7 @@ fn validate_passphrase(passphrase: &str) -> Result<(), Error> {
 /// SLIP-39 allows: at least 128 bits and a multiple of 16 bits (16, 20,
 /// 24, 28 or 32 bytes for BIP39 entropy; 64 bytes for a BIP32 seed). Always
 /// encodes `ext = 1` (extendable), per the spec's reference `GenerateShares`.
-/// `passphrase` may be empty — SLIP-39 always encrypts regardless — but must
+/// `passphrase` may be empty (SLIP-39 always encrypts regardless) but must
 /// be printable ASCII. `iteration_exponent` (0..=15) sets the PBKDF2 cost to
 /// `2500 << e` per Feistel round. The spec sets no default; the reference
 /// implementation and other tools use 1.
@@ -126,7 +126,7 @@ pub fn split(
     Ok(result)
 }
 
-/// The structural metadata a single mnemonic share reveals about itself —
+/// The structural metadata a single mnemonic share reveals about itself:
 /// which group/member it is and the thresholds it was split with. None of
 /// this is sensitive (unlike the share's actual value): anyone holding the
 /// mnemonic can already read it directly, `inspect` just decodes it for
@@ -145,8 +145,8 @@ pub struct ShareInfo {
 }
 
 /// Decodes a single mnemonic share's metadata (not its secret value),
-/// validating its checksum. Useful to identify/label a share — e.g. before
-/// enough shares are on hand to `combine` — without exposing anything
+/// validating its checksum. Useful to identify/label a share: e.g. before
+/// enough shares are on hand to `combine`: without exposing anything
 /// sensitive.
 pub fn inspect(mnemonic: &str) -> Result<ShareInfo, Error> {
     let share = codec::decode(&mnemonic.split_whitespace().collect::<Vec<_>>())?;
@@ -168,7 +168,7 @@ pub fn inspect(mnemonic: &str) -> Result<ShareInfo, Error> {
 /// from other SLIP-39 implementations (e.g. a Trezor, which may use
 /// `ext = 0`) work too.
 ///
-/// More shares/groups than strictly needed is fine — surplus is ignored
+/// More shares/groups than strictly needed is fine: surplus is ignored
 /// deterministically (lowest group/member indices used first) rather than
 /// rejected, since every share has already been checked to share the same
 /// id/ext/iteration-exponent/group-threshold/count/length, so "extra"
@@ -408,7 +408,7 @@ mod tests {
 
     #[test]
     fn ignores_surplus_groups_beyond_the_threshold() {
-        // 3 groups configured, but only 2 are required — bringing all 3
+        // 3 groups configured, but only 2 are required: bringing all 3
         // group's worth of shares should still work, not error, since
         // that's still unambiguously the same backup (checked via
         // id/ext/e/group-threshold/count/length before this point).

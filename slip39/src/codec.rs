@@ -5,7 +5,7 @@
 // all as one bitstream chunked into 10-bit words.
 //
 // Bit-level read/write is delegated to `bitvec` (a mature, extremely
-// widely used crate — not a crypto primitive itself, but exactly the kind
+// widely used crate: not a crypto primitive itself, but exactly the kind
 // of fiddly index arithmetic worth not hand-rolling: this file's padding
 // math already had one subtle bug caught by the official test vectors).
 use std::fmt;
@@ -152,7 +152,7 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
 
     // The word indices *are* the share, so they're secret too. The error
     // path below reports the word's 1-indexed *position* rather than the
-    // word itself — a mistyped word could plausibly be a near-miss on an
+    // word itself: a mistyped word could plausibly be a near-miss on an
     // actual share word, so echoing it back is best avoided.
     let indices: Zeroizing<Vec<u16>> = Zeroizing::new(
         words
@@ -257,7 +257,7 @@ mod tests {
     #[test]
     fn rejects_group_threshold_above_group_count() {
         // Well-formed bits with a valid checksum, but a group threshold no
-        // group count can satisfy — the spec requires G >= GT.
+        // group count can satisfy: the spec requires G >= GT.
         let share = ShareData { group_threshold: 4, group_count: 3, ..sample_share() };
         let words = encode(&share);
         let refs: Vec<&str> = words.iter().map(String::as_str).collect();

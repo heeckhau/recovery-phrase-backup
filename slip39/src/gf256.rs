@@ -1,19 +1,19 @@
-// GF(256) arithmetic — the same finite field AES uses: bytes as polynomial
+// GF(256) arithmetic, the same finite field AES uses: bytes as polynomial
 // representations, multiplication reduced modulo the Rijndael irreducible
 // polynomial x^8 + x^4 + x^3 + x + 1 (0x11B). See SLIP-39 spec, "Shamir's
 // secret-sharing".
 //
 // mul()/inverse() (the two operations actually used on secret share bytes
 // during split/recover) are written to avoid secret-dependent branches and
-// secret-indexed memory access — plain array indexing by a secret byte is
+// secret-indexed memory access: plain array indexing by a secret byte is
 // vulnerable in principle to cache-timing analysis. This is a best-effort,
 // software-level mitigation (no assembly-verified guarantee, and Rust/LLVM
-// could in principle undo some of it under aggressive optimization — there
+// could in principle undo some of it under aggressive optimization: there
 // is no fully airtight way to guarantee this from safe Rust alone), using
 // `subtle` rather than hand-rolled bitmasking, since it's the standard,
 // widely-reviewed crate for exactly this. Real-world exploitability was
 // already low for this tool's threat model (local, offline, single-user,
-// no remote attacker positioned to measure timing) — this closes the gap
+// no remote attacker positioned to measure timing): this closes the gap
 // properly anyway since the fix is small and self-contained.
 //
 // Table *construction* (below) only ever processes the public generator
@@ -59,7 +59,7 @@ struct Tables {
 }
 
 // 3 is a generator of GF(256)*: its multiplicative order is 255 (confirmed
-// against mul_direct in tests below). 2 is not — it only has order 51 — so
+// against mul_direct in tests below). 2 is not (it only has order 51) so
 // it can't be used to build a complete table.
 const GENERATOR: u8 = 3;
 
@@ -75,7 +75,7 @@ static TABLES: LazyLock<Tables> = LazyLock::new(|| {
     Tables { exp, log }
 });
 
-/// GF(256) addition (and subtraction — they're the same operation in
+/// GF(256) addition (and subtraction: they're the same operation in
 /// characteristic 2). A single XOR: already constant-time, no lookup.
 pub fn add(a: u8, b: u8) -> u8 {
     a ^ b
@@ -102,7 +102,7 @@ fn reduce_log_sum(sum: u16) -> u8 {
 }
 
 /// `(255 - log_a) mod 255`, branchless. `log_a` is in 0..=254, so
-/// `255 - log_a` is always in 1..=255 already — the only reduction ever
+/// `255 - log_a` is always in 1..=255 already: the only reduction ever
 /// needed is turning a literal 255 into 0.
 fn negate_log(log_a: u8) -> u8 {
     let raw = 255 - log_a;

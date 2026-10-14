@@ -1,4 +1,4 @@
-// BIP39 recovery phrases — the words a wallet shows as its backup — at
+// BIP39 recovery phrases (the words a wallet shows as its backup) at
 // every standard length (12, 15, 18, 21, 24 words), English wordlist only.
 //
 // A phrase's *entropy* is what SLIP-39 backs up: shares recover the
@@ -24,22 +24,22 @@ pub struct Phrase(Mnemonic);
 /// links a card to funds anyone can look up.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Addresses {
-    /// m/44'/60'/0'/0/0 — the first account in MetaMask and most Ethereum wallets.
+    /// m/44'/60'/0'/0/0: the first account in MetaMask and most Ethereum wallets.
     pub eth: String,
-    /// m/84'/0'/0'/0/0 — the first native SegWit (`bc1q…`) receiving address.
+    /// m/84'/0'/0'/0/0: the first native SegWit (`bc1q…`) receiving address.
     pub btc: String,
 }
 
 /// Why a phrase deserves a second look before it is backed up. Not errors:
-/// these phrases are valid, and backing one up is the user's call — but
+/// these phrases are valid, and backing one up is the user's call: but
 /// each almost always means a test or toy phrase, which anyone can sweep.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Weakness {
     /// One of the official BIP39 test vectors (trezor/python-mnemonic
     /// vectors.json), published in every wallet's test suite.
     KnownTestPhrase,
-    /// The entropy is a single byte repeated — "abandon … about",
-    /// "zoo … wrong", "legal winner …" — never the output of a real
+    /// The entropy is a single byte repeated ("abandon … about",
+    /// "zoo … wrong", "legal winner …"), never the output of a real
     /// random generator.
     RepeatedByte,
     /// Fewer than half the words are distinct, e.g. Hardhat's
@@ -68,14 +68,14 @@ const HARDENED: bool = true;
 const ETH_PATH: [(u32, bool); 5] = [(44, HARDENED), (60, HARDENED), (0, HARDENED), (0, false), (0, false)];
 const BTC_PATH: [(u32, bool); 5] = [(84, HARDENED), (0, HARDENED), (0, HARDENED), (0, false), (0, false)];
 
-/// The 2048-word English BIP39 wordlist, in order — e.g. for autocomplete.
+/// The 2048-word English BIP39 wordlist, in order: e.g. for autocomplete.
 pub fn bip39_wordlist() -> &'static [&'static str] {
     Language::English.word_list()
 }
 
 impl Phrase {
     /// Parses and validates a phrase: known words, a standard length, and
-    /// a matching checksum. Case and extra whitespace are ignored — phones
+    /// a matching checksum. Case and extra whitespace are ignored: phones
     /// and Safari capitalise the first word of a text field.
     pub fn parse(phrase: &str) -> Result<Self, Error> {
         let normalized = phrase.split_whitespace().collect::<Vec<_>>().join(" ").to_lowercase();
@@ -101,7 +101,7 @@ impl Phrase {
         Zeroizing::new(self.0.to_string())
     }
 
-    /// The entropy the words encode — what a SLIP-39 backup of this phrase
+    /// The entropy the words encode: what a SLIP-39 backup of this phrase
     /// splits.
     pub fn entropy(&self) -> Zeroizing<Vec<u8>> {
         Zeroizing::new(self.0.to_entropy())
@@ -145,7 +145,7 @@ impl Phrase {
     /// The first Ethereum and Bitcoin addresses for this phrase, under
     /// `bip39_passphrase` ("" for none). The passphrase changes every
     /// derived key, so a user who has one must enter it to see their real
-    /// addresses — it is not part of any SLIP-39 backup of the phrase.
+    /// addresses: it is not part of any SLIP-39 backup of the phrase.
     pub fn addresses(&self, bip39_passphrase: &str) -> Addresses {
         let master = self.master_key(bip39_passphrase);
         let eth_key = derive(&master, &ETH_PATH);

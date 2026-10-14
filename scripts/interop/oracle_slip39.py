@@ -1,5 +1,5 @@
 """Adapter for pjkundert/python-slip39 (GPL-3.0). Run inside its own venv by
-run.py — as an external program only; nothing from it is linked, vendored or
+run.py: as an external program only; nothing from it is linked, vendored or
 shipped. One JSON request per line on stdin, one JSON response per line on
 stdout.
 

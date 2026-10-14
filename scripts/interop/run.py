@@ -7,7 +7,7 @@ Run via ./run.sh (inside the pinned nix shell). For each oracle tool it:
                    and writes them to slip39/tests/interop/<tool>.json, which
                    a plain `cargo test` re-checks without any of these tools;
   ours -> theirs   splits the same secrets with pkc-slip39 and checks the
-                   oracle recovers them (live only — needs the oracle).
+                   oracle recovers them (live only: needs the oracle).
 
 Plus, both ways: a wrong passphrase gives the *same* wrong bytes in both
 tools, a tampered share is rejected by both, and surplus shares are handled
@@ -189,8 +189,8 @@ SHAMIR_CASES = [
 ]
 
 # python-slip39: its BIP39 mode (empty SLIP-39 passphrase, by its design)
-# at the lengths it supports — it only accepts 128-, 256- and 512-bit
-# secrets, so 15/18/21-word phrases are probed separately — plus its raw
+# at the lengths it supports: it only accepts 128-, 256- and 512-bit
+# secrets, so 15/18/21-word phrases are probed separately: plus its raw
 # mode for a 512-bit seed.
 SLIP39_CASES = [
     # name, bytes, scheme, iteration_exponent, extendable, mode

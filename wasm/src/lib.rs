@@ -34,13 +34,13 @@ pub struct JsPhraseCheck {
 fn weakness_text(weakness: pkc_core::Weakness) -> &'static str {
     match weakness {
         pkc_core::Weakness::KnownTestPhrase => {
-            "This is a published BIP39 test phrase. Anyone can use it — never keep funds on it."
+            "This is a published BIP39 test phrase. Anyone can use it, so never keep funds on it."
         }
         pkc_core::Weakness::RepeatedByte => {
             "This phrase follows a simple pattern no real wallet would generate. Anyone can guess it."
         }
         pkc_core::Weakness::FewDistinctWords => {
-            "This phrase repeats the same few words. Real wallet phrases almost never do — check you typed your own phrase."
+            "This phrase repeats the same few words. Real wallet phrases almost never do: check you typed your own phrase."
         }
     }
 }
@@ -70,7 +70,7 @@ fn check(phrase: &pkc_core::Phrase, bip39_passphrase: &str) -> JsPhraseCheck {
 
 /// Validates a BIP39 recovery phrase and returns what identifies it.
 /// `bip39_passphrase` (the "25th word", "" for none) only affects the
-/// addresses — it is not part of any backup.
+/// addresses: it is not part of any backup.
 #[wasm_bindgen]
 pub fn phrase_check(phrase: &str, bip39_passphrase: &str) -> Result<JsPhraseCheck, JsValue> {
     let phrase = pkc_core::Phrase::parse(phrase).map_err(js_error)?;
@@ -107,7 +107,7 @@ pub fn slip39_split(
 }
 
 /// Which group/member a single SLIP-39 share is, and the thresholds it
-/// was split with — all 1-indexed for display. None of this is sensitive;
+/// was split with: all 1-indexed for display. None of this is sensitive;
 /// it's decoded straight from the mnemonic's own plaintext structure.
 #[wasm_bindgen]
 pub struct JsShareInfo {
@@ -118,8 +118,8 @@ pub struct JsShareInfo {
     pub member_threshold: u32,
 }
 
-/// Identifies a single SLIP-39 mnemonic share — which group/member it is,
-/// and the thresholds it needs — without requiring enough shares to
+/// Identifies a single SLIP-39 mnemonic share (which group/member it is,
+/// and the thresholds it needs) without requiring enough shares to
 /// recover anything. Useful for labeling a share as it's entered.
 #[wasm_bindgen]
 pub fn slip39_inspect(mnemonic: &str) -> Result<JsShareInfo, JsValue> {
@@ -148,9 +148,9 @@ pub struct JsRecovered {
     pub secret_hex: Option<String>,
 }
 
-/// Recombines SLIP-39 shares. A wrong `passphrase` is not an error —
+/// Recombines SLIP-39 shares. A wrong `passphrase` is not an error:
 /// SLIP-39 decryption is unauthenticated, so it silently returns different
-/// bytes — which is why the result carries the fingerprint and addresses
+/// bytes. That is why the result carries the fingerprint and addresses
 /// for the user to check. `bip39_passphrase` only affects those addresses.
 #[wasm_bindgen]
 pub fn slip39_combine(mnemonics: Vec<String>, passphrase: &str, bip39_passphrase: &str) -> Result<JsRecovered, JsValue> {

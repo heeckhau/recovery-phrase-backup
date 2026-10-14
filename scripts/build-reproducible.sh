@@ -6,7 +6,7 @@
 #   scripts/build-reproducible.sh --verify-reproducible  # build twice, compare
 #
 # Why a container: the wasm is byte-identical across builds on one platform,
-# but not across platforms — Cargo's crate hashes take in the host (through
+# but not across platforms: Cargo's crate hashes take in the host (through
 # proc-macro crates, which are compiled for it), and those hashes order the
 # functions and data in the output. Fixing the platform fixes the output.
 # On Apple Silicon this runs under emulation: slower, same result.

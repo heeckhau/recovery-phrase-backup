@@ -22,7 +22,7 @@ enum Command {
 #[derive(Args)]
 struct ConvertArgs {
     /// Private key as raw hex (optionally 0x-prefixed) or a Bitcoin WIF.
-    /// Omit this to be prompted instead (hidden input) — passing it here
+    /// Omit this to be prompted instead (hidden input): passing it here
     /// exposes it via shell history and process listings.
     input: Option<String>,
 
@@ -66,7 +66,7 @@ enum Slip39Command {
 #[derive(Args)]
 struct Slip39SplitArgs {
     /// A BIP39 recovery phrase (12-24 words), or a raw private key as hex or
-    /// WIF. Omit this to be prompted instead (hidden input) — passing it
+    /// WIF. Omit this to be prompted instead (hidden input): passing it
     /// here exposes it via shell history and process listings.
     secret: Option<String>,
 
@@ -79,7 +79,7 @@ struct Slip39SplitArgs {
     groups: Vec<String>,
 
     /// Passphrase, given inline (printable ASCII only). SLIP-39 always
-    /// encrypts, even with no passphrase — omitting this flag means "no
+    /// encrypts, even with no passphrase: omitting this flag means "no
     /// passphrase", not "prompt for one". Exposes it via shell history and
     /// process listings; use --passphrase-prompt for a real passphrase.
     #[arg(long, conflicts_with = "passphrase_prompt")]
@@ -107,16 +107,16 @@ struct Slip39SplitArgs {
 struct Slip39CombineArgs {
     /// Mnemonic shares, enough to meet the threshold (quote each as one
     /// shell argument). Omit these to be prompted for them one at a time
-    /// instead (hidden input) — passing them here exposes them via shell
+    /// instead (hidden input): passing them here exposes them via shell
     /// history and process listings.
     mnemonics: Vec<String>,
 
     /// Passphrase, given inline. A wrong passphrase is NOT reported as an
     /// error: SLIP-39 decryption is intentionally unauthenticated, so it
-    /// silently produces a different, wrong key — check the resulting
+    /// silently produces a different, wrong key: check the resulting
     /// addresses look right before trusting the result. Omitting this flag
     /// means "no passphrase"; exposes it via shell history and process
-    /// listings if given inline — use --passphrase-prompt instead.
+    /// listings if given inline: use --passphrase-prompt instead.
     #[arg(long, conflicts_with = "passphrase_prompt")]
     passphrase: Option<String>,
 
@@ -135,7 +135,7 @@ struct Slip39CombineArgs {
 #[derive(Args)]
 struct Slip39InspectArgs {
     /// A single mnemonic share (quote it as one shell argument). Omit this
-    /// to be prompted instead (hidden input) — passing it here exposes it
+    /// to be prompted instead (hidden input): passing it here exposes it
     /// via shell history and process listings.
     mnemonic: Option<String>,
 }
@@ -174,7 +174,7 @@ fn resolve_secret(provided: Option<String>, what: &str, prompt: &str) -> Result<
 
 /// Resolves a passphrase: `--passphrase-prompt` prompts with hidden input,
 /// `--passphrase <value>` uses it inline (with a warning), and neither
-/// means "no passphrase" — the common case, not treated as "prompt me".
+/// means "no passphrase": the common case, not treated as "prompt me".
 fn resolve_passphrase(inline: Option<String>, use_prompt: bool) -> Result<String, String> {
     if use_prompt {
         prompt_hidden("Passphrase: ")
@@ -302,7 +302,7 @@ fn run_slip39_combine(args: Slip39CombineArgs) -> Result<(), String> {
 
     // A backup doesn't record what it holds. A phrase-sized secret is shown
     // as a phrase; 32 bytes could also be a raw key, so it's shown both
-    // ways — the fingerprint or address you recognise tells you which.
+    // ways: the fingerprint or address you recognise tells you which.
     let mut shown = false;
     if let Ok(phrase) = pkc_core::Phrase::from_entropy(&secret) {
         println!("As a recovery phrase ({} words): {}", phrase.word_count(), phrase.to_words().as_str());

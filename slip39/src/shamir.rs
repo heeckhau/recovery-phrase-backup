@@ -15,7 +15,7 @@ type HmacSha256 = Hmac<Sha256>;
 /// A share point: its x-coordinate (share index) and secret y value-vector.
 pub type Point = (u8, SecretBytes);
 
-/// First 4 bytes of HMAC-SHA256(key, msg) — the "digest" used as the fixed
+/// First 4 bytes of HMAC-SHA256(key, msg): the "digest" used as the fixed
 /// point at x=254, verified on recovery to detect wrong/insufficient/
 /// corrupted shares.
 fn digest4(key: &[u8], msg: &[u8]) -> [u8; 4] {
@@ -32,7 +32,7 @@ fn digest4(key: &[u8], msg: &[u8]) -> [u8; 4] {
 ///
 /// The `xj == xi` skip below compares by *value*, so a duplicated
 /// x-coordinate is silently absorbed rather than ever reaching the
-/// division below with a zero denominator — this can't actually panic on
+/// division below with a zero denominator: this can't actually panic on
 /// duplicate x_i, even degenerate all-duplicate input, verified directly
 /// in this module's tests rather than just reasoned about. It still
 /// returns `Result` rather than leaning on that non-obvious property:
@@ -108,7 +108,7 @@ pub fn split_secret(threshold: u8, share_count: u8, secret: &[u8]) -> Result<Vec
 /// RecoverSecret(T, shares): reconstructs the secret from a set of
 /// share-index/share-value pairs, verifying the embedded digest. Returns
 /// `Error::ShareSetInconsistent` if the shares don't reconstruct a
-/// consistent secret — which covers wrong shares, too few shares, and
+/// consistent secret: which covers wrong shares, too few shares, and
 /// corrupted share data alike, since all of those break the digest check
 /// the same way.
 pub fn recover_secret(threshold: u8, shares: &[Point]) -> Result<SecretBytes, Error> {
@@ -197,13 +197,13 @@ mod tests {
     #[test]
     fn duplicate_x_coordinates_do_not_panic() {
         // interpolate()'s value-based `xj == xi` skip already absorbs
-        // duplicate x-coordinates rather than dividing by zero — verified
+        // duplicate x-coordinates rather than dividing by zero: verified
         // directly here (not just reasoned about) since it's exactly the
         // kind of subtle invariant worth checking rather than assuming.
         // The duplicated share still can't be used to recover anything:
         // it silently drops out of the Lagrange basis computation, which
         // produces a mismatched secret/digest pair that the HMAC check
-        // below rejects — not a crash, but not a successful recovery either.
+        // below rejects: not a crash, but not a successful recovery either.
         let secret = secret_32_bytes();
         let mut shares = split_secret(3, 5, &secret).unwrap();
         shares[1].0 = shares[0].0; // duplicate the first share's x-coordinate

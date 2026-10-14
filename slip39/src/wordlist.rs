@@ -2,13 +2,13 @@ use std::sync::LazyLock;
 
 /// The SLIP-39 wordlist: 1024 English words, alphabetically sorted. Source:
 /// <https://github.com/satoshilabs/slips/blob/master/slip-0039/wordlist.txt>
-/// (satoshilabs/slips, CC-BY-SA-4.0 — data only, embedded verbatim).
+/// (satoshilabs/slips, CC-BY-SA-4.0: data only, embedded verbatim).
 const WORDLIST_TXT: &str = include_str!("wordlist.txt");
 
 static WORDLIST: LazyLock<Vec<&'static str>> = LazyLock::new(|| WORDLIST_TXT.lines().collect());
 
 /// Looks up the word at a given 10-bit index (0..1024).
-/// All 1024 words, in order — e.g. for autocomplete in a UI.
+/// All 1024 words, in order: e.g. for autocomplete in a UI.
 pub fn words() -> &'static [&'static str] {
     &WORDLIST
 }

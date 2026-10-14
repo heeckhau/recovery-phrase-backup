@@ -29,6 +29,11 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - run: cargo test --workspace --locked
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      # House style: no em dashes anywhere outside the vendored reference/
+      # files. The character is built from its UTF-8 bytes so this file
+      # doesn't contain one itself.
+      - name: No em dashes
+        run: "! git grep -n \"$(printf '\\xe2\\x80\\x94')\" -- ':!reference'"
 
   audit:
     name: cargo audit
