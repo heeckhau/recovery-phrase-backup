@@ -253,10 +253,10 @@ function createShareEntry(container, { fixedLength, onProgress }) {
     let text;
     if (first.group_count === 1) {
       const g = groups.get(1);
-      text = enough ? `You have ${g.have} of the ${g.need} shares needed — enough.` : `You have ${g.have} of the ${g.need} shares needed.`;
+      text = enough ? `You have ${g.have} of the ${g.need} shares needed. That's enough.` : `You have ${g.have} of the ${g.need} shares needed.`;
     } else {
       const parts = [...groups.entries()].map(([n, g]) => `group ${n}: ${g.have} of ${g.need}`);
-      text = `${parts.join(", ")} · ${complete} of ${first.group_threshold} groups complete${enough ? " — enough." : "."}`;
+      text = `${parts.join(", ")} · ${complete} of ${first.group_threshold} groups complete${enough ? ". That's enough." : "."}`;
     }
     return { enough, text };
   }
@@ -343,6 +343,7 @@ function freshState() {
     shares: [], // [{ mnemonic, group, groupCount, member, members, threshold }]
     current: 0,
     checkPositions: [],
+    checked: new Set(), // indices of shares whose spot check passed
   };
 }
 
@@ -478,8 +479,8 @@ function schemeWarnings({ groupThreshold, groups }) {
   const single = groups.length === 1;
   groups.forEach(([t, n], i) => {
     const where = single ? "" : ` in group ${i + 1}`;
-    if (t === n && n > 1) warnings.push(`${t} of ${n}${where}: every share is needed, so losing any one of them loses ${single ? "everything" : "that group"} — riskier than a single copy.`);
-    if (t === 1 && n === 1 && single) warnings.push("1 of 1: one share that is just your phrase in other words — no protection against losing it.");
+    if (t === n && n > 1) warnings.push(`${t} of ${n}${where}: every share is needed, so losing any one of them loses ${single ? "everything" : "that group"}. That is riskier than a single copy.`);
+    if (t === 1 && n === 1 && single) warnings.push("1 of 1: one share that is just your phrase in other words, with no protection against losing it.");
   });
   if (!single && groupThreshold === groups.length && groups.length > 1) {
     warnings.push(`Every group is needed (${groupThreshold} of ${groups.length}): losing any one group loses everything.`);
@@ -551,8 +552,8 @@ let b4CheckGrid;
 
 function shareLabel(share) {
   const { groupThreshold, groups } = state.scheme;
-  if (groups.length === 1) return `Share ${share.member} of ${share.members} — any ${share.threshold} recover`;
-  return `Group ${share.group} of ${share.groupCount}, share ${share.member} of ${share.members} — any ${share.threshold} of this group; ${groupThreshold} of ${groups.length} groups recover`;
+  if (groups.length === 1) return `Share ${share.member} of ${share.members} (any ${share.threshold} recover)`;
+  return `Group ${share.group} of ${share.groupCount}, share ${share.member} of ${share.members} (any ${share.threshold} of this group; ${groupThreshold} of ${groups.length} groups recover)`;
 }
 
 function showShare() {
@@ -567,12 +568,40 @@ function showShare() {
   $("b4-show").hidden = false;
   $("b4-verify").hidden = true;
   clearError($("b4-error"));
+  updateShareNav();
 
   // Three distinct random positions, in order, for the spot check.
   const positions = new Set();
   while (positions.size < 3) positions.add(randomBelow(state.shareWords));
   state.checkPositions = [...positions].sort((a, b) => a - b);
 }
+
+// Back is always allowed; forward only past a share whose spot check has
+// passed, so navigating can't become a way to skip checking.
+function updateShareNav() {
+  const last = state.shares.length - 1;
+  const checked = state.checked.has(state.current);
+  const allChecked = state.checked.size === state.shares.length;
+  $("b4-checked").hidden = !checked;
+  $("b4-written").hidden = checked;
+  $("b4-prev").hidden = state.current === 0;
+  const next = $("b4-next");
+  next.textContent = state.current === last ? "Continue to the recovery test" : "Next share";
+  next.disabled = state.current === last ? !allChecked : !checked;
+}
+
+$("b4-prev").addEventListener("click", () => {
+  state.current -= 1;
+  showShare();
+});
+
+$("b4-next").addEventListener("click", () => {
+  if (state.current === state.shares.length - 1) startRecoveryTest();
+  else {
+    state.current += 1;
+    showShare();
+  }
+});
 
 $("b4-written").addEventListener("click", () => {
   $("b4-show").hidden = true;
@@ -595,9 +624,13 @@ $("b4-check").addEventListener("click", () => {
     showError($("b4-error"), `Word ${wrong.map((p) => p + 1).join(" and ")} doesn't match. Compare your copy with the share again.`);
     return;
   }
-  state.current += 1;
-  if (state.current < state.shares.length) showShare();
-  else startRecoveryTest();
+  state.checked.add(state.current);
+  const unchecked = state.shares.findIndex((_, i) => !state.checked.has(i));
+  if (unchecked === -1) startRecoveryTest();
+  else {
+    state.current = unchecked;
+    showShare();
+  }
 });
 
 // ---- step 5: test the recovery ----
@@ -610,7 +643,7 @@ function startRecoveryTest() {
   $("b5-intro").textContent =
     groups.length === 1
       ? `Take any ${groups[0][0]} of the shares you wrote down and type them in, one at a time. This proves your written copies really give your phrase back.`
-      : `Take enough of the shares you wrote down — ${groupThreshold} of the groups, each with its own threshold — and type them in, one at a time. This proves your written copies really give your phrase back.`;
+      : `Take enough of the shares you wrote down (${groupThreshold} of the groups, each with its own threshold) and type them in, one at a time. This proves your written copies really give your phrase back.`;
   $("b5-result").hidden = true;
   $("b5-next").hidden = true;
   b5Entry = createShareEntry($("b5-entry"), {
@@ -633,13 +666,17 @@ function startRecoveryTest() {
         $("b5-next").hidden = false;
       } else {
         result.className = "banner warning";
-        result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Compare each with the share on screen — go back with your browser's tab still open, or start over.";
+        result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Go back to the shares and compare each with your copy.";
       }
     },
   });
 }
 
 $("b5-next").addEventListener("click", finishBackup);
+$("b5-back").addEventListener("click", () => {
+  state.current = 0;
+  showShare();
+});
 $("b5-skip").addEventListener("click", finishBackup);
 
 function finishBackup() {
@@ -665,30 +702,36 @@ window.addEventListener("afterprint", () => {
   printArea.innerHTML = "";
 });
 
-function shareCard(share, words) {
-  const page = el("div", "print-page");
-  page.appendChild(el("h1", null, "Recovery share"));
-  page.appendChild(el("p", "meta", shareLabel(share)));
+// One cut-out card per share. `withWords` false gives blank cards to fill in
+// by hand: the same labels and fingerprint, which are not secret.
+function shareCard(share, withWords) {
+  const card = el("div", "print-card");
+  card.appendChild(el("h2", null, "Recovery share"));
+  card.appendChild(el("p", "meta", shareLabel(share)));
   const fp = el("p", "meta", "Fingerprint: ");
   fp.appendChild(el("span", "fp", state.fingerprint));
-  page.appendChild(fp);
+  card.appendChild(fp);
+  const words = share.mnemonic.split(" ");
   const grid = el("div", "words");
   for (let i = 0; i < state.shareWords; i++) {
     const cell = el("div");
     cell.appendChild(el("span", "n", `${i + 1}.`));
-    if (words) cell.appendChild(document.createTextNode(words[i]));
+    if (withWords) cell.appendChild(document.createTextNode(words[i]));
     grid.appendChild(cell);
   }
-  page.appendChild(grid);
-  const notes = el("ol", "instructions");
-  const lines = [
-    "This is one share of a SLIP-39 backup of a wallet's recovery phrase. On its own it reveals nothing.",
-    "Every share of this backup carries the same fingerprint. Keep this share apart from the others.",
-    "To recover: bring together enough shares (see above), type them into a SLIP-39 tool on an offline computer, and check the result shows this fingerprint. The result is a recovery phrase to restore in a wallet.",
-  ];
-  if (state.passphrase) lines.push("This backup also uses a SLIP-39 passphrase, which is not written here. Recovery needs it exactly.");
-  for (const line of lines) notes.appendChild(el("li", null, line));
-  page.appendChild(notes);
+  card.appendChild(grid);
+  let note =
+    "One share of a SLIP-39 backup of a wallet's recovery phrase; on its own it reveals nothing. Keep it apart from the other shares. " +
+    "To recover, bring enough shares together, type them into a SLIP-39 tool on an offline computer, and check it shows this fingerprint.";
+  if (state.passphrase) note += " This backup also needs its SLIP-39 passphrase, which is not written here.";
+  card.appendChild(el("p", "instructions", note));
+  return card;
+}
+
+function cardsPage(withWords) {
+  const page = el("div", "print-page cards");
+  page.appendChild(el("p", "print-cut", "Cut along the dashed lines, and keep each card in a different place."));
+  for (const share of state.shares) page.appendChild(shareCard(share, withWords));
   return page;
 }
 
@@ -702,13 +745,13 @@ function recoverySheet() {
   const needed =
     groups.length === 1
       ? `any ${groups[0][0]} of the ${groups[0][1]} shares`
-      : `${groupThreshold} of the ${groups.length} groups — ${groups.map(([t, n], i) => `group ${i + 1}: ${t} of ${n}`).join("; ")}`;
+      : `${groupThreshold} of the ${groups.length} groups (${groups.map(([t, n], i) => `group ${i + 1}: ${t} of ${n}`).join("; ")})`;
   const lines = [
-    `A wallet's recovery phrase was split into SLIP-39 shares — numbered word lists on separate cards. Recovering it needs ${needed}. This sheet holds no secret.`,
+    `A wallet's recovery phrase was split into SLIP-39 shares: numbered word lists on separate cards. Recovering it needs ${needed}. This sheet holds no secret.`,
     "Gather the shares. Use a computer with no network connection.",
     "Open the Recovery Phrase Backup file, choose \"Recover a phrase\", and type the shares in one at a time.",
-    "Check the fingerprint it shows matches the one above. If it doesn't, a share or the passphrase is wrong — nothing is reported as an error.",
-    "The result is a recovery phrase (12–24 words). Restore it in a wallet with its \"import\" or \"restore\" option.",
+    "Check the fingerprint it shows matches the one above. If it doesn't, a share or the passphrase is wrong; nothing is reported as an error.",
+    "The result is a recovery phrase (12 to 24 words). Restore it in a wallet with its \"import\" or \"restore\" option.",
     "Without that file: SLIP-39 is an open standard. Trezor's reference tool (python-shamir-mnemonic, \"shamir recover\") gives the secret as hex; that hex is the phrase's entropy, which any BIP39 tool turns back into the words.",
   ];
   if (state.passphrase) lines.splice(1, 0, "This backup uses a SLIP-39 passphrase. Recovery needs it exactly; it is kept separately from the shares.");
@@ -718,17 +761,16 @@ function recoverySheet() {
   return page;
 }
 
-$("b4-print-blank").addEventListener("click", () => printPage(shareCard(state.shares[state.current], null)));
+$("b4-print-blank").addEventListener("click", () => printPage(cardsPage(false)));
 $("b4-print").addEventListener("click", () => printDialog.showModal());
 $("print-cancel").addEventListener("click", () => printDialog.close());
 $("print-blank-instead").addEventListener("click", () => {
   printDialog.close();
-  printPage(shareCard(state.shares[state.current], null));
+  printPage(cardsPage(false));
 });
 $("print-confirm").addEventListener("click", () => {
   printDialog.close();
-  const share = state.shares[state.current];
-  printPage(shareCard(share, share.mnemonic.split(" ")));
+  printPage(cardsPage(true));
 });
 $("b6-print-sheet").addEventListener("click", () => printPage(recoverySheet()));
 
@@ -819,7 +861,7 @@ function clearAll() {
 }
 
 $("clear-all").addEventListener("click", () => {
-  if (confirm("Clear everything on this page?")) clearAll();
+  if (confirm("Erase every word, share and passphrase on this page and go back to the start?")) clearAll();
 });
 
 // Closing or navigating away wipes the fields, so a back/forward cache or
@@ -858,7 +900,7 @@ init()
 
     // BEGIN dev-only (scripts/build.py strips this from the release file)
     // ?test starts a backup of the canonical all-zero test phrase, for quick
-    // manual/visual testing. Never a real phrase — it's the most famous test
+    // manual/visual testing. Never a real phrase: it's the most famous test
     // vector there is, so it demonstrably holds no funds.
     if (new URLSearchParams(window.location.search).has("test")) {
       startBackup();

@@ -6,7 +6,7 @@
 <!--
   Defense in depth for a page that handles real private keys: this page
   makes zero network requests and never sets HTML from a string (only
-  createElement/textContent — checked, not just asserted), so nothing
+  createElement/textContent, checked rather than just asserted), so nothing
   here should ever need to exploit script injection. This CSP just caps
   the blast radius if that ever regresses. 'wasm-unsafe-eval' is required
   to instantiate the wasm module. This is the development policy, for
@@ -14,7 +14,7 @@
   stylesheet. The release build (scripts/build.py) replaces it with a
   stricter one: default-src 'none', and the inlined script and the
   stylesheet allowed only by hash. So no element may carry a style=
-  attribute — use a class.
+  attribute: use a class.
 -->
 <!-- frame-ancestors is deliberately omitted: it's HTTP-header-only per spec
      and browsers ignore (with a console warning) when set via <meta>, which
@@ -289,7 +289,31 @@
     body > *:not(#print-area) { display: none !important; }
     #print-area { display: block; }
   }
+  .checked-badge { margin-left: 0.5rem; padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--ok-bg); color: var(--ok-text); font-size: 0.75rem; font-weight: 600; }
+  .share-nav button { margin-top: 0.75rem; }
   .print-page { font-family: Georgia, "Times New Roman", serif; color: #000; }
+  .print-page.cards { display: block; }
+  .print-card {
+    padding: 10pt 12pt;
+    margin-bottom: 10pt;
+    border: 1.5px dashed #555;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-page .print-card h2 { font-size: 13pt; margin: 0 0 2pt; }
+  .print-page .print-card .meta { font-size: 10.5pt; margin: 1pt 0; }
+  .print-page .print-card .fp { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12pt; font-weight: bold; letter-spacing: 0.12em; }
+  .print-page .print-card .words { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2pt 14pt; margin: 8pt 0 6pt; }
+  .print-page .print-card .words div {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 11pt;
+    min-height: 18pt;
+    padding: 3pt 0 1pt;
+    border-bottom: 1px solid #999;
+  }
+  .print-page .print-card .words .n { display: inline-block; width: 2.2em; color: #555; }
+  .print-page .print-card .instructions { font-size: 8.5pt; line-height: 1.35; margin: 0; }
+  .print-cut { font-size: 8pt; color: #555; margin: 0 0 8pt; }
   .print-page h1 { font-size: 18pt; margin: 0 0 4pt; }
   .print-page .meta { font-size: 12pt; margin: 2pt 0; }
   .print-page .fp { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15pt; font-weight: bold; letter-spacing: 0.12em; }
@@ -310,10 +334,10 @@
 <main>
   <div class="top">
     <h1>Recovery Phrase Backup</h1>
-    <button type="button" id="clear-all" class="btn-small">Clear all</button>
+    <button type="button" id="clear-all" class="btn-small" title="Erases every word, share and passphrase typed or shown on this page, and goes back to the start. Nothing is ever saved, so the page is then as if freshly opened.">Clear all</button>
   </div>
-  <p class="subtitle">Split a wallet's recovery phrase into shares — any agreed number of them gives it back, fewer reveal nothing — using SLIP-39, an open standard.</p>
-  <div class="banner warning" id="online-banner" hidden>You're online. For a real phrase, disconnect from the network first: this page never sends anything, but an offline machine is the safe default.</div>
+  <p class="subtitle">Split a wallet's recovery phrase into shares with SLIP-39, an open standard. An agreed number of shares gives it back; fewer reveal nothing.</p>
+  <div class="banner warning" id="online-banner" hidden>You're online. For a real phrase, disconnect from the network first. This page never sends anything, but other software in your browser can: a malicious browser extension, for example, can read what you type here and send your phrase away. Offline, it has nowhere to send it. A fresh browser profile without extensions is safer still.</div>
 
   <section class="card" id="home">
     <div class="home-actions">
@@ -321,7 +345,7 @@
       <button type="button" id="start-recover" disabled>Recover a phrase<span class="sub">From your shares</span></button>
     </div>
     <div class="error" id="load-error"></div>
-    <p class="notice">Everything runs inside this one file, in your browser. Nothing is sent anywhere or saved — close the page and it's gone.</p>
+    <p class="notice">Everything runs inside this one file, in your browser. Nothing is sent anywhere or saved: close the page and it's gone.</p>
   </section>
 
   <section class="card wizard" id="backup" hidden>
@@ -336,7 +360,7 @@
       <div class="error" id="b1-error"></div>
       <div class="check-card" id="b1-check" hidden>
         <div class="field mt-075">
-          <div class="field-label">Fingerprint — will go on every share</div>
+          <div class="field-label">Fingerprint (goes on every share)</div>
           <div class="fingerprint" id="b1-fingerprint"></div>
         </div>
         <div class="field">
@@ -347,12 +371,12 @@
           <div class="field-label">First Bitcoin address (native SegWit)</div>
           <input type="text" readonly spellcheck="false" id="b1-btc" class="mono-output">
         </div>
-        <p class="notice mt-035">Is this your wallet? These addresses are shown here only — never on a share.</p>
+        <p class="notice mt-035">Is this your wallet? These addresses are shown here only, never on a share.</p>
         <label for="b1-bip39">Wallet passphrase ("25th word"), only if your wallet uses one</label>
         <input type="text" id="b1-bip39" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
         <p class="notice mt-035">Only changes the addresses above. It is <strong>not</strong> part of the backup: if your wallet uses one, back it up separately.</p>
         <div id="b1-warnings"></div>
-        <label class="ack" id="b1-ack-row" hidden><input type="checkbox" id="b1-ack"> I understand — back it up anyway</label>
+        <label class="ack" id="b1-ack-row" hidden><input type="checkbox" id="b1-ack"> I understand, back it up anyway</label>
       </div>
       <div class="button-row">
         <button type="button" class="btn-secondary" data-home>Cancel</button>
@@ -364,7 +388,7 @@
       <h2>How should it be split?</h2>
       <label class="choice"><input type="radio" name="scheme" value="2of3" checked> <strong>2 of 3</strong><span class="sub">Any 2 shares give your phrase back. Losing 1 is fine; finding 1 reveals nothing.</span></label>
       <label class="choice"><input type="radio" name="scheme" value="3of5"> <strong>3 of 5</strong><span class="sub">Any 3 of 5. Losing 2 is fine.</span></label>
-      <label class="choice"><input type="radio" name="scheme" value="custom"> <strong>Custom</strong><span class="sub">Your own numbers, or groups — e.g. 2 of 3 places, each needing 2 of 3 people.</span></label>
+      <label class="choice"><input type="radio" name="scheme" value="custom"> <strong>Custom</strong><span class="sub">Your own numbers, or groups: for example 2 of 3 places, each needing 2 of 3 people.</span></label>
       <div id="custom-scheme" hidden>
         <label>Groups</label>
         <div id="group-rows"></div>
@@ -380,7 +404,7 @@
         <div class="field mt-075">
           <label for="split-passphrase" class="mt-0">SLIP-39 passphrase</label>
           <input type="text" id="split-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank (recommended)">
-          <p class="notice mt-035">Not the wallet passphrase. It encrypts the shares, and recovery <strong>never reports a wrong one</strong>: it silently gives back a different phrase. Whoever recovers will need it exactly — most backups should leave it blank and rely on the threshold.</p>
+          <p class="notice mt-035">Not the wallet passphrase. It encrypts the shares, and recovery <strong>never reports a wrong one</strong>: it silently gives back a different phrase. Whoever recovers will need it exactly. Most backups should leave it blank and rely on the threshold.</p>
         </div>
         <div class="field mt-075">
           <label for="iteration-exponent" class="mt-0">Iteration exponent</label>
@@ -399,7 +423,7 @@
       <h2>Before you start</h2>
       <div id="b3-summary"></div>
       <p>You'll see one share at a time. For each: write it down (or print it), then type back three of its words to check your copy.</p>
-      <p>Keep the shares in different places, and make sure someone you trust knows they exist and how to recover — this page can print a "how to recover" sheet at the end.</p>
+      <p>Keep the shares in different places, and make sure someone you trust knows they exist and how to recover. This page can print a "how to recover" sheet at the end.</p>
       <div class="button-row">
         <button type="button" class="btn-secondary" id="b3-back">Back</button>
         <button type="button" id="b3-next">Make the shares</button>
@@ -409,12 +433,12 @@
     <div class="step" id="b4" hidden>
       <h2 id="b4-title"></h2>
       <p id="b4-sub"></p>
-      <p>Fingerprint: <span class="fingerprint" id="b4-fingerprint"></span></p>
+      <p>Fingerprint: <span class="fingerprint" id="b4-fingerprint"></span> <span class="checked-badge" id="b4-checked" hidden>Checked</span></p>
       <div id="b4-show">
         <div class="word-grid" id="b4-words"></div>
         <div class="button-row">
-          <button type="button" class="btn-secondary" id="b4-print-blank">Print a blank card</button>
-          <button type="button" class="btn-secondary" id="b4-print">Print this share</button>
+          <button type="button" class="btn-secondary" id="b4-print-blank">Print blank cards</button>
+          <button type="button" class="btn-secondary" id="b4-print">Print all shares</button>
         </div>
         <button type="button" id="b4-written">I've written it down</button>
       </div>
@@ -427,6 +451,10 @@
           <button type="button" id="b4-check">Check</button>
         </div>
       </div>
+      <div class="button-row share-nav">
+        <button type="button" class="btn-secondary" id="b4-prev">Previous share</button>
+        <button type="button" class="btn-secondary" id="b4-next">Next share</button>
+      </div>
     </div>
 
     <div class="step" id="b5" hidden>
@@ -435,15 +463,16 @@
       <div id="b5-entry"></div>
       <div class="banner" id="b5-result" hidden></div>
       <button type="button" id="b5-next" hidden>Continue</button>
-      <button type="button" class="link-button" id="b5-skip">Skip for now — I'll test later</button>
+      <button type="button" class="btn-secondary" id="b5-back">Back to the shares</button>
+      <button type="button" class="link-button" id="b5-skip">Skip for now, I'll test later</button>
     </div>
 
     <div class="step" id="b6" hidden>
       <h2>Done</h2>
       <p>Your shares are ready. Fingerprint: <span class="fingerprint" id="b6-fingerprint"></span></p>
       <h2 class="mt-1">What about the original?</h2>
-      <p>Your phrase now exists twice: as these shares, and as the copy you started from. The shares protect you only as far as that original lets them — lose it and nothing is lost, but whoever finds it has your whole wallet.</p>
-      <p>Once you've tested recovery, you can destroy it, or keep it somewhere as safe as you'd keep any full backup. Your call — the shares work either way.</p>
+      <p>Your phrase now exists twice: as these shares, and as the copy you started from. The shares protect you only as far as that original lets them: lose it and nothing is lost, but whoever finds it has your whole wallet.</p>
+      <p>Once you've tested recovery, you can destroy it, or keep it somewhere as safe as you'd keep any full backup. Your call: the shares work either way.</p>
       <button type="button" class="btn-secondary" id="b6-print-sheet">Print a "How to recover" sheet (no secrets on it)</button>
       <button type="button" id="b6-finish">Finish and clear this page</button>
     </div>
@@ -482,7 +511,7 @@
           <button type="button" class="btn-secondary" id="r2-no">No</button>
           <button type="button" id="r2-yes">Yes, it matches</button>
         </div>
-        <div class="banner warning mt-1" id="r2-mismatch" hidden>Then this isn't your phrase. The usual causes: a wrong or missing SLIP-39 passphrase (it is never reported as an error), or shares from two different backups. Nothing is wrong with your shares — go back and check.</div>
+        <div class="banner warning mt-1" id="r2-mismatch" hidden>Then this isn't your phrase. The usual causes: a wrong or missing SLIP-39 passphrase (it is never reported as an error), or shares from two different backups. Your shares may be fine: go back and check the passphrase and which shares you used.</div>
         <div id="r2-addresses" hidden>
           <div class="field mt-1">
             <div class="field-label">First Ethereum address</div>
@@ -507,7 +536,7 @@
         </div>
       </div>
       <div id="r2-secret-block" hidden>
-        <p>These shares don't hold a recovery phrase — they were made from some other secret (for example a 512-bit seed by another tool):</p>
+        <p>These shares don't hold a recovery phrase. They were made from some other secret (for example a 512-bit seed by another tool):</p>
         <input type="text" readonly spellcheck="false" id="r2-secret" class="mono-output">
       </div>
       <div class="button-row">
@@ -519,12 +548,13 @@
 
   <dialog id="print-dialog">
     <h2>Before you print</h2>
-    <p>Printing is the one moment a share leaves this page. Use a printer connected by cable, not a network or cloud printer, and don't choose "Save as PDF" — a saved file is a copy that can end up in cloud backups.</p>
-    <p>Safest of all: print a blank card and write the words by hand.</p>
+    <p>This prints every share on one sheet, each on its own card with cut lines. Until you cut the cards apart and store them in separate places, that sheet is your whole phrase.</p>
+    <p>Print at home: a printer on your own network is fine, but avoid office, shared and cloud printers. Don't choose "Save as PDF": a saved file is a full copy that can end up in cloud backups.</p>
+    <p>Safest of all: print blank cards and write the words by hand.</p>
     <div class="button-row">
       <button type="button" class="btn-secondary" id="print-cancel">Cancel</button>
-      <button type="button" class="btn-secondary" id="print-blank-instead">Print blank instead</button>
-      <button type="button" id="print-confirm">Print share</button>
+      <button type="button" class="btn-secondary" id="print-blank-instead">Print blank cards</button>
+      <button type="button" id="print-confirm">Print all shares</button>
     </div>
   </dialog>
 

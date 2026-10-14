@@ -1,6 +1,6 @@
-// The correctness-critical UI (ROADMAP, "Considerations — UI"): both
+// The correctness-critical UI (ROADMAP, "Considerations: UI"): both
 // wizards end to end against the release file, under its strict CSP, with
-// the checks that matter — the spot check, the recovery test, what gets
+// the checks that matter: the spot check, the recovery test, what gets
 // printed, and that nothing secret is left behind.
 const { test, expect } = require("@playwright/test");
 const { pathToFileURL } = require("node:url");
@@ -20,7 +20,11 @@ test.beforeEach(async ({ page }) => {
     window.__prints = [];
     window.__clipboardWrites = 0;
     document.addEventListener("securitypolicyviolation", (e) => window.__violations.push(e.violatedDirective));
-    window.print = () => window.__prints.push(document.getElementById("print-area").innerText);
+    window.print = () => {
+      const area = document.getElementById("print-area");
+      const cells = [...area.querySelectorAll(".words div")].map((cell) => cell.textContent);
+      window.__prints.push({ text: area.innerText, cells });
+    };
     if (navigator.clipboard) navigator.clipboard.writeText = async () => void window.__clipboardWrites++;
     document.addEventListener("copy", () => void window.__clipboardWrites++);
   });
@@ -98,17 +102,13 @@ test("back up a phrase: check, split, spot-check, test, print", async ({ page })
   await expect(page.locator("#b3-summary")).toContainText("Any 2 of them");
   await page.click("#b3-next");
 
-  // Share 1: print a blank card, then the filled card through the warning.
+  // Print blank cards, then all shares on one sheet through the warning.
   const first = (await page.locator("#b4-words .word").allTextContents()).join(" ");
   await page.click("#b4-print-blank");
   await page.click("#b4-print");
   await expect(page.locator("#print-dialog")).toHaveAttribute("open", "");
   await page.click("#print-confirm");
   const [blank, filled] = await page.evaluate(() => window.__prints);
-  for (const word of first.split(" ").slice(3)) expect(blank).not.toContain(`. ${word}`);
-  for (const word of first.split(" ")) expect(filled).toContain(word);
-  expect(filled).toContain(FINGERPRINT);
-  for (const word of PHRASE.split(" ").filter((w) => !first.includes(w))) expect(filled).not.toContain(word);
 
   // A wrong spot-check word is caught.
   await page.click("#b4-written");
@@ -126,6 +126,18 @@ test("back up a phrase: check, split, spot-check, test, print", async ({ page })
   expect(shares).toHaveLength(3);
   expect(shares.every((s) => s.split(" ").length === 20)).toBe(true);
 
+  // The sheet has a card for every share, with its words in order; blank
+  // cards carry labels and the fingerprint but no words; the phrase itself
+  // appears nowhere.
+  expect(filled.text.match(/Recovery share/g)).toHaveLength(3);
+  expect(blank.text.match(/Recovery share/g)).toHaveLength(3);
+  expect(blank.text).toContain(FINGERPRINT);
+  const numbered = shares.flatMap((share) => share.split(" ").map((word, i) => `${i + 1}.${word}`));
+  expect(filled.cells).toEqual(numbered);
+  expect(blank.cells).toEqual(shares.flatMap((share) => share.split(" ").map((_, i) => `${i + 1}.`)));
+  const shareWords = new Set(shares.join(" ").split(" "));
+  for (const word of PHRASE.split(" ").filter((w) => !shareWords.has(w))) expect(filled.text).not.toMatch(new RegExp(`\\b${word}\\b`));
+
   // The recovery test must reproduce the fingerprint.
   await typeShare(page, "b5-entry", shares[0]);
   await typeShare(page, "b5-entry", shares[2]);
@@ -134,7 +146,7 @@ test("back up a phrase: check, split, spot-check, test, print", async ({ page })
   await page.click("#b5-next");
 
   await page.click("#b6-print-sheet");
-  const sheet = (await page.evaluate(() => window.__prints)).at(-1);
+  const sheet = (await page.evaluate(() => window.__prints)).at(-1).text;
   expect(sheet).toContain(FINGERPRINT);
   for (const word of PHRASE.split(" ")) expect(sheet).not.toMatch(new RegExp(`\\b${word}\\b`));
 
@@ -144,6 +156,34 @@ test("back up a phrase: check, split, spot-check, test, print", async ({ page })
   expect(anyText).toBe(false);
 });
 
+test("shares can be revisited, but not skipped past unchecked", async ({ page }) => {
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.click("#b1-next");
+  await page.click("#b2-next");
+  await page.click("#b3-next");
+  await expect(page.locator("#b4-prev")).toBeHidden();
+  await expect(page.locator("#b4-next")).toBeDisabled();
+
+  const first = await page.locator("#b4-words").textContent();
+  await page.click("#b4-written");
+  const words = await page.locator("#b4-words .word").allTextContents();
+  const positions = (await page.locator("#b4-check-grid .num").allTextContents()).map((n) => Number(n) - 1);
+  for (let i = 0; i < 3; i++) await page.locator("#b4-check-grid input").nth(i).fill(words[positions[i]]);
+  await page.click("#b4-check");
+
+  // On share 2 now: back to share 1, which shows as checked and can be left forward.
+  await expect(page.locator("#b4-title")).toContainText("Share 2 of 3");
+  await expect(page.locator("#b4-next")).toBeDisabled();
+  await page.click("#b4-prev");
+  await expect(page.locator("#b4-words")).toHaveText(first);
+  await expect(page.locator("#b4-checked")).toBeVisible();
+  await expect(page.locator("#b4-written")).toBeHidden();
+  await page.click("#b4-next");
+  await expect(page.locator("#b4-title")).toContainText("Share 2 of 3");
+  await expect(page.locator("#b4-checked")).toBeHidden();
+});
+
 test("a miscopied share fails the recovery test", async ({ page }) => {
   const shares = await backUp(page);
   const words = shares[0].split(" ");
@@ -151,6 +191,11 @@ test("a miscopied share fails the recovery test", async ({ page }) => {
   await typeShare(page, "b5-entry", words.join(" "));
   await expect(page.locator("#b5-entry .error")).toContainText("doesn't check out");
   await expect(page.locator("#b5-next")).toBeHidden();
+
+  // From the test, the shares are one click away, and all still checked.
+  await page.click("#b5-back");
+  expect((await page.locator("#b4-words .word").allTextContents()).join(" ")).toBe(shares[0]);
+  await expect(page.locator("#b4-checked")).toBeVisible();
 });
 
 test("recover a phrase from shares, typed with 4-letter prefixes", async ({ page }) => {
