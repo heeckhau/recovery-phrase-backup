@@ -587,7 +587,19 @@ Then, in order:
    "Considerations" above, and a `@media print` layout per share with its
    label, threshold, the fingerprint, and plain-language instructions an
    heir can follow without understanding any of this — printed one share
-   at a time, with the print-step warning.
+   at a time, with the print-step warning. *Done (2026-10-14):* backup
+   is six steps — phrase (word grid, live fingerprint/address check,
+   test-phrase warning needing an explicit "back it up anyway"), scheme
+   (2-of-3, 3-of-5 or custom, with guardrails for 3-of-3-style schemes),
+   review, one share at a time with a three-word spot check, a full
+   recovery test that must reproduce the fingerprint, and guidance on the
+   original phrase. Cards print one per page, or blank for handwriting;
+   the "how to recover" sheet carries no secret. Recovery takes shares one
+   at a time with progress towards the threshold and confirms the
+   fingerprint before showing addresses. Seven Playwright tests drive the
+   release file itself in CI (`tests/e2e/`), including that nothing
+   reaches the clipboard or storage and the strict CSP never fires; a
+   planted spot-check bug fails exactly the test that should catch it.
 6. **Independent review, then release.** Reviews of `pkc-slip39`, the
    page and the build by several other LLMs, each given the code and the
    threat model (offline, single file, real recovery phrases); findings and
