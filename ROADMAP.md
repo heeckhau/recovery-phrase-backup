@@ -399,11 +399,10 @@ pipeline.
 
 The findings behind these are in [`PLAN.md`](PLAN.md), "Review". Four
 decisions come first because they drive everything after them: A and B
-from the code review, C and D from the product framing above. B is
-and C are settled (2026-10-12); A and D are still proposals, apart from
-D's fingerprint.
+from the code review, C and D from the product framing above. All four
+are settled: B and C on 2026-10-12, A and D on 2026-10-14.
 
-**Decision A — what 24 words mean.** Proposal: 24 words always means a
+**Decision A — what 24 words mean.** Settled 2026-10-14: 24 words always means a
 BIP39 seed phrase (entropy → PBKDF2 seed → BIP32/44 for ETH/BTC). Drop
 Phase 1's raw-entropy encoding.
 SLIP-39 then backs up the phrase's entropy, so shares recover the words
@@ -474,10 +473,10 @@ are entered (step 4), not in the library. Done in the crate (commit
 **Decision D — SLIP-39's own passphrase.** SLIP-39 encrypts the secret
 under a passphrase that is separate from BIP39's "25th word", and a wrong
 one silently yields a different secret with no error — for a backup meant
-to be recovered by an heir in ten years, a trap. Proposal: default to no
-passphrase (the threshold is the security), keep the field behind
-"Advanced" with the trap spelled out, and print a verification fingerprint
-on every share card. (Deniability, the property the unauthenticated design
+to be recovered by an heir in ten years, a trap. Settled 2026-10-14: no
+passphrase by default — the field starts empty (the threshold is the
+security) and kept behind "Advanced" with the trap spelled out; a
+verification fingerprint is printed on every share card. (Deniability, the property the unauthenticated design
 buys, is not something this product promises.) Evidence from the
 cross-tool suite: python-slip39's BIP39 mode never sets a SLIP-39
 passphrase at all; and all three other tools default to iteration exponent
