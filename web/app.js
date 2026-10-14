@@ -344,6 +344,8 @@ function freshState() {
     current: 0,
     checkPositions: [],
     checked: new Set(), // indices of shares whose spot check passed
+    method: "hand", // how the shares are recorded: "hand" or "print"
+    printed: false,
   };
 }
 
@@ -526,6 +528,8 @@ $("b2-next").addEventListener("click", () => {
 
 $("b3-back").addEventListener("click", () => backupStep(2));
 $("b3-next").addEventListener("click", () => {
+  state.method = document.querySelector("input[name=method]:checked").value;
+  state.printed = false;
   const { groupThreshold, groups } = state.scheme;
   let result;
   try {
@@ -562,7 +566,15 @@ function showShare() {
   $("b4-title").textContent = shareLabel(share);
   // With groups, the label alone doesn't say how far along the user is.
   $("b4-sub").hidden = state.scheme.groups.length === 1;
-  $("b4-sub").textContent = `Share ${state.current + 1} of ${state.shares.length} to write down.`;
+  $("b4-sub").textContent = `Share ${state.current + 1} of ${state.shares.length}.`;
+  const byHand = state.method === "hand";
+  $("b4-howto").textContent = byHand
+    ? "Write the words down in order, numbered as shown, on paper or a printed blank card."
+    : "Print the shares (all at once), then check each printed card here.";
+  $("b4-print-blank").hidden = !byHand;
+  $("b4-print").hidden = byHand;
+  $("b4-print-note").hidden = byHand;
+  $("b4-written").textContent = byHand ? "I've written it down" : "Check this card";
   $("b4-fingerprint").textContent = state.fingerprint;
   renderWords($("b4-words"), share.mnemonic.split(" "));
   $("b4-show").hidden = false;
@@ -584,6 +596,9 @@ function updateShareNav() {
   const allChecked = state.checked.size === state.shares.length;
   $("b4-checked").hidden = !checked;
   $("b4-written").hidden = checked;
+  // A printed card can only be checked once something has been printed.
+  $("b4-written").disabled = state.method === "print" && !state.printed;
+  $("b4-print").textContent = state.printed ? "Print the shares again" : "Print the shares";
   $("b4-prev").hidden = state.current === 0;
   const next = $("b4-next");
   next.textContent = state.current === last ? "Continue to the recovery test" : "Next share";
@@ -728,9 +743,10 @@ function shareCard(share, withWords) {
   return card;
 }
 
-function cardsPage(withWords) {
-  const page = el("div", "print-page cards");
-  page.appendChild(el("p", "print-cut", "Cut along the dashed lines, and keep each card in a different place."));
+function cardsPage(withWords, layout = "sheet") {
+  const page = el("div", layout === "pages" ? "print-page cards one-per-page" : "print-page cards");
+  const hint = layout === "pages" ? "One card per page. Keep each page in a different place." : "Cut along the dashed lines, and keep each card in a different place.";
+  page.appendChild(el("p", "print-cut", hint));
   for (const share of state.shares) page.appendChild(shareCard(share, withWords));
   return page;
 }
@@ -764,13 +780,11 @@ function recoverySheet() {
 $("b4-print-blank").addEventListener("click", () => printPage(cardsPage(false)));
 $("b4-print").addEventListener("click", () => printDialog.showModal());
 $("print-cancel").addEventListener("click", () => printDialog.close());
-$("print-blank-instead").addEventListener("click", () => {
-  printDialog.close();
-  printPage(cardsPage(false));
-});
 $("print-confirm").addEventListener("click", () => {
   printDialog.close();
-  printPage(cardsPage(true));
+  printPage(cardsPage(true, document.querySelector("input[name=layout]:checked").value));
+  state.printed = true;
+  updateShareNav();
 });
 $("b6-print-sheet").addEventListener("click", () => printPage(recoverySheet()));
 

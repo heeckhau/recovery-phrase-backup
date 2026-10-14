@@ -293,6 +293,8 @@
   .share-nav button { margin-top: 0.75rem; }
   .print-page { font-family: Georgia, "Times New Roman", serif; color: #000; }
   .print-page.cards { display: block; }
+  .print-page.one-per-page .print-card { break-after: page; page-break-after: always; }
+  .print-page.one-per-page .print-card:last-child { break-after: auto; page-break-after: auto; }
   .print-card {
     padding: 10pt 12pt;
     margin-bottom: 10pt;
@@ -422,7 +424,10 @@
     <div class="step" id="b3" hidden>
       <h2>Before you start</h2>
       <div id="b3-summary"></div>
-      <p>You'll see one share at a time. For each: write it down (or print it), then type back three of its words to check your copy.</p>
+      <p>You'll see one share at a time, and check each copy by typing back three of its words.</p>
+      <label>How will you record the shares?</label>
+      <label class="choice"><input type="radio" name="method" value="hand" checked> <strong>Write them by hand</strong><span class="sub">Nothing secret ever passes through a printer or a file. You can print blank cards to write on.</span></label>
+      <label class="choice"><input type="radio" name="method" value="print"> <strong>Print them</strong><span class="sub">Fastest. Until you separate the cards and store them in different places, the printout is your whole phrase.</span></label>
       <p>Keep the shares in different places, and make sure someone you trust knows they exist and how to recover. This page can print a "how to recover" sheet at the end.</p>
       <div class="button-row">
         <button type="button" class="btn-secondary" id="b3-back">Back</button>
@@ -435,11 +440,11 @@
       <p id="b4-sub"></p>
       <p>Fingerprint: <span class="fingerprint" id="b4-fingerprint"></span> <span class="checked-badge" id="b4-checked" hidden>Checked</span></p>
       <div id="b4-show">
+        <p id="b4-howto"></p>
         <div class="word-grid" id="b4-words"></div>
-        <div class="button-row">
-          <button type="button" class="btn-secondary" id="b4-print-blank">Print blank cards</button>
-          <button type="button" class="btn-secondary" id="b4-print">Print all shares</button>
-        </div>
+        <button type="button" class="btn-secondary" id="b4-print-blank">Print blank cards to write on</button>
+        <button type="button" class="btn-secondary" id="b4-print">Print the shares</button>
+        <p class="notice mt-075" id="b4-print-note" hidden>Checking a printed card can feel pointless, but it catches a card that printed cut off, smudged or not at all. Three words, then the next card.</p>
         <button type="button" id="b4-written">I've written it down</button>
       </div>
       <div id="b4-verify" hidden>
@@ -547,14 +552,13 @@
   </section>
 
   <dialog id="print-dialog">
-    <h2>Before you print</h2>
-    <p>This prints every share on one sheet, each on its own card with cut lines. Until you cut the cards apart and store them in separate places, that sheet is your whole phrase.</p>
-    <p>Print at home: a printer on your own network is fine, but avoid office, shared and cloud printers. Don't choose "Save as PDF": a saved file is a full copy that can end up in cloud backups.</p>
-    <p>Safest of all: print blank cards and write the words by hand.</p>
+    <h2>Print the shares</h2>
+    <label class="choice"><input type="radio" name="layout" value="sheet" checked> <strong>One sheet, cut apart</strong><span class="sub">Each share on its own card with dashed cut lines.</span></label>
+    <label class="choice"><input type="radio" name="layout" value="pages"> <strong>One card per page</strong><span class="sub">No scissors needed; uses a page per share.</span></label>
+    <p class="mt-1">Until you separate the cards and store them in different places, the printout is your whole phrase. A home printer on your own network is fine; avoid office, shared and cloud printers. Don't choose "Save as PDF": a saved file is a full copy that can end up in cloud backups.</p>
     <div class="button-row">
       <button type="button" class="btn-secondary" id="print-cancel">Cancel</button>
-      <button type="button" class="btn-secondary" id="print-blank-instead">Print blank cards</button>
-      <button type="button" id="print-confirm">Print all shares</button>
+      <button type="button" id="print-confirm">Print</button>
     </div>
   </dialog>
 

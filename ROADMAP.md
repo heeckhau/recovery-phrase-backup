@@ -340,9 +340,14 @@ recommendation in this design, it is the premise.
   recover)"), numbered words, the fingerprint, and short recovery
   instructions; plus a secret-free "how to recover" sheet. Blank cards for
   handwriting as well as filled ones. *Revised 2026-10-14 for usability:*
-  all cards print together on one sheet, with dashed cut lines, instead of
-  one share per print job, which was tedious. The phrase never appears on
-  any printed page.
+  the user picks how to record the shares before seeing any: **by hand**
+  (the default; blank cards optional, nothing secret goes through a
+  printer) or **printed**, all shares in one job, as one sheet with dashed
+  cut lines or one card per page. Printing one share per job was tedious,
+  and its only gain (no single job holding everything) is small for a home
+  printer. Both modes keep the three-word check per share: for a printout
+  it catches a card that printed cut off, smudged or not at all. The
+  phrase never appears on any printed page.
 - **Hygiene**: a "clear everything" button, fields wiped when the page
   closes, no storage of any kind, no copy-to-clipboard for shares, a
   `navigator.onLine` warning banner. The `?test` prefill goes away in
@@ -394,8 +399,9 @@ recommendation in this design, it is the premise.
   So the design aims at the specific risk rather than at files, without
   friction that would push people to worse shortcuts (a phone photo of the
   phrase). *Revised 2026-10-14:* printing one share per job made a careless
-  "Save as PDF" capture only one harmless share, but it was tedious, so all
-  cards now print on one sheet to be cut apart. The trade-off, stated
+  "Save as PDF" capture only one harmless share, but it was tedious, so the
+  user now chooses: write by hand (the default), or print all shares in
+  one job, on one sheet to cut apart or one card per page. The trade-off, stated
   plainly in the print warning: until the cards are cut and separated (and
   in any saved file or print spool), that sheet is the whole phrase. What
   remains: the phrase never on any printed page; a warning at the print
@@ -600,10 +606,11 @@ Then, in order:
    review, one share at a time with a three-word spot check, a full
    recovery test that must reproduce the fingerprint, and guidance on the
    original phrase. Shares can be revisited (back always, forward only
-   past a checked share). All cards print on one sheet with cut lines, or
-   blank for handwriting; the "how to recover" sheet carries no secret. Recovery takes shares one
+   past a checked share). The user picks by hand (default; optional blank
+   cards) or printed (all shares in one job, one sheet with cut lines or
+   one card per page); the "how to recover" sheet carries no secret. Recovery takes shares one
    at a time with progress towards the threshold and confirms the
-   fingerprint before showing addresses. Eight Playwright tests drive the
+   fingerprint before showing addresses. Nine Playwright tests drive the
    release file itself in CI (`tests/e2e/`), including that nothing
    reaches the clipboard or storage and the strict CSP never fires; a
    planted spot-check bug fails exactly the test that should catch it.

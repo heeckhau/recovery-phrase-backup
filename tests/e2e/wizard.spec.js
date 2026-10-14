@@ -23,7 +23,8 @@ test.beforeEach(async ({ page }) => {
     window.print = () => {
       const area = document.getElementById("print-area");
       const cells = [...area.querySelectorAll(".words div")].map((cell) => cell.textContent);
-      window.__prints.push({ text: area.innerText, cells });
+      const layout = area.querySelector(".one-per-page") ? "pages" : "sheet";
+      window.__prints.push({ text: area.innerText, cells, layout });
     };
     if (navigator.clipboard) navigator.clipboard.writeText = async () => void window.__clipboardWrites++;
     document.addEventListener("copy", () => void window.__clipboardWrites++);
@@ -91,7 +92,7 @@ test("the release file carries no dev-only code", async ({ page }) => {
   await expect(page.locator("#backup")).toBeHidden();
 });
 
-test("back up a phrase: check, split, spot-check, test, print", async ({ page }) => {
+test("back up a phrase by hand: check, split, spot-check, test", async ({ page }) => {
   await page.click("#start-backup");
   await pastePhrase(page, PHRASE);
   await expect(page.locator("#b1-fingerprint")).toHaveText(FINGERPRINT);
@@ -102,13 +103,12 @@ test("back up a phrase: check, split, spot-check, test, print", async ({ page })
   await expect(page.locator("#b3-summary")).toContainText("Any 2 of them");
   await page.click("#b3-next");
 
-  // Print blank cards, then all shares on one sheet through the warning.
+  // Writing by hand (the default): blank cards to write on, no share printing.
   const first = (await page.locator("#b4-words .word").allTextContents()).join(" ");
+  await expect(page.locator("#b4-print")).toBeHidden();
+  await expect(page.locator("#b4-written")).toHaveText("I've written it down");
   await page.click("#b4-print-blank");
-  await page.click("#b4-print");
-  await expect(page.locator("#print-dialog")).toHaveAttribute("open", "");
-  await page.click("#print-confirm");
-  const [blank, filled] = await page.evaluate(() => window.__prints);
+  const [blank] = await page.evaluate(() => window.__prints);
 
   // A wrong spot-check word is caught.
   await page.click("#b4-written");
@@ -126,17 +126,10 @@ test("back up a phrase: check, split, spot-check, test, print", async ({ page })
   expect(shares).toHaveLength(3);
   expect(shares.every((s) => s.split(" ").length === 20)).toBe(true);
 
-  // The sheet has a card for every share, with its words in order; blank
-  // cards carry labels and the fingerprint but no words; the phrase itself
-  // appears nowhere.
-  expect(filled.text.match(/Recovery share/g)).toHaveLength(3);
+  // Blank cards carry labels and the fingerprint, but no words.
   expect(blank.text.match(/Recovery share/g)).toHaveLength(3);
   expect(blank.text).toContain(FINGERPRINT);
-  const numbered = shares.flatMap((share) => share.split(" ").map((word, i) => `${i + 1}.${word}`));
-  expect(filled.cells).toEqual(numbered);
   expect(blank.cells).toEqual(shares.flatMap((share) => share.split(" ").map((_, i) => `${i + 1}.`)));
-  const shareWords = new Set(shares.join(" ").split(" "));
-  for (const word of PHRASE.split(" ").filter((w) => !shareWords.has(w))) expect(filled.text).not.toMatch(new RegExp(`\\b${word}\\b`));
 
   // The recovery test must reproduce the fingerprint.
   await typeShare(page, "b5-entry", shares[0]);
@@ -154,6 +147,45 @@ test("back up a phrase: check, split, spot-check, test, print", async ({ page })
   await expect(page.locator("#home")).toBeVisible();
   const anyText = await page.evaluate(() => [...document.querySelectorAll("input")].some((i) => i.type === "text" && i.value));
   expect(anyText).toBe(false);
+});
+
+test("back up a phrase by printing: both layouts, checking unlocked by printing", async ({ page }) => {
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.click("#b1-next");
+  await page.click("#b2-next");
+  await page.check('input[name="method"][value="print"]');
+  await page.click("#b3-next");
+
+  await expect(page.locator("#b4-print-blank")).toBeHidden();
+  await expect(page.locator("#b4-print-note")).toBeVisible();
+  await expect(page.locator("#b4-written")).toHaveText("Check this card");
+  await expect(page.locator("#b4-written")).toBeDisabled();
+
+  await page.click("#b4-print");
+  await expect(page.locator("#print-dialog")).toHaveAttribute("open", "");
+  await page.click("#print-confirm");
+  await expect(page.locator("#b4-written")).toBeEnabled();
+  await expect(page.locator("#b4-print")).toHaveText("Print the shares again");
+  await page.click("#b4-print");
+  await page.check('input[name="layout"][value="pages"]');
+  await page.click("#print-confirm");
+  const [sheet, pages] = await page.evaluate(() => window.__prints);
+  expect(sheet.layout).toBe("sheet");
+  expect(pages.layout).toBe("pages");
+
+  const shares = await writeDownAllShares(page);
+  expect(shares).toHaveLength(3);
+  // Every card, every word in order; the phrase itself appears nowhere.
+  const numbered = shares.flatMap((share) => share.split(" ").map((word, i) => `${i + 1}.${word}`));
+  for (const printout of [sheet, pages]) {
+    expect(printout.text.match(/Recovery share/g)).toHaveLength(3);
+    expect(printout.text).toContain(FINGERPRINT);
+    expect(printout.cells).toEqual(numbered);
+  }
+  const shareWords = new Set(shares.join(" ").split(" "));
+  for (const word of PHRASE.split(" ").filter((w) => !shareWords.has(w))) expect(sheet.text).not.toMatch(new RegExp(`\\b${word}\\b`));
+  await expect(page.locator("#b5")).toBeVisible();
 });
 
 test("shares can be revisited, but not skipped past unchecked", async ({ page }) => {
