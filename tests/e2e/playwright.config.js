@@ -5,6 +5,7 @@ const path = require("node:path");
 const { defineConfig, devices } = require("@playwright/test");
 
 process.env.PKC_HTML ||= path.resolve(__dirname, "../../dist/private-key-convertor.html");
+process.env.PKC_DEMO_HTML ||= path.resolve(__dirname, "../../dist/demo.html");
 
 module.exports = defineConfig({
   testDir: ".",

@@ -1,7 +1,8 @@
 """Builds the release artifact: one self-contained HTML file that opens from
 disk (file://) with no network access.
 
-    python3 scripts/build.py                        # -> dist/private-key-convertor.html
+    python3 scripts/build.py                        # -> dist/private-key-convertor.html,
+                                                    #    dist/demo.html, dist/site/
     python3 scripts/build.py --verify-reproducible  # build twice, compare bytes
 
 Steps: compile pkc-wasm with the pinned toolchain (rust-toolchain.toml) and
@@ -38,7 +39,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 TOOLS = ROOT / "target" / "tools"
-OUTPUT = ROOT / "dist" / "private-key-convertor.html"
+DIST = ROOT / "dist"
+SITE = ROOT / "site"
+RELEASE_NAME = "private-key-convertor.html"
 
 APP_IMPORT = re.compile(r'^import init, \{ ([\w, ]+) \} from "\./pkg/pkc_wasm\.js";\n', re.M)
 GLUE_EXPORT_TAIL = "export { initSync, __wbg_init as default };\n"
@@ -149,7 +152,14 @@ def csp_hash(text):
     return "'sha256-" + base64.b64encode(hashlib.sha256(text.encode()).digest()).decode() + "'"
 
 
-def assemble(html, glue, app, wasm_bytes):
+DEMO_SWITCH = "let DEMO_MODE = false;\n"
+
+
+def assemble(html, glue, app, wasm_bytes, demo=False):
+    if app.count(DEMO_SWITCH) != 1:
+        fail("app.js should have exactly one DEMO_MODE switch")
+    if demo:
+        app = app.replace(DEMO_SWITCH, "let DEMO_MODE = true;\n")
     wasm_b64 = base64.b64encode(wasm_bytes).decode()
     script = (
         "\n"
@@ -177,11 +187,33 @@ def assemble(html, glue, app, wasm_bytes):
     return CSP_META.sub(lambda _: f'<meta http-equiv="Content-Security-Policy" content="{csp}">', html)
 
 
+def landing_page(html):
+    """The static landing page: no script at all, its stylesheet allowed by
+    hash, same as the tool."""
+    styles = STYLE_BLOCK.findall(html)
+    if len(styles) != 1:
+        fail("site/index.html should have exactly one <style> block")
+    if re.search(r"<script|\sstyle=\"", html):
+        fail("site/index.html must have no script and no style= attribute")
+    csp = f"default-src 'none'; style-src {csp_hash(styles[0])}; base-uri 'none'; form-action 'none'"
+    if len(CSP_META.findall(html)) != 1:
+        fail("site/index.html should have exactly one CSP meta tag")
+    return CSP_META.sub(lambda _: f'<meta http-equiv="Content-Security-Policy" content="{csp}">', html)
+
+
 def build(target_dir):
+    """Every output, as {path under dist/: bytes}: the release file, the
+    demo (the same page with DEMO_MODE on), and the website."""
     wasm = build_wasm(target_dir)
     glue, wasm_bytes = bindgen(ensure_wasm_bindgen(), wasm, target_dir / "bindgen")
-    html = assemble((WEB / "index.html").read_text(), glue, (WEB / "app.js").read_text(), wasm_bytes)
-    return html.encode()
+    page, app = (WEB / "index.html").read_text(), (WEB / "app.js").read_text()
+    release = assemble(page, glue, app, wasm_bytes).encode()
+    demo = assemble(page, glue, app, wasm_bytes, demo=True).encode()
+    outputs = {RELEASE_NAME: release, "demo.html": demo}
+    if (SITE / "index.html").exists():
+        outputs["site/index.html"] = landing_page((SITE / "index.html").read_text()).encode()
+        outputs["site/demo.html"] = demo
+    return outputs
 
 
 def main():
@@ -191,10 +223,11 @@ def main():
     args = parser.parse_args()
 
     first = build(ROOT / "target" / "html")
-    OUTPUT.parent.mkdir(exist_ok=True)
-    OUTPUT.write_bytes(first)
-    digest = hashlib.sha256(first).hexdigest()
-    print(f"{digest}  {OUTPUT.relative_to(ROOT)} ({len(first)} bytes)")
+    for name, data in first.items():
+        path = DIST / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        print(f"{hashlib.sha256(data).hexdigest()}  {path.relative_to(ROOT)} ({len(data)} bytes)")
 
     if args.verify_reproducible:
         clean = ROOT / "target" / "html-verify"
@@ -202,7 +235,8 @@ def main():
             shutil.rmtree(clean)
         second = build(clean)
         if second != first:
-            fail(f"not reproducible: second build is {hashlib.sha256(second).hexdigest()}")
+            changed = sorted(name for name in first if first[name] != second.get(name))
+            fail(f"not reproducible: {', '.join(changed)} differ on a clean second build")
         print("reproducible: a clean second build is byte-identical")
 
 

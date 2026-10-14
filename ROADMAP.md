@@ -33,8 +33,9 @@ Complete and tested, not yet released.
   checks against three other SLIP-39 tools), ten browser tests against the
   release file itself, and a check that no em dash appears in the repo.
 
-Not done yet: the independent review, LICENSE files, a public repository, a
-signed release, and a website.
+Not done yet: the independent review, a name, LICENSE files, a public
+repository, a signed release, and putting the website online (it is built,
+not hosted).
 
 ## Next
 
@@ -52,14 +53,19 @@ signed release, and a website.
 3. **Release v1.** LICENSE files; make the repository public; a release job
    that builds the HTML in the reference container and publishes it with
    `SHA256SUMS` and a signature; verification steps in the README.
-4. **A website.** Hosted from the public repository by CI (GitHub Pages; or
-   Cloudflare Pages if real HTTP security headers turn out to matter):
-   - *A demo build* (`build.py --demo`): the same page, but it only accepts
+4. **A website.** *Built (2026-10-15); hosting waits for the public
+   repository.* `scripts/build.py` writes it to `dist/site/` next to the
+   release file, CI builds it in the reference container and tests it, and
+   it will be served from GitHub Pages at `<user>.github.io/<repo>` (no
+   custom domain):
+   - *A demo build* (`dist/demo.html`): the same page, but it only accepts
      a few published sample phrases (offered as buttons) and refuses any
      other phrase with a pointer to the download. A permanent "demo, sample
      data only" banner, and "DEMO, NOT A REAL BACKUP" across every printed
      card. Accepting arbitrary or randomly generated phrases would invite
-     real use online, which the whole design argues against.
+     real use online, which the whole design argues against. The two sample
+     phrases are derived from fixed labels, and `pkc-core` flags them in the
+     real tool like any published test phrase.
    - *A landing page*: the problem, how splitting solves it, "try the demo",
      how to use it for real (download, verify, go offline), the comparisons
      below, and recovery without this tool. Same terminal style, no
@@ -67,8 +73,8 @@ signed release, and a website.
    - *An explainer animation*: a short SVG/CSS loop in the page's style. A
      phrase card splits into three; they go to three places; one burns and
      the other two still recover the phrase; a thief finds one and learns
-     nothing. Still frames for reduced motion. A commissioned hand-drawn
-     cartoon can replace it later.
+     nothing. With reduced motion the same story is told as text. A
+     commissioned hand-drawn cartoon can replace it later.
 5. **Outreach, with a stopping rule.** Put v1 in front of self-custody
    communities, EthStaker first because it is reachable. If after 3 to 6
    months nobody endorses or uses it, stop: something useful will have been

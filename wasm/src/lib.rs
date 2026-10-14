@@ -34,7 +34,7 @@ pub struct JsPhraseCheck {
 fn weakness_text(weakness: pkc_core::Weakness) -> &'static str {
     match weakness {
         pkc_core::Weakness::KnownTestPhrase => {
-            "This is a published BIP39 test phrase. Anyone can use it, so never keep funds on it."
+            "This is a published test or sample phrase. Anyone can use it, so never keep funds on it."
         }
         pkc_core::Weakness::RepeatedByte => {
             "This phrase follows a simple pattern no real wallet would generate. Anyone can guess it."

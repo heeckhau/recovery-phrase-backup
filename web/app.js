@@ -6,6 +6,24 @@ import init, { bip39_wordlist, phrase_check, slip39_combine, slip39_inspect, sli
 
 const $ = (id) => document.getElementById(id);
 
+// The online demo is this same page with DEMO_MODE on (scripts/build.py
+// writes it as dist/demo.html). It accepts only the sample phrases below,
+// which are public, and pkc-core flags them in the real tool too.
+let DEMO_MODE = false;
+const DEMO = {
+  phrases: {
+    12: "leopard involve vital powder diary motion comfort foil width later gasp year",
+    24: "embark same leave age drama review decrease outdoor lobster shrug worry champion mango flush govern vehicle vintage scene notice lesson history era extra rose",
+  },
+  // A 2-of-3 backup of the 12-word sample phrase.
+  shares: [
+    "envelope industry academic acid client wits timber ocean heat elevator minister laden eclipse tricycle prepare famous network desert adjust sled",
+    "envelope industry academic agency amuse midst location furl client large remember crisis traveler aviation carbon puny impulse scroll quarter staff",
+    "envelope industry academic always dive cluster evaluate papa woman downtown presence gather finance dragon skin cleanup ancestor chew intimate editor",
+  ],
+};
+const isDemoSample = (phrase) => Object.values(DEMO.phrases).includes(phrase);
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -170,6 +188,9 @@ function createWordGrid(container, kind, { count, numbers, onChange, onPasteCoun
     inputs() {
       return inputs;
     },
+    fill(words) {
+      fillFrom(0, words);
+    },
     complete() {
       return inputs.every((input) => list.set.has(input.value.trim().toLowerCase()));
     },
@@ -299,6 +320,10 @@ function createShareEntry(container, { fixedLength, onProgress }) {
   });
 
   return {
+    add(mnemonic) {
+      grid.fill(mnemonic.split(" "));
+      addButton.click();
+    },
     mnemonics: () => shares.map((s) => s.mnemonic),
     reset() {
       shares = [];
@@ -366,7 +391,11 @@ function b1Update() {
   const words = b1Grid.words();
   const filled = words.every((w) => w !== "");
   let check = null;
-  if (b1Grid.complete()) {
+  let sample = false;
+  if (b1Grid.complete() && DEMO_MODE && !isDemoSample(words.join(" "))) {
+    showError($("b1-error"), "This online demo only works with the sample phrases above. To back up your own phrase, download the tool and use it offline.");
+  } else if (b1Grid.complete()) {
+    sample = DEMO_MODE;
     try {
       check = phrase_check(words.join(" "), b1Bip39.value);
     } catch {
@@ -383,8 +412,12 @@ function b1Update() {
     $("b1-fingerprint").textContent = check.fingerprint;
     $("b1-eth").value = check.eth_address;
     $("b1-btc").value = check.btc_address;
-    for (const warning of check.warnings) warnings.appendChild(el("div", "banner warning mt-075", warning));
-    $("b1-ack-row").hidden = check.warnings.length === 0;
+    // In the demo every accepted phrase is a published sample; one note
+    // says so instead of the weak-phrase warnings.
+    const shown = sample ? [] : check.warnings;
+    for (const warning of shown) warnings.appendChild(el("div", "banner warning mt-075", warning));
+    $("b1-ack-row").hidden = shown.length === 0;
+    $("b1-demo-note").hidden = !sample;
     state.phrase = words.join(" ");
     state.fingerprint = check.fingerprint;
     state.shareWords = SHARE_WORDS_FOR_PHRASE[check.word_count];
@@ -394,7 +427,7 @@ function b1Update() {
     $("b1-ack-row").hidden = true;
     state.phrase = "";
   }
-  const needsAck = check && check.warnings.length > 0;
+  const needsAck = check && !sample && check.warnings.length > 0;
   $("b1-next").disabled = !check || (needsAck && !b1Ack.checked);
 }
 
@@ -788,6 +821,7 @@ window.addEventListener("afterprint", () => {
 // sheet holds those details. `withWords` false gives blank cards.
 function shareCard(share, withWords) {
   const card = el("div", "print-card");
+  if (DEMO_MODE) card.appendChild(el("p", "demo-mark", "DEMO, NOT A REAL BACKUP"));
   card.appendChild(el("h2", null, "Recovery share"));
   const fp = el("p", "meta", "Fingerprint: ");
   fp.appendChild(el("span", "fp", state.fingerprint));
@@ -824,6 +858,7 @@ function cardsPage(withWords, layout = "sheet") {
 
 function recoverySheet() {
   const page = el("div", "print-page");
+  if (DEMO_MODE) page.appendChild(el("p", "demo-mark", "DEMO, NOT A REAL BACKUP"));
   page.appendChild(el("h1", null, "How to recover this wallet"));
   const fp = el("p", "meta", "Fingerprint of this backup: ");
   fp.appendChild(el("span", "fp", state.fingerprint));
@@ -883,6 +918,10 @@ $("r1-recover").addEventListener("click", () => {
     recovered = slip39_combine(r1Entry.mnemonics(), $("r1-passphrase").value, $("r1-bip39").value);
   } catch (err) {
     showError($("r1-error"), String(err));
+    return;
+  }
+  if (DEMO_MODE && !(recovered.words && isDemoSample(recovered.words))) {
+    showError($("r1-error"), "This online demo only recovers backups of its sample phrases. To recover your own, download the tool and use it offline.");
     return;
   }
   showStep(screens.recover, "r2", "Step 2 of 2 · Result");
@@ -954,11 +993,34 @@ $("clear-all").addEventListener("click", () => {
 window.addEventListener("pagehide", wipeFields);
 
 function updateOnlineBanner() {
-  $("online-banner").hidden = !navigator.onLine;
+  $("online-banner").hidden = DEMO_MODE || !navigator.onLine;
 }
 window.addEventListener("online", updateOnlineBanner);
 window.addEventListener("offline", updateOnlineBanner);
 updateOnlineBanner();
+
+// ---- the online demo ----
+
+function applyDemo() {
+  document.title += " (demo)";
+  $("demo-banner").hidden = false;
+  $("b1-samples").hidden = false;
+  $("r1-samples").hidden = false;
+  updateOnlineBanner();
+}
+
+for (const button of document.querySelectorAll("[data-sample]")) {
+  button.addEventListener("click", () => {
+    const words = DEMO.phrases[button.dataset.sample].split(" ");
+    b1Count.value = String(words.length);
+    b1Grid.setCount(words.length);
+    b1Grid.fill(words);
+  });
+}
+
+for (const button of document.querySelectorAll("[data-share]")) {
+  button.addEventListener("click", () => r1Entry.add(DEMO.shares[Number(button.dataset.share)]));
+}
 
 // ---- start ----
 
@@ -984,6 +1046,8 @@ init()
     $("start-recover").disabled = false;
 
     // BEGIN dev-only (scripts/build.py strips this from the release file)
+    // ?demo previews the demo build's behaviour on the development page.
+    if (new URLSearchParams(window.location.search).has("demo")) DEMO_MODE = true;
     // ?test starts a backup of the canonical all-zero test phrase, for quick
     // manual/visual testing. Never a real phrase: it's the most famous test
     // vector there is, so it demonstrably holds no funds.
@@ -996,6 +1060,7 @@ init()
       b1Update();
     }
     // END dev-only
+    if (DEMO_MODE) applyDemo();
   })
   .catch((err) => {
     showError($("load-error"), `Could not load the WebAssembly module: ${err}`);

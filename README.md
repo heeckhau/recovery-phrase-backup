@@ -127,7 +127,7 @@ first use.
 | What | How |
 | --- | --- |
 | Rust tests and lints | `cargo test --workspace` and `cargo clippy --workspace --all-targets -- -D warnings` |
-| Release file (this machine) | `python3 scripts/build.py` writes `dist/private-key-convertor.html` |
+| Release file, demo and website (this machine) | `python3 scripts/build.py` writes `dist/private-key-convertor.html`, `dist/demo.html` and `dist/site/` |
 | Release file (reference) | `scripts/build-reproducible.sh` (Docker); `--verify-reproducible` builds twice and compares |
 | Browser tests | build the release file, then `cd tests/e2e && npm ci && npx playwright install chromium && npx playwright test` |
 | Cross-tool suite | `scripts/interop/run.sh --check-only` (nix) |

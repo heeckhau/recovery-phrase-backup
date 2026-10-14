@@ -2,7 +2,7 @@
 # The reference release build: scripts/build.py inside one pinned Linux
 # x86-64 container, so anyone with Docker gets the same bytes as CI.
 #
-#   scripts/build-reproducible.sh                        # -> dist/private-key-convertor.html
+#   scripts/build-reproducible.sh                        # -> dist/ (release file, demo, site)
 #   scripts/build-reproducible.sh --verify-reproducible  # build twice, compare
 #
 # Why a container: the wasm is byte-identical across builds on one platform,
@@ -25,7 +25,8 @@ docker run --rm --platform linux/amd64 \
     (cd /src && tar --exclude=./target --exclude=./dist --exclude=./web/pkg --exclude=./.git -cf - .) | tar -xf - -C /work
     cd /work
     python3 -I scripts/build.py "$@"
-    cp dist/private-key-convertor.html /out/
+    cp -r dist/. /out/
   ' build "$@"
 
-if command -v sha256sum >/dev/null; then sha256sum dist/private-key-convertor.html; else shasum -a 256 dist/private-key-convertor.html; fi
+files=$(find dist -type f -name '*.html' | sort)
+if command -v sha256sum >/dev/null; then sha256sum $files; else shasum -a 256 $files; fi

@@ -36,7 +36,8 @@ pub struct Addresses {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Weakness {
     /// One of the official BIP39 test vectors (trezor/python-mnemonic
-    /// vectors.json), published in every wallet's test suite.
+    /// vectors.json), published in every wallet's test suite, or one of the
+    /// sample phrases this project's online demo publishes.
     KnownTestPhrase,
     /// The entropy is a single byte repeated ("abandon … about",
     /// "zoo … wrong", "legal winner …"), never the output of a real
@@ -62,6 +63,14 @@ const KNOWN_TEST_ENTROPY: [&str; 12] = [
     "f30f8c1da665478f49b001d94c5fc452",
     "c10ec20dc3cd9f652c7fac2f1230f7a3c828389a14392f05",
     "f585c11aec520db57dd353c69554b21a89b20fb0650966fa0a9d6f74fd989d8f",
+];
+
+/// Entropy of the online demo's sample phrases: SHA-256 of
+/// "Recovery Phrase Backup demo sample 12" / "... 24", truncated to 16 and
+/// 32 bytes. They are public on the website, so the real tool flags them.
+pub const DEMO_SAMPLE_ENTROPY: [&str; 2] = [
+    "804ec7d45493d5208b8ad3facfa980ff",
+    "4857ddfb826423710e4ce98338ebf7130872b399478ff438125bc036c2989445",
 ];
 
 const HARDENED: bool = true;
@@ -112,7 +121,8 @@ impl Phrase {
     pub fn weaknesses(&self) -> Vec<Weakness> {
         let entropy = self.entropy();
         let mut found = Vec::new();
-        if KNOWN_TEST_ENTROPY.contains(&hex::encode(entropy.as_slice()).as_str()) {
+        let hex_entropy = hex::encode(entropy.as_slice());
+        if KNOWN_TEST_ENTROPY.contains(&hex_entropy.as_str()) || DEMO_SAMPLE_ENTROPY.contains(&hex_entropy.as_str()) {
             found.push(Weakness::KnownTestPhrase);
         }
         if entropy.iter().all(|&b| b == entropy[0]) {
@@ -224,6 +234,15 @@ mod tests {
         ])
         .unwrap();
         assert!(random_looking.weaknesses().is_empty());
+    }
+
+    #[test]
+    fn the_demo_sample_phrases_are_flagged() {
+        let twelve = "leopard involve vital powder diary motion comfort foil width later gasp year";
+        let twenty_four = "embark same leave age drama review decrease outdoor lobster shrug worry champion mango flush govern vehicle vintage scene notice lesson history era extra rose";
+        for phrase in [twelve, twenty_four] {
+            assert_eq!(Phrase::parse(phrase).unwrap().weaknesses(), vec![Weakness::KnownTestPhrase]);
+        }
     }
 
     #[test]

@@ -240,6 +240,9 @@
   .choice strong { font-size: 0.95rem; }
   .choice .sub { display: block; color: var(--muted); font-size: 0.82rem; margin: 0.2rem 0 0 1.6rem; }
   .ack { display: flex; gap: 0.5rem; align-items: center; font-weight: 500; }
+  .banner a { color: inherit; }
+  .sample-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.75rem 0; font-size: 0.85rem; }
+  .sample-row button { width: auto; margin: 0; padding: 0.35rem 0.7rem; }
   .button-row { display: flex; gap: 0.75rem; }
   .button-row button { flex: 1; margin-top: 1.25rem; padding: 0.65rem; font-size: 0.95rem; }
   .link-button {
@@ -299,6 +302,7 @@
   .print-page .print-card .words .n { display: inline-block; width: 2.2em; color: #555; }
   .print-page .print-card .instructions { font-size: 8.5pt; line-height: 1.35; margin: 0; }
   .print-cut { font-size: 8pt; color: #555; margin: 0 0 8pt; }
+  .print-page .demo-mark { margin: 0 0 6pt; padding: 3pt 6pt; border: 2px solid #000; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12pt; font-weight: bold; letter-spacing: 0.1em; text-align: center; }
   .print-page h1 { font-size: 18pt; margin: 0 0 4pt; }
   .print-page .meta { font-size: 12pt; margin: 2pt 0; }
   .print-page .fp { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15pt; font-weight: bold; letter-spacing: 0.12em; }
@@ -322,6 +326,7 @@
     <button type="button" id="clear-all" class="btn-small" title="Erases every word, share and passphrase typed or shown on this page, and goes back to the start. Nothing is ever saved, so the page is then as if freshly opened.">Clear all</button>
   </div>
   <p class="subtitle">Split a wallet's recovery phrase into shares with SLIP-39, an open standard. An agreed number of shares gives it back; fewer reveal nothing.</p>
+  <div class="banner warning" id="demo-banner" hidden><strong>Demo with sample data only.</strong> It refuses real phrases. To back up your own, <a href="index.html#download">download the tool</a> and use it offline.</div>
   <div class="banner warning" id="online-banner" hidden>You're online. For a real phrase, disconnect from the network first. This page never sends anything, but other software in your browser can: a malicious browser extension, for example, can read what you type here and send your phrase away. Offline, it has nowhere to send it. A fresh browser profile without extensions is safer still.</div>
 
   <section class="card" id="home">
@@ -339,6 +344,11 @@
     <div class="step" id="b1">
       <h2>Your recovery phrase</h2>
       <p>Type the words your wallet gave you, one per box. Pasting the whole phrase into the first box also works.</p>
+      <div class="sample-row" id="b1-samples" hidden>
+        <span>Try a sample phrase:</span>
+        <button type="button" class="btn-secondary" data-sample="12">12 words</button>
+        <button type="button" class="btn-secondary" data-sample="24">24 words</button>
+      </div>
       <label for="b1-count">Number of words</label>
       <select id="b1-count" class="inline"></select>
       <div class="word-grid" id="b1-grid"></div>
@@ -361,6 +371,7 @@
         <input type="text" id="b1-bip39" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
         <p class="notice mt-035">Only changes the addresses above. It is <strong>not</strong> part of the backup: if your wallet uses one, back it up separately.</p>
         <div id="b1-warnings"></div>
+        <p class="notice mt-075" id="b1-demo-note" hidden>A sample phrase: it is public, so never use it for real funds.</p>
         <label class="ack" id="b1-ack-row" hidden><input type="checkbox" id="b1-ack"> I understand, back it up anyway</label>
       </div>
       <div class="button-row">
@@ -471,6 +482,12 @@
     <div class="step" id="r1">
       <h2>Your shares</h2>
       <p>Type one share at a time. Shares from any SLIP-39 tool work.</p>
+      <div class="sample-row" id="r1-samples" hidden>
+        <span>Try sample shares (any 2 of 3):</span>
+        <button type="button" class="btn-secondary" data-share="0">Share 1</button>
+        <button type="button" class="btn-secondary" data-share="1">Share 2</button>
+        <button type="button" class="btn-secondary" data-share="2">Share 3</button>
+      </div>
       <div id="r1-entry"></div>
       <label for="r1-bip39">Wallet passphrase ("25th word"), only if your wallet uses one</label>
       <input type="text" id="r1-bip39" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
