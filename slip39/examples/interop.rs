@@ -6,6 +6,8 @@
 //    "passphrase":..,"iteration_exponent":..}      -> {"mnemonics":[[..],..]}
 //   {"op":"combine","mnemonics":[..],"passphrase":..} -> {"secret_hex":..}
 //   {"op":"inspect","mnemonic":..}                   -> {"extendable":..,"iteration_exponent":..,..}
+//   {"op":"split_phrase","phrase":..,...as split}    -> {"mnemonics":[[..],..]}   (BIP39 phrase in)
+//   {"op":"combine_phrase","mnemonics":[..],"passphrase":..} -> {"phrase":..,"fingerprint":..}
 //
 // Any library error comes back as {"error": "..."}.
 use std::io::{BufRead, Write};
@@ -33,8 +35,12 @@ fn u8_field(req: &Value, key: &str) -> Result<u8, String> {
 
 fn handle(req: &Value) -> Result<Value, String> {
     match str_field(req, "op")? {
-        "split" => {
-            let secret = hex_decode(str_field(req, "secret_hex")?)?;
+        op @ ("split" | "split_phrase") => {
+            let secret = if op == "split_phrase" {
+                pkc_core::Phrase::parse(str_field(req, "phrase")?).map_err(|e| e.to_string())?.entropy().to_vec()
+            } else {
+                hex_decode(str_field(req, "secret_hex")?)?
+            };
             let groups: Vec<pkc_slip39::GroupSpec> = req["groups"]
                 .as_array()
                 .ok_or("missing groups")?
@@ -60,6 +66,13 @@ fn handle(req: &Value) -> Result<Value, String> {
                 req["mnemonics"].as_array().ok_or("missing mnemonics")?.iter().filter_map(Value::as_str).collect();
             let secret = pkc_slip39::combine(&mnemonics, str_field(req, "passphrase")?).map_err(|e| e.to_string())?;
             Ok(json!({ "secret_hex": hex_encode(&secret) }))
+        }
+        "combine_phrase" => {
+            let mnemonics: Vec<&str> =
+                req["mnemonics"].as_array().ok_or("missing mnemonics")?.iter().filter_map(Value::as_str).collect();
+            let secret = pkc_slip39::combine(&mnemonics, str_field(req, "passphrase")?).map_err(|e| e.to_string())?;
+            let phrase = pkc_core::Phrase::from_entropy(&secret).map_err(|e| e.to_string())?;
+            Ok(json!({ "phrase": phrase.to_words().as_str(), "fingerprint": hex_encode(&phrase.fingerprint()) }))
         }
         "inspect" => {
             let info = pkc_slip39::inspect(str_field(req, "mnemonic")?).map_err(|e| e.to_string())?;

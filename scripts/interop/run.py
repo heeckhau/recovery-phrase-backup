@@ -253,6 +253,9 @@ def check_case(c, tool, case, ours, combine_theirs, generate_ours_spec):
     for i, s in enumerate(sets):
         r = ours(op="combine", mnemonics=s, passphrase=passphrase)
         c.expect(r.get("secret_hex") == secret, f"{name}: ours recovers oracle set {i}: {r}")
+        if "bip39_phrase" in case:
+            r = ours(op="combine_phrase", mnemonics=s, passphrase=passphrase)
+            c.expect(r.get("phrase") == case["bip39_phrase"], f"{name}: ours recovers the original phrase from oracle set {i}: {r}")
     r = ours(op="combine", mnemonics=sets[0], passphrase=wrong)
     c.expect(r.get("secret_hex") == wrong_secret, f"{name}: wrong passphrase gives the same bytes in ours and the oracle: {r} vs {wrong_secret}")
     c.expect("error" in ours(op="combine", mnemonics=tampered_set, passphrase=passphrase), f"{name}: ours rejects the tampered share")
@@ -261,8 +264,12 @@ def check_case(c, tool, case, ours, combine_theirs, generate_ours_spec):
         c.expect(r.get("secret_hex") == secret, f"{name}: ours ignores surplus shares: {r}")
     info = ours(op="inspect", mnemonic=mnemonics[0][0])
 
-    # ours -> theirs
-    split = ours(op="split", **generate_ours_spec)
+    # ours -> theirs (for phrase cases, split from the words themselves)
+    if "bip39_phrase" in case:
+        spec = {k: v for k, v in generate_ours_spec.items() if k != "secret_hex"}
+        split = ours(op="split_phrase", phrase=case["bip39_phrase"], **spec)
+    else:
+        split = ours(op="split", **generate_ours_spec)
     if "error" in split:
         c.expect(False, f"{name}: ours splits: {split}")
     else:

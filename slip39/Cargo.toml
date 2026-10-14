@@ -18,5 +18,8 @@ subtle = { version = "2.6", default-features = false }
 getrandom = { version = "0.4", features = ["wasm_js"] }
 
 [dev-dependencies]
+# Only for the cross-tool suite's phrase-level checks (tests/interop.rs and
+# examples/interop.rs); the library itself stays independent of pkc-core.
+pkc-core = { path = "../core" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
