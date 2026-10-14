@@ -32,6 +32,10 @@
     --accent: #2454ff;
     --error-bg: #fdecea;
     --error-text: #7a1f14;
+    --warn-bg: #fff4d6;
+    --warn-text: #6b4a00;
+    --ok-bg: #e5f6ea;
+    --ok-text: #14532d;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -43,9 +47,15 @@
       --accent: #6d93ff;
       --error-bg: #3a1a17;
       --error-text: #ff9f92;
+      --warn-bg: #3a3017;
+      --warn-text: #ffd479;
+      --ok-bg: #16301f;
+      --ok-text: #8fe0a8;
     }
   }
   * { box-sizing: border-box; }
+  /* `hidden` must win over any display rule (e.g. .ack's flex). */
+  [hidden] { display: none !important; }
   body {
     margin: 0;
     min-height: 100vh;
@@ -102,30 +112,6 @@
     padding: 0.5rem 0.6rem;
     letter-spacing: -0.01em;
   }
-  .tabs {
-    display: flex;
-    gap: 1.25rem;
-    margin-top: 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .tab-button {
-    margin: 0;
-    width: auto;
-    padding: 0 0 0.6rem;
-    border: none;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    background: none;
-    color: var(--muted);
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-  .tab-button[aria-selected="true"] {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-  .tab-panel { padding-top: 1.25rem; }
-  .tab-panel[hidden] { display: none; }
   button {
     margin-top: 1.25rem;
     width: 100%;
@@ -163,32 +149,20 @@
     color: var(--muted);
     line-height: 1.5;
   }
-  .page-tabs {
-    margin-top: 0;
-    font-size: 1rem;
-  }
   select.inline {
     width: auto;
     display: inline-block;
   }
-  .group-row, .mnemonic-row {
+  .group-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
   }
-  .mnemonic-row { align-items: flex-start; }
   .group-row span { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
-  .group-row .field-label, .mnemonic-row .field-label {
+  .group-row .field-label {
     width: 100%;
     margin-bottom: 0.25rem;
-  }
-  .mnemonic-row textarea { flex: 1; }
-  .share-badge {
-    margin-top: 0.3rem;
-    font-size: 0.78rem;
-    color: var(--accent);
-    min-height: 1.1em;
   }
   .btn-remove {
     margin: 0;
@@ -216,171 +190,348 @@
     color: var(--muted);
     margin-top: 1.25rem;
   }
-  .results {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--border);
-  }
-  .results[hidden] { display: none; }
-  .group-result { margin-bottom: 1.25rem; }
-  .group-result:last-child { margin-bottom: 0; }
-  .group-result-title {
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-  }
-  /* Spacing tweaks as classes, not style= attributes, so the release
-     build's CSP can forbid inline styles. !important keeps the precedence
-     the inline styles had. */
-  .phrase-check {
-    margin-top: 0.75rem;
-    padding: 0.25rem 0.75rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-  }
-  .phrase-check[hidden] { display: none; }
   .mt-0 { margin-top: 0 !important; }
   .mt-035 { margin-top: 0.35rem !important; }
   .mt-075 { margin-top: 0.75rem !important; }
   .mt-1 { margin-top: 1rem !important; }
+  /* ---- wizard ---- */
+  .top { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+  .btn-small {
+    margin: 0;
+    width: auto;
+    padding: 0.35rem 0.7rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  .banner {
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+    .warning { background: var(--warn-bg); color: var(--warn-text); }
+  .success { background: var(--ok-bg); color: var(--ok-text); }
+  .home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .home-actions button { margin: 0; padding: 1.1rem; font-size: 1.05rem; }
+  .home-actions .sub { display: block; font-weight: 400; font-size: 0.8rem; opacity: 0.85; margin-top: 0.3rem; }
+  .progress {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.35rem;
+  }
+  .step h2 { font-size: 1.15rem; margin: 0 0 0.6rem; }
+  .step p { font-size: 0.9rem; line-height: 1.5; margin: 0.5rem 0; }
+  .word-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem 0.75rem; margin-top: 0.75rem; }
+  @media (max-width: 540px) { .word-grid { grid-template-columns: repeat(2, 1fr); } }
+  .word-cell { display: flex; align-items: center; gap: 0.35rem; }
+  .word-cell .num {
+    width: 1.6rem;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .word-cell input { padding: 0.4rem 0.5rem; font-size: 0.9rem; }
+  .word-cell input.valid { border-color: var(--ok-text); }
+  .word-cell input.invalid { border-color: var(--error-text); background: var(--error-bg); }
+  .word-cell .word { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1rem; font-weight: 600; }
+  .check-card { margin-top: 1rem; padding: 0.75rem 1rem 1rem; border: 1px solid var(--border); border-radius: 8px; }
+  .fingerprint { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: 0.08em; }
+  .choice {
+    display: block;
+    margin: 0.5rem 0 0;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .choice strong { font-size: 0.95rem; }
+  .choice .sub { display: block; color: var(--muted); font-size: 0.82rem; margin: 0.2rem 0 0 1.6rem; }
+  .ack { display: flex; gap: 0.5rem; align-items: center; font-weight: 500; }
+  .button-row { display: flex; gap: 0.75rem; }
+  .button-row button { flex: 1; margin-top: 1.25rem; padding: 0.65rem; font-size: 0.95rem; }
+  .link-button {
+    width: auto;
+    margin-top: 0.75rem;
+    padding: 0;
+    background: none;
+    color: var(--muted);
+    text-decoration: underline;
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+  .collected { margin: 0.75rem 0 0; padding-left: 1.2rem; font-size: 0.85rem; }
+  dialog {
+    max-width: 460px;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+  dialog h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+  dialog p { font-size: 0.88rem; line-height: 1.5; }
+
+  /* ---- print: only #print-area, one card or sheet at a time ---- */
+  #print-area { display: none; }
+  @media print {
+    @page { margin: 16mm; }
+    body { display: block; padding: 0; background: #fff; color: #000; min-height: 0; }
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block; }
+  }
+  .print-page { font-family: Georgia, "Times New Roman", serif; color: #000; }
+  .print-page h1 { font-size: 18pt; margin: 0 0 4pt; }
+  .print-page .meta { font-size: 12pt; margin: 2pt 0; }
+  .print-page .fp { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15pt; font-weight: bold; letter-spacing: 0.12em; }
+  .print-page .words { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4pt 20pt; margin: 16pt 0; }
+  .print-page .words div {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13pt;
+    min-height: 24pt;
+    padding: 4pt 0 2pt;
+    border-bottom: 1px solid #888;
+  }
+  .print-page .words .n { display: inline-block; width: 2.4em; color: #555; }
+  .print-page .instructions { font-size: 10.5pt; line-height: 1.45; }
+  .print-page .instructions li { margin-bottom: 3pt; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Recovery Phrase Backup</h1>
-  <p class="subtitle">Split a BIP39 recovery phrase into SLIP-39 shares — any threshold of them gives the phrase back, fewer reveal nothing — and recover it again.</p>
-
-  <div class="tabs page-tabs" id="page-tabs" role="tablist">
-    <button type="button" class="tab-button" id="tab-split" role="tab" aria-selected="true" aria-controls="panel-split">Back up a phrase</button>
-    <button type="button" class="tab-button" id="tab-combine" role="tab" aria-selected="false" aria-controls="panel-combine">Recover a phrase</button>
+  <div class="top">
+    <h1>Recovery Phrase Backup</h1>
+    <button type="button" id="clear-all" class="btn-small">Clear all</button>
   </div>
+  <p class="subtitle">Split a wallet's recovery phrase into shares — any agreed number of them gives it back, fewer reveal nothing — using SLIP-39, an open standard.</p>
+  <div class="banner warning" id="online-banner" hidden>You're online. For a real phrase, disconnect from the network first: this page never sends anything, but an offline machine is the safe default.</div>
 
-  <div class="card">
-    <div class="tab-panel" id="panel-split" role="tabpanel" aria-labelledby="tab-split">
-      <form id="split-form">
-        <label for="split-phrase" class="mt-0">Recovery phrase (12, 15, 18, 21 or 24 words)</label>
-        <textarea id="split-phrase" rows="3" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="the words your wallet showed you"></textarea>
+  <section class="card" id="home">
+    <div class="home-actions">
+      <button type="button" id="start-backup" disabled>Back up a phrase<span class="sub">Split it into shares</span></button>
+      <button type="button" id="start-recover" disabled>Recover a phrase<span class="sub">From your shares</span></button>
+    </div>
+    <div class="error" id="load-error"></div>
+    <p class="notice">Everything runs inside this one file, in your browser. Nothing is sent anywhere or saved — close the page and it's gone.</p>
+  </section>
 
-        <div class="phrase-check" id="split-check" hidden>
-          <div class="field">
-            <div class="field-label" id="split-check-title">Fingerprint</div>
-            <input type="text" readonly spellcheck="false" id="split-out-fingerprint" class="mono-output">
-          </div>
-          <div class="field">
-            <div class="field-label">First Ethereum address</div>
-            <input type="text" readonly spellcheck="false" id="split-out-eth" class="mono-output">
-          </div>
-          <div class="field">
-            <div class="field-label">First Bitcoin address (native SegWit)</div>
-            <input type="text" readonly spellcheck="false" id="split-out-btc" class="mono-output">
-          </div>
-          <p class="notice mt-035">Check these are your wallet's addresses before you split. They are shown here only, never on a share: the fingerprint is what goes on every share.</p>
+  <section class="card wizard" id="backup" hidden>
+    <div class="progress" id="backup-progress"></div>
+
+    <div class="step" id="b1">
+      <h2>Your recovery phrase</h2>
+      <p>Type the words your wallet gave you, one per box. Pasting the whole phrase into the first box also works.</p>
+      <label for="b1-count">Number of words</label>
+      <select id="b1-count" class="inline"></select>
+      <div class="word-grid" id="b1-grid"></div>
+      <div class="error" id="b1-error"></div>
+      <div class="check-card" id="b1-check" hidden>
+        <div class="field mt-075">
+          <div class="field-label">Fingerprint — will go on every share</div>
+          <div class="fingerprint" id="b1-fingerprint"></div>
         </div>
+        <div class="field">
+          <div class="field-label">First Ethereum address</div>
+          <input type="text" readonly spellcheck="false" id="b1-eth" class="mono-output">
+        </div>
+        <div class="field">
+          <div class="field-label">First Bitcoin address (native SegWit)</div>
+          <input type="text" readonly spellcheck="false" id="b1-btc" class="mono-output">
+        </div>
+        <p class="notice mt-035">Is this your wallet? These addresses are shown here only — never on a share.</p>
+        <label for="b1-bip39">Wallet passphrase ("25th word"), only if your wallet uses one</label>
+        <input type="text" id="b1-bip39" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
+        <p class="notice mt-035">Only changes the addresses above. It is <strong>not</strong> part of the backup: if your wallet uses one, back it up separately.</p>
+        <div id="b1-warnings"></div>
+        <label class="ack" id="b1-ack-row" hidden><input type="checkbox" id="b1-ack"> I understand — back it up anyway</label>
+      </div>
+      <div class="button-row">
+        <button type="button" class="btn-secondary" data-home>Cancel</button>
+        <button type="button" id="b1-next" disabled>Continue</button>
+      </div>
+    </div>
 
-        <label for="split-bip39-passphrase">BIP39 passphrase ("25th word"), if your wallet uses one</label>
-        <input type="text" id="split-bip39-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
-        <p class="notice mt-035">Only used to show your wallet's real addresses above. It is <strong>not</strong> part of the backup: if your wallet uses one, back it up separately.</p>
-
+    <div class="step" id="b2" hidden>
+      <h2>How should it be split?</h2>
+      <label class="choice"><input type="radio" name="scheme" value="2of3" checked> <strong>2 of 3</strong><span class="sub">Any 2 shares give your phrase back. Losing 1 is fine; finding 1 reveals nothing.</span></label>
+      <label class="choice"><input type="radio" name="scheme" value="3of5"> <strong>3 of 5</strong><span class="sub">Any 3 of 5. Losing 2 is fine.</span></label>
+      <label class="choice"><input type="radio" name="scheme" value="custom"> <strong>Custom</strong><span class="sub">Your own numbers, or groups — e.g. 2 of 3 places, each needing 2 of 3 people.</span></label>
+      <div id="custom-scheme" hidden>
         <label>Groups</label>
         <div id="group-rows"></div>
         <button type="button" id="add-group" class="btn-secondary">+ Add group</button>
-
         <div class="field mt-1" id="group-threshold-field" hidden>
           <label for="group-threshold" class="mt-0">Groups required to recover</label>
           <select id="group-threshold" class="inline"></select>
         </div>
-
-        <details class="advanced">
-          <summary>Advanced</summary>
-          <div class="field mt-075">
-            <label for="split-passphrase" class="mt-0">SLIP-39 passphrase</label>
-            <input type="text" id="split-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank (recommended)">
-            <p class="notice mt-035">Not the BIP39 passphrase above. It encrypts the shares, and recovery <strong>never reports a wrong one</strong>: it silently gives back a different phrase. Whoever recovers will need it exactly — most backups should leave it blank and rely on the threshold.</p>
-          </div>
-          <div class="field mt-075">
-            <label for="iteration-exponent" class="mt-0">Iteration exponent</label>
-            <select id="iteration-exponent" class="inline"></select>
-            <p class="notice mt-035">PBKDF2 cost is 2500 &times; 2^exponent per round. 1 matches other SLIP-39 tools; only matters with a SLIP-39 passphrase.</p>
-          </div>
-        </details>
-
-        <button type="submit">Split</button>
-      </form>
-
-      <div class="error" id="split-error"></div>
-
-      <div class="results" id="split-results" hidden></div>
+      </div>
+      <div id="b2-guard"></div>
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <div class="field mt-075">
+          <label for="split-passphrase" class="mt-0">SLIP-39 passphrase</label>
+          <input type="text" id="split-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank (recommended)">
+          <p class="notice mt-035">Not the wallet passphrase. It encrypts the shares, and recovery <strong>never reports a wrong one</strong>: it silently gives back a different phrase. Whoever recovers will need it exactly — most backups should leave it blank and rely on the threshold.</p>
+        </div>
+        <div class="field mt-075">
+          <label for="iteration-exponent" class="mt-0">Iteration exponent</label>
+          <select id="iteration-exponent" class="inline"></select>
+          <p class="notice mt-035">PBKDF2 cost is 2500 &times; 2^exponent per round. 1 matches other SLIP-39 tools; it only matters with a SLIP-39 passphrase.</p>
+        </div>
+      </details>
+      <div class="error" id="b2-error"></div>
+      <div class="button-row">
+        <button type="button" class="btn-secondary" id="b2-back">Back</button>
+        <button type="button" id="b2-next">Continue</button>
+      </div>
     </div>
 
-    <div class="tab-panel" id="panel-combine" role="tabpanel" aria-labelledby="tab-combine" hidden>
-      <form id="combine-form">
-        <label class="mt-0">Shares</label>
-        <div id="mnemonic-rows"></div>
-        <button type="button" id="add-mnemonic" class="btn-secondary">+ Add share</button>
+    <div class="step" id="b3" hidden>
+      <h2>Before you start</h2>
+      <div id="b3-summary"></div>
+      <p>You'll see one share at a time. For each: write it down (or print it), then type back three of its words to check your copy.</p>
+      <p>Keep the shares in different places, and make sure someone you trust knows they exist and how to recover — this page can print a "how to recover" sheet at the end.</p>
+      <div class="button-row">
+        <button type="button" class="btn-secondary" id="b3-back">Back</button>
+        <button type="button" id="b3-next">Make the shares</button>
+      </div>
+    </div>
 
-        <label for="combine-bip39-passphrase">BIP39 passphrase ("25th word"), if your wallet uses one</label>
-        <input type="text" id="combine-bip39-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
-        <p class="notice mt-035">Only used to show your wallet's real addresses below; the shares don't contain it.</p>
+    <div class="step" id="b4" hidden>
+      <h2 id="b4-title"></h2>
+      <p id="b4-sub"></p>
+      <p>Fingerprint: <span class="fingerprint" id="b4-fingerprint"></span></p>
+      <div id="b4-show">
+        <div class="word-grid" id="b4-words"></div>
+        <div class="button-row">
+          <button type="button" class="btn-secondary" id="b4-print-blank">Print a blank card</button>
+          <button type="button" class="btn-secondary" id="b4-print">Print this share</button>
+        </div>
+        <button type="button" id="b4-written">I've written it down</button>
+      </div>
+      <div id="b4-verify" hidden>
+        <p>Check your copy: type these words from what you wrote down.</p>
+        <div class="word-grid" id="b4-check-grid"></div>
+        <div class="error" id="b4-error"></div>
+        <div class="button-row">
+          <button type="button" class="btn-secondary" id="b4-show-again">Show the share again</button>
+          <button type="button" id="b4-check">Check</button>
+        </div>
+      </div>
+    </div>
 
-        <details class="advanced">
-          <summary>Advanced</summary>
-          <div class="field mt-075">
-            <label for="combine-passphrase" class="mt-0">SLIP-39 passphrase</label>
-            <input type="text" id="combine-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none was set">
-          </div>
-        </details>
+    <div class="step" id="b5" hidden>
+      <h2>Test your recovery</h2>
+      <p id="b5-intro"></p>
+      <div id="b5-entry"></div>
+      <div class="banner" id="b5-result" hidden></div>
+      <button type="button" id="b5-next" hidden>Continue</button>
+      <button type="button" class="link-button" id="b5-skip">Skip for now — I'll test later</button>
+    </div>
 
-        <button type="submit">Recover</button>
-      </form>
+    <div class="step" id="b6" hidden>
+      <h2>Done</h2>
+      <p>Your shares are ready. Fingerprint: <span class="fingerprint" id="b6-fingerprint"></span></p>
+      <h2 class="mt-1">What about the original?</h2>
+      <p>Your phrase now exists twice: as these shares, and as the copy you started from. The shares protect you only as far as that original lets them — lose it and nothing is lost, but whoever finds it has your whole wallet.</p>
+      <p>Once you've tested recovery, you can destroy it, or keep it somewhere as safe as you'd keep any full backup. Your call — the shares work either way.</p>
+      <button type="button" class="btn-secondary" id="b6-print-sheet">Print a "How to recover" sheet (no secrets on it)</button>
+      <button type="button" id="b6-finish">Finish and clear this page</button>
+    </div>
+  </section>
 
-      <div class="error" id="combine-error"></div>
+  <section class="card wizard" id="recover" hidden>
+    <div class="progress" id="recover-progress"></div>
 
-      <div class="results" id="combine-results" hidden>
-        <div id="combine-phrase-block">
-          <div class="field">
-            <div class="field-label" id="combine-words-label">Recovered phrase</div>
-            <textarea readonly spellcheck="false" id="combine-out-words" class="mono-output" rows="3"></textarea>
-          </div>
-          <div class="field">
-            <div class="field-label">Fingerprint — must match the one on your shares</div>
-            <input type="text" readonly spellcheck="false" id="combine-out-fingerprint" class="mono-output">
-          </div>
-          <div class="field">
+    <div class="step" id="r1">
+      <h2>Your shares</h2>
+      <p>Type one share at a time. Shares from any SLIP-39 tool work.</p>
+      <div id="r1-entry"></div>
+      <label for="r1-bip39">Wallet passphrase ("25th word"), only if your wallet uses one</label>
+      <input type="text" id="r1-bip39" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
+      <p class="notice mt-035">Only used to show your wallet's addresses below; the shares don't contain it.</p>
+      <details class="advanced">
+        <summary>Advanced: SLIP-39 passphrase</summary>
+        <div class="field mt-075">
+          <label for="r1-passphrase" class="mt-0">SLIP-39 passphrase</label>
+          <input type="text" id="r1-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none was set">
+        </div>
+      </details>
+      <div class="error" id="r1-error"></div>
+      <div class="button-row">
+        <button type="button" class="btn-secondary" data-home>Cancel</button>
+        <button type="button" id="r1-recover" disabled>Recover</button>
+      </div>
+    </div>
+
+    <div class="step" id="r2" hidden>
+      <div id="r2-phrase-block">
+        <h2 id="r2-title">Your recovery phrase</h2>
+        <div class="word-grid" id="r2-words"></div>
+        <p class="mt-1">Does this fingerprint match the one on your shares? <span class="fingerprint" id="r2-fingerprint"></span></p>
+        <div class="button-row">
+          <button type="button" class="btn-secondary" id="r2-no">No</button>
+          <button type="button" id="r2-yes">Yes, it matches</button>
+        </div>
+        <div class="banner warning mt-1" id="r2-mismatch" hidden>Then this isn't your phrase. The usual causes: a wrong or missing SLIP-39 passphrase (it is never reported as an error), or shares from two different backups. Nothing is wrong with your shares — go back and check.</div>
+        <div id="r2-addresses" hidden>
+          <div class="field mt-1">
             <div class="field-label">First Ethereum address</div>
-            <input type="text" readonly spellcheck="false" id="combine-out-eth" class="mono-output">
+            <input type="text" readonly spellcheck="false" id="r2-eth" class="mono-output">
           </div>
           <div class="field">
             <div class="field-label">First Bitcoin address (native SegWit)</div>
-            <input type="text" readonly spellcheck="false" id="combine-out-btc" class="mono-output">
+            <input type="text" readonly spellcheck="false" id="r2-btc" class="mono-output">
           </div>
+          <p class="notice mt-035">Restore this phrase in your wallet with its "import" or "restore from recovery phrase" option.</p>
         </div>
-        <div id="combine-rawkey-block" hidden>
-          <p class="notice">These shares hold 32 bytes, which could also be a raw private key backed up with the command-line tool. If so, this is it:</p>
-          <div class="field">
-            <div class="field-label">Private key (hex)</div>
-            <input type="text" readonly spellcheck="false" id="combine-out-rawkey" class="mono-output">
-          </div>
-          <div class="field">
-            <div class="field-label">Its Ethereum address</div>
-            <input type="text" readonly spellcheck="false" id="combine-out-rawkey-eth" class="mono-output">
-          </div>
+      </div>
+      <div id="r2-rawkey-block" hidden>
+        <p class="notice">These shares hold 32 bytes, which could also be a raw private key backed up with the command-line tool. If so, this is it:</p>
+        <div class="field">
+          <div class="field-label">Private key (hex)</div>
+          <input type="text" readonly spellcheck="false" id="r2-rawkey" class="mono-output">
         </div>
-        <div id="combine-secret-block" hidden>
-          <div class="field">
-            <div class="field-label" id="combine-secret-label">Recovered secret (hex) — not a recovery phrase</div>
-            <input type="text" readonly spellcheck="false" id="combine-out-secret" class="mono-output">
-          </div>
+        <div class="field">
+          <div class="field-label">Its Ethereum address</div>
+          <input type="text" readonly spellcheck="false" id="r2-rawkey-eth" class="mono-output">
         </div>
-        <p class="notice">A wrong passphrase or a wrong share is <strong>not</strong> reported as an error — recovery "succeeds" with a different result. Check the fingerprint matches the one on your shares before trusting it.</p>
+      </div>
+      <div id="r2-secret-block" hidden>
+        <p>These shares don't hold a recovery phrase — they were made from some other secret (for example a 512-bit seed by another tool):</p>
+        <input type="text" readonly spellcheck="false" id="r2-secret" class="mono-output">
+      </div>
+      <div class="button-row">
+        <button type="button" class="btn-secondary" id="r2-back">Back to the shares</button>
+        <button type="button" id="r2-finish">Finish and clear this page</button>
       </div>
     </div>
-  </div>
+  </section>
 
-  <p class="notice">
-    Everything runs locally in your browser via WebAssembly — nothing you type is sent anywhere.
-    For a real phrase, use the release file offline: one HTML file that opens from disk, on a machine with no network connection.
-  </p>
+  <dialog id="print-dialog">
+    <h2>Before you print</h2>
+    <p>Printing is the one moment a share leaves this page. Use a printer connected by cable, not a network or cloud printer, and don't choose "Save as PDF" — a saved file is a copy that can end up in cloud backups.</p>
+    <p>Safest of all: print a blank card and write the words by hand.</p>
+    <div class="button-row">
+      <button type="button" class="btn-secondary" id="print-cancel">Cancel</button>
+      <button type="button" class="btn-secondary" id="print-blank-instead">Print blank instead</button>
+      <button type="button" id="print-confirm">Print share</button>
+    </div>
+  </dialog>
+
+  <datalist id="bip39-words"></datalist>
+  <datalist id="slip39-words"></datalist>
 </main>
+<div id="print-area"></div>
 <script type="module" src="./app.js"></script>
 </body>
 </html>

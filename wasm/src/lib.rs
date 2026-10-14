@@ -19,6 +19,10 @@ fn hex_encode(bytes: &[u8]) -> String {
 #[derive(Clone)]
 pub struct JsPhraseCheck {
     pub word_count: u32,
+    /// Why this phrase deserves a second look, as plain-language
+    /// sentences; empty for a phrase that looks like real wallet output.
+    #[wasm_bindgen(getter_with_clone)]
+    pub warnings: Vec<String>,
     #[wasm_bindgen(getter_with_clone)]
     pub fingerprint: String,
     #[wasm_bindgen(getter_with_clone)]
@@ -27,10 +31,37 @@ pub struct JsPhraseCheck {
     pub btc_address: String,
 }
 
+fn weakness_text(weakness: pkc_core::Weakness) -> &'static str {
+    match weakness {
+        pkc_core::Weakness::KnownTestPhrase => {
+            "This is a published BIP39 test phrase. Anyone can use it — never keep funds on it."
+        }
+        pkc_core::Weakness::RepeatedByte => {
+            "This phrase follows a simple pattern no real wallet would generate. Anyone can guess it."
+        }
+        pkc_core::Weakness::FewDistinctWords => {
+            "This phrase repeats the same few words. Real wallet phrases almost never do — check you typed your own phrase."
+        }
+    }
+}
+
+/// The 2048-word English BIP39 wordlist, newline-separated, for autocomplete.
+#[wasm_bindgen]
+pub fn bip39_wordlist() -> String {
+    pkc_core::bip39_wordlist().join("\n")
+}
+
+/// The 1024-word SLIP-39 wordlist, newline-separated, for autocomplete.
+#[wasm_bindgen]
+pub fn slip39_wordlist() -> String {
+    pkc_slip39::wordlist().join("\n")
+}
+
 fn check(phrase: &pkc_core::Phrase, bip39_passphrase: &str) -> JsPhraseCheck {
     let addresses = phrase.addresses(bip39_passphrase);
     JsPhraseCheck {
         word_count: phrase.word_count() as u32,
+        warnings: phrase.weaknesses().into_iter().map(weakness_text).map(String::from).collect(),
         fingerprint: hex_encode(&phrase.fingerprint()),
         eth_address: addresses.eth,
         btc_address: addresses.btc,
