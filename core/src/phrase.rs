@@ -1,0 +1,164 @@
+// BIP39 recovery phrases — the words a wallet shows as its backup — at
+// every standard length (12, 15, 18, 21, 24 words), English wordlist only.
+//
+// A phrase's *entropy* is what SLIP-39 backs up: shares recover the
+// entropy, and the entropy gives back the exact words. Wallets don't use
+// the entropy directly; they stretch the phrase (plus an optional BIP39
+// passphrase, the "25th word") into a 512-bit seed and derive keys from it
+// with BIP32. That path is only used here to *recognise* a phrase: its
+// BIP32 fingerprint and its first Ethereum and Bitcoin addresses.
+use bip32::{ChildNumber, XPrv};
+use bip39::{Language, Mnemonic};
+use zeroize::Zeroizing;
+
+use crate::btc::btc_p2wpkh_address;
+use crate::error::Error;
+use crate::eth::eth_address;
+use crate::key::{Network, PrivateKey};
+
+/// A checksum-valid English BIP39 phrase.
+pub struct Phrase(Mnemonic);
+
+/// The first receiving addresses a phrase's wallet would show, for
+/// recognising it on screen. Never printed on a share card: an address
+/// links a card to funds anyone can look up.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Addresses {
+    /// m/44'/60'/0'/0/0 — the first account in MetaMask and most Ethereum wallets.
+    pub eth: String,
+    /// m/84'/0'/0'/0/0 — the first native SegWit (`bc1q…`) receiving address.
+    pub btc: String,
+}
+
+const HARDENED: bool = true;
+const ETH_PATH: [(u32, bool); 5] = [(44, HARDENED), (60, HARDENED), (0, HARDENED), (0, false), (0, false)];
+const BTC_PATH: [(u32, bool); 5] = [(84, HARDENED), (0, HARDENED), (0, HARDENED), (0, false), (0, false)];
+
+impl Phrase {
+    /// Parses and validates a phrase: known words, a standard length, and
+    /// a matching checksum. Case and extra whitespace are ignored — phones
+    /// and Safari capitalise the first word of a text field.
+    pub fn parse(phrase: &str) -> Result<Self, Error> {
+        let normalized = phrase.split_whitespace().collect::<Vec<_>>().join(" ").to_lowercase();
+        let normalized = Zeroizing::new(normalized);
+        Mnemonic::parse_in(Language::English, normalized.as_str())
+            .map(Phrase)
+            .map_err(|e| Error::InvalidPhrase(e.to_string()))
+    }
+
+    /// The phrase for 16, 20, 24, 28 or 32 bytes of entropy.
+    pub fn from_entropy(entropy: &[u8]) -> Result<Self, Error> {
+        Mnemonic::from_entropy_in(Language::English, entropy)
+            .map(Phrase)
+            .map_err(|_| Error::InvalidPhraseEntropyLength(entropy.len()))
+    }
+
+    pub fn word_count(&self) -> usize {
+        self.0.word_count()
+    }
+
+    /// The words, space-separated.
+    pub fn to_words(&self) -> Zeroizing<String> {
+        Zeroizing::new(self.0.to_string())
+    }
+
+    /// The entropy the words encode — what a SLIP-39 backup of this phrase
+    /// splits.
+    pub fn entropy(&self) -> Zeroizing<Vec<u8>> {
+        Zeroizing::new(self.0.to_entropy())
+    }
+
+    fn master_key(&self, bip39_passphrase: &str) -> XPrv {
+        let seed = Zeroizing::new(self.0.to_seed(bip39_passphrase));
+        XPrv::new(&*seed).expect("a 64-byte seed is always a valid BIP32 master key input")
+    }
+
+    /// The BIP32 master-key fingerprint (first 4 bytes of hash160 of the
+    /// master public key), with an empty BIP39 passphrase: the value printed
+    /// on every share card. Wallets such as Sparrow and Coldcard display the
+    /// same value.
+    pub fn fingerprint(&self) -> [u8; 4] {
+        self.master_key("").public_key().fingerprint()
+    }
+
+    /// The first Ethereum and Bitcoin addresses for this phrase, under
+    /// `bip39_passphrase` ("" for none). The passphrase changes every
+    /// derived key, so a user who has one must enter it to see their real
+    /// addresses — it is not part of any SLIP-39 backup of the phrase.
+    pub fn addresses(&self, bip39_passphrase: &str) -> Addresses {
+        let master = self.master_key(bip39_passphrase);
+        let eth_key = derive(&master, &ETH_PATH);
+        let btc_key = derive(&master, &BTC_PATH);
+        Addresses { eth: eth_address(&eth_key), btc: btc_p2wpkh_address(&btc_key, Network::Mainnet) }
+    }
+}
+
+fn derive(master: &XPrv, path: &[(u32, bool)]) -> PrivateKey {
+    let mut key = master.clone();
+    for &(index, hardened) in path {
+        let child = ChildNumber::new(index, hardened).expect("path indices are below 2^31");
+        // Fails only with probability ~2^-127 per step (BIP32: the derived
+        // scalar is zero or ≥ the curve order); real wallets don't handle it
+        // either.
+        key = key.derive_child(child).expect("BIP32 child derivation");
+    }
+    PrivateKey::from_bytes(key.to_bytes()).expect("a BIP32-derived key is a valid secp256k1 scalar")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The canonical all-zero-entropy test phrase, used across BIP32/39/44/84
+    // test vectors and wallet test suites.
+    const ABANDON_ABOUT: &str =
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    #[test]
+    fn known_phrase_gives_known_fingerprint_and_addresses() {
+        let phrase = Phrase::parse(ABANDON_ABOUT).unwrap();
+        // Master fingerprint as used in BIP-84 / Bitcoin Core descriptor docs.
+        assert_eq!(hex::encode(phrase.fingerprint()), "73c5da0a");
+        let addresses = phrase.addresses("");
+        // BIP-84's own test vector for m/84'/0'/0'/0/0.
+        assert_eq!(addresses.btc, "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu");
+        // The first MetaMask/ethers account for this phrase.
+        assert_eq!(addresses.eth, "0x9858EfFD232B4033E47d90003D41EC34EcaEda94");
+    }
+
+    #[test]
+    fn bip39_passphrase_changes_the_addresses_but_not_the_fingerprint() {
+        let phrase = Phrase::parse(ABANDON_ABOUT).unwrap();
+        assert_ne!(phrase.addresses("TREZOR"), phrase.addresses(""));
+        // The fingerprint is defined with an empty passphrase, so it
+        // identifies the words alone.
+        assert_eq!(hex::encode(phrase.fingerprint()), "73c5da0a");
+    }
+
+    #[test]
+    fn every_standard_length_round_trips_through_entropy() {
+        for len in [16, 20, 24, 28, 32] {
+            let entropy: Vec<u8> = (0..len as u8).map(|i| i.wrapping_mul(29).wrapping_add(7)).collect();
+            let phrase = Phrase::from_entropy(&entropy).unwrap();
+            assert_eq!(phrase.word_count(), len * 3 / 4);
+            let reparsed = Phrase::parse(&phrase.to_words()).unwrap();
+            assert_eq!(*reparsed.entropy(), entropy);
+        }
+    }
+
+    #[test]
+    fn tolerates_capitalisation_and_extra_whitespace() {
+        let messy = format!("  Abandon {}\n", ABANDON_ABOUT["abandon ".len()..].replace(' ', "   "));
+        assert_eq!(*Phrase::parse(&messy).unwrap().to_words(), ABANDON_ABOUT);
+    }
+
+    #[test]
+    fn rejects_bad_checksum_unknown_words_and_odd_lengths() {
+        let bad_checksum = ABANDON_ABOUT.replace("about", "abandon");
+        assert!(matches!(Phrase::parse(&bad_checksum), Err(Error::InvalidPhrase(_))));
+        assert!(matches!(Phrase::parse("abandon notaword"), Err(Error::InvalidPhrase(_))));
+        let eleven = ABANDON_ABOUT.rsplit_once(' ').unwrap().0;
+        assert!(matches!(Phrase::parse(eleven), Err(Error::InvalidPhrase(_))));
+        assert_eq!(Phrase::from_entropy(&[0u8; 17]).err(), Some(Error::InvalidPhraseEntropyLength(17)));
+    }
+}

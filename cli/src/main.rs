@@ -1,4 +1,5 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use zeroize::Zeroizing;
 
 #[derive(Parser)]
 #[command(version)]
@@ -9,9 +10,9 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Convert a private key between hex/WIF/mnemonic and derive Bitcoin + Ethereum addresses.
+    /// Convert a raw private key between hex and WIF and derive its Bitcoin and Ethereum addresses.
     Convert(ConvertArgs),
-    /// SLIP-39 Shamir secret sharing: split a key into backup shares, or recombine them.
+    /// SLIP-39 Shamir secret sharing: split a recovery phrase (or a raw key) into backup shares, or recombine them.
     Slip39 {
         #[command(subcommand)]
         action: Slip39Command,
@@ -20,10 +21,9 @@ enum Command {
 
 #[derive(Args)]
 struct ConvertArgs {
-    /// Private key as raw hex (optionally 0x-prefixed), a Bitcoin WIF, or a
-    /// 24-word BIP39 mnemonic. Omit this to be prompted instead (hidden
-    /// input) — passing it here exposes it via shell history and process
-    /// listings.
+    /// Private key as raw hex (optionally 0x-prefixed) or a Bitcoin WIF.
+    /// Omit this to be prompted instead (hidden input) — passing it here
+    /// exposes it via shell history and process listings.
     input: Option<String>,
 
     /// Network to assume when `input` is raw hex or a mnemonic. Ignored for
@@ -53,9 +53,11 @@ impl std::fmt::Display for NetworkArg {
 
 #[derive(Subcommand)]
 enum Slip39Command {
-    /// Split a private key into SLIP-39 mnemonic shares.
+    /// Split a BIP39 recovery phrase, or a raw private key, into SLIP-39 shares.
+    /// For a single checksummed-words backup with no sharing, use
+    /// --group-threshold 1 --group 1:1.
     Split(Slip39SplitArgs),
-    /// Recombine SLIP-39 mnemonic shares into the original private key.
+    /// Recombine SLIP-39 shares into the original recovery phrase or key.
     Combine(Slip39CombineArgs),
     /// Show which group/member a single share is, without needing enough shares to recover anything.
     Inspect(Slip39InspectArgs),
@@ -63,12 +65,12 @@ enum Slip39Command {
 
 #[derive(Args)]
 struct Slip39SplitArgs {
-    /// Private key as raw hex, WIF, or a 24-word BIP39 mnemonic. Omit this
-    /// to be prompted instead (hidden input) — passing it here exposes it
-    /// via shell history and process listings.
-    private_key: Option<String>,
+    /// A BIP39 recovery phrase (12-24 words), or a raw private key as hex or
+    /// WIF. Omit this to be prompted instead (hidden input) — passing it
+    /// here exposes it via shell history and process listings.
+    secret: Option<String>,
 
-    /// Number of groups required to reconstruct the key.
+    /// Number of groups required to recover.
     #[arg(long)]
     group_threshold: u8,
 
@@ -87,6 +89,12 @@ struct Slip39SplitArgs {
     /// passing it inline with --passphrase.
     #[arg(long)]
     passphrase_prompt: bool,
+
+    /// Prompt for your wallet's BIP39 passphrase (the "25th word"), used only
+    /// to show its real first addresses. It is not part of the backup: if
+    /// your wallet uses one, it needs its own backup.
+    #[arg(long)]
+    bip39_passphrase_prompt: bool,
 
     /// PBKDF2 cost is 2500 << this value per round (0..=15). Higher is
     /// slower but more resistant to brute-forcing a guessed passphrase. The
@@ -116,6 +124,12 @@ struct Slip39CombineArgs {
     /// passing it inline with --passphrase.
     #[arg(long)]
     passphrase_prompt: bool,
+
+    /// Prompt for your wallet's BIP39 passphrase (the "25th word"), used only
+    /// to show its real first addresses. It is not part of the backup: if
+    /// your wallet uses one, it needs its own backup.
+    #[arg(long)]
+    bip39_passphrase_prompt: bool,
 }
 
 #[derive(Args)]
@@ -194,7 +208,7 @@ fn resolve_mnemonics(provided: Vec<String>) -> Result<Vec<String>, String> {
 }
 
 fn run_convert(args: ConvertArgs) -> Result<(), String> {
-    let input = resolve_secret(args.input, "the private key", "Private key (hex, WIF, or mnemonic): ")?;
+    let input = resolve_secret(args.input, "the private key", "Private key (hex or WIF): ")?;
 
     let network = match args.network {
         NetworkArg::Mainnet => pkc_core::Network::Mainnet,
@@ -209,20 +223,66 @@ fn run_convert(args: ConvertArgs) -> Result<(), String> {
     println!("WIF:          {}", result.wif);
     println!("BTC address:  {}", result.btc_address);
     println!("ETH address:  {}", result.eth_address);
-    println!("Mnemonic:     {}", result.mnemonic);
     Ok(())
 }
 
-fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
-    let private_key = resolve_secret(args.private_key, "the private key", "Private key (hex, WIF, or mnemonic): ")?;
-    let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt)?;
+/// What `slip39 split` backs up. Words are always a recovery phrase; a
+/// single token is a raw private key (hex or WIF). SLIP-39 itself doesn't
+/// record which, so the output says it out loud.
+enum BackupInput {
+    Phrase(pkc_core::Phrase),
+    Key(pkc_core::PrivateKey),
+}
 
-    let key = pkc_core::parse_private_key(&private_key).map_err(|e| e.to_string())?.key;
+fn parse_backup_input(input: &str) -> Result<BackupInput, String> {
+    if input.split_whitespace().count() > 1 {
+        pkc_core::Phrase::parse(input).map(BackupInput::Phrase).map_err(|e| e.to_string())
+    } else {
+        pkc_core::parse_private_key(input).map(|p| BackupInput::Key(p.key)).map_err(|e| e.to_string())
+    }
+}
+
+fn resolve_bip39_passphrase(use_prompt: bool) -> Result<Zeroizing<String>, String> {
+    Ok(Zeroizing::new(if use_prompt { prompt_hidden("BIP39 passphrase (25th word): ")? } else { String::new() }))
+}
+
+/// The fingerprint, and the first addresses for recognising the phrase.
+fn print_phrase_check(phrase: &pkc_core::Phrase, bip39_passphrase: &str) {
+    let addresses = phrase.addresses(bip39_passphrase);
+    let which = if bip39_passphrase.is_empty() { "no BIP39 passphrase" } else { "with your BIP39 passphrase" };
+    println!("Fingerprint:  {}", hex_encode(&phrase.fingerprint()));
+    println!("First ETH address ({which}): {}", addresses.eth);
+    println!("First BTC address ({which}): {}", addresses.btc);
+}
+
+fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
+    let input = Zeroizing::new(resolve_secret(
+        args.secret,
+        "the recovery phrase or key",
+        "Recovery phrase, or private key (hex or WIF): ",
+    )?);
+    let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt)?;
+    let bip39_passphrase = resolve_bip39_passphrase(args.bip39_passphrase_prompt)?;
     let groups: Vec<pkc_slip39::GroupSpec> = args.groups.iter().map(|s| parse_group(s)).collect::<Result<_, _>>()?;
 
-    let shares = pkc_slip39::split(&key.to_bytes(), args.group_threshold, &groups, &passphrase, args.iteration_exponent)
+    let secret: Zeroizing<Vec<u8>> = match parse_backup_input(&input)? {
+        BackupInput::Phrase(phrase) => {
+            println!("Backing up a {}-word recovery phrase.", phrase.word_count());
+            print_phrase_check(&phrase, &bip39_passphrase);
+            println!("Write the fingerprint on every share: it shows the shares belong together, and a recovery must reproduce it.");
+            phrase.entropy()
+        }
+        BackupInput::Key(key) => {
+            println!("Backing up a raw private key, not a recovery phrase.");
+            println!("ETH address: {}", pkc_core::eth_address(&key));
+            Zeroizing::new(key.to_bytes().to_vec())
+        }
+    };
+
+    let shares = pkc_slip39::split(&secret, args.group_threshold, &groups, &passphrase, args.iteration_exponent)
         .map_err(|e| e.to_string())?;
 
+    println!();
     for (i, group) in shares.iter().enumerate() {
         println!("Group {i}:");
         for (j, mnemonic) in group.iter().enumerate() {
@@ -235,16 +295,33 @@ fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
 fn run_slip39_combine(args: Slip39CombineArgs) -> Result<(), String> {
     let mnemonics = resolve_mnemonics(args.mnemonics)?;
     let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt)?;
+    let bip39_passphrase = resolve_bip39_passphrase(args.bip39_passphrase_prompt)?;
 
     let refs: Vec<&str> = mnemonics.iter().map(String::as_str).collect();
     let secret = pkc_slip39::combine(&refs, &passphrase).map_err(|e| e.to_string())?;
-    if secret.len() == 32 {
-        println!("Private key: {}", hex_encode(&secret));
-    } else {
-        // Only a 32-byte secret can be a secp256k1 key; other lengths are
-        // e.g. a BIP39 phrase's entropy or a BIP32 seed from another tool.
+
+    // A backup doesn't record what it holds. A phrase-sized secret is shown
+    // as a phrase; 32 bytes could also be a raw key, so it's shown both
+    // ways — the fingerprint or address you recognise tells you which.
+    let mut shown = false;
+    if let Ok(phrase) = pkc_core::Phrase::from_entropy(&secret) {
+        println!("As a recovery phrase ({} words): {}", phrase.word_count(), phrase.to_words().as_str());
+        print_phrase_check(&phrase, &bip39_passphrase);
+        shown = true;
+    }
+    if let Ok(bytes) = <[u8; 32]>::try_from(secret.as_slice()) {
+        if let Ok(key) = pkc_core::PrivateKey::from_bytes(bytes) {
+            println!("As a raw private key: {}", hex_encode(&secret));
+            println!("ETH address: {}", pkc_core::eth_address(&key));
+            shown = true;
+        }
+    }
+    if !shown {
         println!("Secret ({} bits): {}", secret.len() * 8, hex_encode(&secret));
     }
+    println!(
+        "A wrong passphrase or a wrong share gives a different result, not an error: check the fingerprint or address."
+    );
     Ok(())
 }
 

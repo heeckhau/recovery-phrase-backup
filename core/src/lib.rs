@@ -2,14 +2,14 @@ mod btc;
 mod error;
 mod eth;
 mod key;
-mod mnemonic;
+mod phrase;
 mod wif;
 
-pub use btc::btc_p2pkh_address;
+pub use btc::{btc_p2pkh_address, btc_p2wpkh_address};
 pub use error::Error;
 pub use eth::eth_address;
 pub use key::{KeyFormat, Network, PrivateKey};
-pub use mnemonic::{from_mnemonic, to_mnemonic};
+pub use phrase::{Addresses, Phrase};
 pub use wif::{encode_wif, parse_private_key, ParsedKey};
 
 /// Every representation of a private key, derived in one call.
@@ -21,17 +21,16 @@ pub struct ConversionResult {
     pub wif: String,
     pub btc_address: String,
     pub eth_address: String,
-    pub mnemonic: String,
 }
 
-/// Parses `input` (raw hex, WIF, or a 24-word BIP39 mnemonic) and derives
+/// Parses `input` (raw hex or WIF) and derives
 /// every representation.
 ///
 /// `network`/`format` are only defaults: if `input` is a WIF, the
 /// network/format it encodes take precedence, since re-encoding a WIF the
 /// user actually gave us under different settings than they specified
-/// would be surprising. They only apply when `input` is raw hex or a
-/// mnemonic, neither of which carries such metadata.
+/// would be surprising. They only apply when `input` is raw hex, which
+/// carries no such metadata.
 pub fn convert(input: &str, network: Network, format: KeyFormat) -> Result<ConversionResult, Error> {
     let parsed = parse_private_key(input)?;
     let network = parsed.network.unwrap_or(network);
@@ -44,7 +43,6 @@ pub fn convert(input: &str, network: Network, format: KeyFormat) -> Result<Conve
         wif: encode_wif(&parsed.key, network, format),
         btc_address: btc_p2pkh_address(&parsed.key, network, format),
         eth_address: eth_address(&parsed.key),
-        mnemonic: to_mnemonic(&parsed.key),
     })
 }
 
@@ -62,7 +60,6 @@ mod tests {
         assert_eq!(result.wif, "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn");
         assert_eq!(result.btc_address, "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH");
         assert_eq!(result.eth_address, "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf");
-        assert_eq!(result.mnemonic.split_whitespace().count(), 24);
     }
 
     #[test]
@@ -77,12 +74,9 @@ mod tests {
     }
 
     #[test]
-    fn convert_from_mnemonic_round_trips_to_same_key_as_hex() {
-        let hex = "0000000000000000000000000000000000000000000000000000000000000001";
-        let from_hex = convert(hex, Network::Mainnet, KeyFormat::Compressed).unwrap();
-        let from_mnemonic = convert(&from_hex.mnemonic, Network::Mainnet, KeyFormat::Compressed).unwrap();
-        assert_eq!(from_mnemonic.private_key_hex, hex);
-        assert_eq!(from_mnemonic.eth_address, from_hex.eth_address);
+    fn convert_refuses_a_recovery_phrase() {
+        let phrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+        assert!(matches!(convert(phrase, Network::Mainnet, KeyFormat::Compressed), Err(Error::InputIsAPhrase)));
     }
 
     #[test]

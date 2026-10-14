@@ -5,79 +5,61 @@ pub fn init() {
     console_error_panic_hook::set_once();
 }
 
-/// Plain-data mirror of `pkc_core::ConversionResult` for JS: network/format
-/// are surfaced as strings rather than exposing the Rust enums to wasm-bindgen.
-#[wasm_bindgen(getter_with_clone)]
-pub struct JsConversionResult {
-    pub network: String,
-    pub format: String,
-    pub private_key_hex: String,
-    pub wif: String,
-    pub btc_address: String,
-    pub eth_address: String,
-    pub mnemonic: String,
-}
-
-fn network_to_str(network: pkc_core::Network) -> &'static str {
-    match network {
-        pkc_core::Network::Mainnet => "mainnet",
-        pkc_core::Network::Testnet => "testnet",
-    }
-}
-
-fn format_to_str(format: pkc_core::KeyFormat) -> &'static str {
-    match format {
-        pkc_core::KeyFormat::Compressed => "compressed",
-        pkc_core::KeyFormat::Uncompressed => "uncompressed",
-    }
-}
-
-/// Converts `input` (raw hex, WIF, or a 24-word BIP39 mnemonic) to every
-/// representation. `network` must be `"mainnet"` or `"testnet"`; both are
-/// only defaults used when `input` is raw hex or a mnemonic — a WIF's own
-/// network/format take precedence.
-#[wasm_bindgen]
-pub fn convert(input: &str, network: &str, compressed: bool) -> Result<JsConversionResult, JsValue> {
-    let network = match network {
-        "mainnet" => pkc_core::Network::Mainnet,
-        "testnet" => pkc_core::Network::Testnet,
-        other => return Err(JsValue::from_str(&format!("unknown network \"{other}\" (expected \"mainnet\" or \"testnet\")"))),
-    };
-    let format = if compressed { pkc_core::KeyFormat::Compressed } else { pkc_core::KeyFormat::Uncompressed };
-
-    let result = pkc_core::convert(input, network, format).map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-    Ok(JsConversionResult {
-        network: network_to_str(result.network).to_string(),
-        format: format_to_str(result.format).to_string(),
-        private_key_hex: result.private_key_hex,
-        wif: result.wif,
-        btc_address: result.btc_address,
-        eth_address: result.eth_address,
-        mnemonic: result.mnemonic,
-    })
+fn js_error(e: impl std::fmt::Display) -> JsValue {
+    JsValue::from_str(&e.to_string())
 }
 
 fn hex_encode(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-/// Splits a private key (hex, WIF, or BIP39 mnemonic — anything
-/// `convert()` accepts) into SLIP-39 mnemonic shares. `group_specs` is a
-/// flat array of alternating `[member_threshold, member_count, ...]`
-/// pairs, one pair per group. Returns one string per group: that group's
-/// member mnemonics joined by `"\n"` (a mnemonic itself is space-joined
-/// words, so `\n` unambiguously separates members — split on it in JS to
-/// get each group's individual mnemonics).
+/// What identifies a recovery phrase on screen: its fingerprint (the value
+/// printed on every share card) and its first addresses (never printed).
+#[wasm_bindgen]
+#[derive(Clone)]
+pub struct JsPhraseCheck {
+    pub word_count: u32,
+    #[wasm_bindgen(getter_with_clone)]
+    pub fingerprint: String,
+    #[wasm_bindgen(getter_with_clone)]
+    pub eth_address: String,
+    #[wasm_bindgen(getter_with_clone)]
+    pub btc_address: String,
+}
+
+fn check(phrase: &pkc_core::Phrase, bip39_passphrase: &str) -> JsPhraseCheck {
+    let addresses = phrase.addresses(bip39_passphrase);
+    JsPhraseCheck {
+        word_count: phrase.word_count() as u32,
+        fingerprint: hex_encode(&phrase.fingerprint()),
+        eth_address: addresses.eth,
+        btc_address: addresses.btc,
+    }
+}
+
+/// Validates a BIP39 recovery phrase and returns what identifies it.
+/// `bip39_passphrase` (the "25th word", "" for none) only affects the
+/// addresses — it is not part of any backup.
+#[wasm_bindgen]
+pub fn phrase_check(phrase: &str, bip39_passphrase: &str) -> Result<JsPhraseCheck, JsValue> {
+    let phrase = pkc_core::Phrase::parse(phrase).map_err(js_error)?;
+    Ok(check(&phrase, bip39_passphrase))
+}
+
+/// Splits a BIP39 recovery phrase into SLIP-39 shares of its entropy.
+/// `group_specs` is a flat array of alternating `[member_threshold,
+/// member_count, ...]` pairs, one pair per group. Returns one string per
+/// group: that group's shares joined by `"\n"` (a share itself is
+/// space-separated words, so `\n` unambiguously separates them).
 #[wasm_bindgen]
 pub fn slip39_split(
-    private_key: &str,
+    phrase: &str,
     group_threshold: u8,
     group_specs: &[u8],
     passphrase: &str,
     iteration_exponent: u8,
 ) -> Result<Vec<String>, JsValue> {
-    let key = pkc_core::parse_private_key(private_key).map_err(|e| JsValue::from_str(&e.to_string()))?.key;
+    let phrase = pkc_core::Phrase::parse(phrase).map_err(js_error)?;
 
     if !group_specs.len().is_multiple_of(2) {
         return Err(JsValue::from_str("group_specs must be an even-length array of [threshold, count] pairs"));
@@ -87,9 +69,8 @@ pub fn slip39_split(
         .map(|pair| pkc_slip39::GroupSpec { member_threshold: pair[0], member_count: pair[1] })
         .collect();
 
-    let secret: [u8; 32] = key.to_bytes();
-    let shares = pkc_slip39::split(&secret, group_threshold, &groups, passphrase, iteration_exponent)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let shares = pkc_slip39::split(&phrase.entropy(), group_threshold, &groups, passphrase, iteration_exponent)
+        .map_err(js_error)?;
 
     Ok(shares.into_iter().map(|members| members.join("\n")).collect())
 }
@@ -111,7 +92,7 @@ pub struct JsShareInfo {
 /// recover anything. Useful for labeling a share as it's entered.
 #[wasm_bindgen]
 pub fn slip39_inspect(mnemonic: &str) -> Result<JsShareInfo, JsValue> {
-    let info = pkc_slip39::inspect(mnemonic).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let info = pkc_slip39::inspect(mnemonic).map_err(js_error)?;
     Ok(JsShareInfo {
         group_number: info.group_index as u32 + 1,
         group_count: info.group_count as u32,
@@ -121,16 +102,39 @@ pub fn slip39_inspect(mnemonic: &str) -> Result<JsShareInfo, JsValue> {
     })
 }
 
-/// Recombines SLIP-39 mnemonic shares into the original secret's hex, at
-/// whatever length it was split with — 32 bytes for a private key, other
-/// lengths for e.g. BIP39 entropy from another tool. A wrong `passphrase`
-/// is not detected as an error here — SLIP-39 decryption is intentionally
-/// unauthenticated, so it silently returns different, wrong bytes instead.
-/// Callers should show the derived addresses so the user can visually
-/// confirm they recognize them.
+/// What a set of shares recovered. A backup doesn't record what it holds:
+/// a phrase-sized secret is returned as a phrase (`words` and `check`), and
+/// 32 bytes might instead be a raw private key backed up with the CLI, so
+/// that reading is offered too (`raw_key_*`). The fingerprint or address
+/// the user recognises tells which one they backed up. `secret_hex` is set
+/// only when neither reading applies (e.g. a 512-bit seed from another tool).
+#[wasm_bindgen(getter_with_clone)]
+pub struct JsRecovered {
+    pub words: Option<String>,
+    pub check: Option<JsPhraseCheck>,
+    pub raw_key_hex: Option<String>,
+    pub raw_key_eth_address: Option<String>,
+    pub secret_hex: Option<String>,
+}
+
+/// Recombines SLIP-39 shares. A wrong `passphrase` is not an error —
+/// SLIP-39 decryption is unauthenticated, so it silently returns different
+/// bytes — which is why the result carries the fingerprint and addresses
+/// for the user to check. `bip39_passphrase` only affects those addresses.
 #[wasm_bindgen]
-pub fn slip39_combine(mnemonics: Vec<String>, passphrase: &str) -> Result<String, JsValue> {
+pub fn slip39_combine(mnemonics: Vec<String>, passphrase: &str, bip39_passphrase: &str) -> Result<JsRecovered, JsValue> {
     let refs: Vec<&str> = mnemonics.iter().map(String::as_str).collect();
-    let secret = pkc_slip39::combine(&refs, passphrase).map_err(|e| JsValue::from_str(&e.to_string()))?;
-    Ok(hex_encode(&secret))
+    let secret = pkc_slip39::combine(&refs, passphrase).map_err(js_error)?;
+
+    let phrase = pkc_core::Phrase::from_entropy(&secret).ok();
+    let raw_key = <[u8; 32]>::try_from(secret.as_slice()).ok().and_then(|b| pkc_core::PrivateKey::from_bytes(b).ok());
+    let neither = phrase.is_none() && raw_key.is_none();
+
+    Ok(JsRecovered {
+        words: phrase.as_ref().map(|p| p.to_words().to_string()),
+        check: phrase.as_ref().map(|p| check(p, bip39_passphrase)),
+        raw_key_hex: raw_key.as_ref().map(|k| k.to_hex()),
+        raw_key_eth_address: raw_key.as_ref().map(pkc_core::eth_address),
+        secret_hex: neither.then(|| hex_encode(&secret)),
+    })
 }

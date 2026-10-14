@@ -14,16 +14,18 @@ pub struct ParsedKey {
     pub format: Option<KeyFormat>,
 }
 
-/// Parses a raw 32-byte hex private key (optionally `0x`-prefixed), a
-/// Base58Check-encoded WIF private key, or a 24-word BIP39 mnemonic,
-/// validating the WIF checksum or mnemonic checksum respectively (the
-/// legacy tool this replaces validated neither).
+/// Parses a raw 32-byte hex private key (optionally `0x`-prefixed) or a
+/// Base58Check-encoded WIF private key, validating the WIF checksum (the
+/// legacy tool this replaces didn't). Words are rejected as a recovery
+/// phrase — see [`crate::Phrase`].
 pub fn parse_private_key(input: &str) -> Result<ParsedKey, Error> {
     let trimmed = input.trim();
 
+    // Words are a recovery phrase, never a raw key: a phrase derives many
+    // keys through BIP32, so treating its words as one key would be wrong
+    // in a way that looks plausible.
     if trimmed.split_whitespace().count() > 1 {
-        let key = crate::mnemonic::from_mnemonic(trimmed)?;
-        return Ok(ParsedKey { key, network: None, format: None });
+        return Err(Error::InputIsAPhrase);
     }
 
     let hex_candidate = trimmed

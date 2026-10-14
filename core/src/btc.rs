@@ -31,6 +31,19 @@ pub fn btc_p2pkh_address(key: &PrivateKey, network: Network, format: KeyFormat) 
     bs58::encode(payload).with_check().into_string()
 }
 
+/// Derives the Bitcoin native SegWit (P2WPKH, BIP-84 style `bc1q…`) address
+/// for a private key: witness version 0 over hash160 of the compressed
+/// public key, bech32-encoded.
+pub fn btc_p2wpkh_address(key: &PrivateKey, network: Network) -> String {
+    let public_key = key.to_secret_key().public_key();
+    let program = hash160(public_key.to_sec1_point(true).as_bytes());
+    let hrp = match network {
+        Network::Mainnet => bech32::hrp::BC,
+        Network::Testnet => bech32::hrp::TB,
+    };
+    bech32::segwit::encode_v0(hrp, &program).expect("a 20-byte v0 witness program always encodes")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -57,5 +70,12 @@ mod tests {
     fn compressed_testnet_address_for_key_one() {
         let addr = btc_p2pkh_address(&key_one(), Network::Testnet, KeyFormat::Compressed);
         assert_eq!(addr, "mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r");
+    }
+
+    #[test]
+    fn native_segwit_address_for_key_one() {
+        // BIP-173's own P2WPKH example is the key-one public key.
+        let addr = btc_p2wpkh_address(&key_one(), Network::Mainnet);
+        assert_eq!(addr, "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4");
     }
 }

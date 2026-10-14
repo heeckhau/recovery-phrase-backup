@@ -20,7 +20,7 @@
      and browsers ignore (with a console warning) when set via <meta>, which
      is the only delivery mechanism available to a static file like this. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
-<title>Private Key Converter</title>
+<title>Recovery Phrase Backup</title>
 <style>
   :root {
     color-scheme: light dark;
@@ -97,24 +97,10 @@
     resize: none;
     line-height: 1.4;
   }
-  .row { display: flex; gap: 1rem; }
-  .row > div { flex: 1; }
-  .checkbox-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-  }
-  .checkbox-row label { margin: 0; font-weight: 500; }
   .mono-output {
     font-size: 0.82rem;
     padding: 0.5rem 0.6rem;
     letter-spacing: -0.01em;
-  }
-  .shared-result {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--border);
   }
   .tabs {
     display: flex;
@@ -246,98 +232,54 @@
   /* Spacing tweaks as classes, not style= attributes, so the release
      build's CSP can forbid inline styles. !important keeps the precedence
      the inline styles had. */
+  .phrase-check {
+    margin-top: 0.75rem;
+    padding: 0.25rem 0.75rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .phrase-check[hidden] { display: none; }
   .mt-0 { margin-top: 0 !important; }
   .mt-035 { margin-top: 0.35rem !important; }
-  .mt-04 { margin-top: 0.4rem !important; }
   .mt-075 { margin-top: 0.75rem !important; }
   .mt-1 { margin-top: 1rem !important; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Private Key Converter</h1>
-  <p class="subtitle">Convert an Ethereum private key to every format, and derive a Bitcoin address too (same key, same curve).</p>
+  <h1>Recovery Phrase Backup</h1>
+  <p class="subtitle">Split a BIP39 recovery phrase into SLIP-39 shares — any threshold of them gives the phrase back, fewer reveal nothing — and recover it again.</p>
 
   <div class="tabs page-tabs" id="page-tabs" role="tablist">
-    <button type="button" class="tab-button" id="page-tab-convert" role="tab" aria-selected="true" aria-controls="page-panel-convert">Convert</button>
-    <button type="button" class="tab-button" id="page-tab-slip39" role="tab" aria-selected="false" aria-controls="page-panel-slip39">SLIP-39 Backup</button>
+    <button type="button" class="tab-button" id="tab-split" role="tab" aria-selected="true" aria-controls="panel-split">Back up a phrase</button>
+    <button type="button" class="tab-button" id="tab-combine" role="tab" aria-selected="false" aria-controls="panel-combine">Recover a phrase</button>
   </div>
 
-  <div id="page-panel-convert" role="tabpanel" aria-labelledby="page-tab-convert">
   <div class="card">
-    <form id="convert-form">
-      <label for="input-key">Private key (hex, WIF, or 24-word mnemonic)</label>
-      <input type="text" id="input-key" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="e.g. 0x0000...0001, a Bitcoin WIF like 5Hp..., or 24 mnemonic words">
-      <button type="submit">Convert</button>
-    </form>
-
-    <div class="error" id="error"></div>
-
-    <div class="shared-result" id="shared-result">
-      <div class="field">
-        <div class="field-label">Private key (hex)</div>
-        <input type="text" readonly spellcheck="false" id="out-hex" class="mono-output">
-      </div>
-      <div class="field">
-        <div class="field-label">Mnemonic (BIP39, 24 words)</div>
-        <textarea readonly spellcheck="false" id="out-mnemonic" class="mono-output" rows="3"></textarea>
-        <p class="notice mt-04">This encodes exactly this key's bytes as words — it is <strong>not</strong> a wallet seed phrase. Importing it into MetaMask or another HD wallet as a "recovery phrase" will derive different keys, not this one.</p>
-      </div>
-    </div>
-
-    <div class="tabs" id="tabs" role="tablist">
-      <button type="button" class="tab-button" id="tab-eth" role="tab" aria-selected="true" aria-controls="panel-eth">Ethereum</button>
-      <button type="button" class="tab-button" id="tab-btc" role="tab" aria-selected="false" aria-controls="panel-btc">Bitcoin</button>
-    </div>
-
-    <div class="tab-panel" id="panel-eth" role="tabpanel" aria-labelledby="tab-eth">
-      <div class="field">
-        <div class="field-label">Ethereum address</div>
-        <input type="text" readonly spellcheck="false" id="out-eth" class="mono-output">
-      </div>
-    </div>
-
-    <div class="tab-panel" id="panel-btc" role="tabpanel" aria-labelledby="tab-btc" hidden>
-      <div class="row">
-        <div>
-          <label for="input-network">Network</label>
-          <select id="input-network">
-            <option value="mainnet">Mainnet</option>
-            <option value="testnet">Testnet</option>
-          </select>
-        </div>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="input-compressed" checked>
-        <label for="input-compressed">Compressed key</label>
-      </div>
-      <p class="notice mt-035">Only applies when the input is raw hex — pasting a WIF uses the network/format already encoded in it. Change either and re-convert to update the results below.</p>
-
-      <div class="field mt-1">
-        <div class="field-label">WIF</div>
-        <input type="text" readonly spellcheck="false" id="out-wif" class="mono-output">
-      </div>
-      <div class="field">
-        <div class="field-label">Bitcoin address (P2PKH)</div>
-        <input type="text" readonly spellcheck="false" id="out-btc" class="mono-output">
-      </div>
-    </div>
-  </div>
-  </div>
-
-  <div id="page-panel-slip39" role="tabpanel" aria-labelledby="page-tab-slip39" hidden>
-  <div class="card">
-    <div class="tabs" id="slip39-tabs" role="tablist">
-      <button type="button" class="tab-button" id="tab-split" role="tab" aria-selected="true" aria-controls="panel-split">Split</button>
-      <button type="button" class="tab-button" id="tab-combine" role="tab" aria-selected="false" aria-controls="panel-combine">Combine</button>
-    </div>
-
     <div class="tab-panel" id="panel-split" role="tabpanel" aria-labelledby="tab-split">
-      <p class="notice mt-0">Split a private key into SLIP-39 mnemonic shares — recoverable from a threshold of groups, each needing a threshold of members. Same key, same curve as the Convert tab: paste any hex/WIF/mnemonic form of it.</p>
-
       <form id="split-form">
-        <label for="split-key">Private key (hex, WIF, or mnemonic)</label>
-        <input type="text" id="split-key" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="the key you want to back up">
+        <label for="split-phrase" class="mt-0">Recovery phrase (12, 15, 18, 21 or 24 words)</label>
+        <textarea id="split-phrase" rows="3" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="the words your wallet showed you"></textarea>
+
+        <div class="phrase-check" id="split-check" hidden>
+          <div class="field">
+            <div class="field-label" id="split-check-title">Fingerprint</div>
+            <input type="text" readonly spellcheck="false" id="split-out-fingerprint" class="mono-output">
+          </div>
+          <div class="field">
+            <div class="field-label">First Ethereum address</div>
+            <input type="text" readonly spellcheck="false" id="split-out-eth" class="mono-output">
+          </div>
+          <div class="field">
+            <div class="field-label">First Bitcoin address (native SegWit)</div>
+            <input type="text" readonly spellcheck="false" id="split-out-btc" class="mono-output">
+          </div>
+          <p class="notice mt-035">Check these are your wallet's addresses before you split. They are shown here only, never on a share: the fingerprint is what goes on every share.</p>
+        </div>
+
+        <label for="split-bip39-passphrase">BIP39 passphrase ("25th word"), if your wallet uses one</label>
+        <input type="text" id="split-bip39-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
+        <p class="notice mt-035">Only used to show your wallet's real addresses above. It is <strong>not</strong> part of the backup: if your wallet uses one, back it up separately.</p>
 
         <label>Groups</label>
         <div id="group-rows"></div>
@@ -348,16 +290,17 @@
           <select id="group-threshold" class="inline"></select>
         </div>
 
-        <label for="split-passphrase">Passphrase (optional)</label>
-        <input type="text" id="split-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank for none">
-        <p class="notice mt-035">SLIP-39 always encrypts, even with an empty passphrase. Whatever you set here, write it down with the shares — it is <strong>not verified</strong> when recovering (see Combine).</p>
-
         <details class="advanced">
           <summary>Advanced</summary>
           <div class="field mt-075">
+            <label for="split-passphrase" class="mt-0">SLIP-39 passphrase</label>
+            <input type="text" id="split-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank (recommended)">
+            <p class="notice mt-035">Not the BIP39 passphrase above. It encrypts the shares, and recovery <strong>never reports a wrong one</strong>: it silently gives back a different phrase. Whoever recovers will need it exactly — most backups should leave it blank and rely on the threshold.</p>
+          </div>
+          <div class="field mt-075">
             <label for="iteration-exponent" class="mt-0">Iteration exponent</label>
             <select id="iteration-exponent" class="inline"></select>
-            <p class="notice mt-035">PBKDF2 cost is 2500 &times; 2^exponent. Higher is slower to brute-force but slower to recover too. 0 is fine for most uses.</p>
+            <p class="notice mt-035">PBKDF2 cost is 2500 &times; 2^exponent per round. 1 matches other SLIP-39 tools; only matters with a SLIP-39 passphrase.</p>
           </div>
         </details>
 
@@ -370,44 +313,72 @@
     </div>
 
     <div class="tab-panel" id="panel-combine" role="tabpanel" aria-labelledby="tab-combine" hidden>
-      <p class="notice mt-0">Recombine enough shares (meeting the group and member thresholds they were split with) back into the original private key.</p>
-
       <form id="combine-form">
-        <label>Mnemonic shares</label>
+        <label class="mt-0">Shares</label>
         <div id="mnemonic-rows"></div>
         <button type="button" id="add-mnemonic" class="btn-secondary">+ Add share</button>
 
-        <label for="combine-passphrase">Passphrase</label>
-        <input type="text" id="combine-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none was set">
+        <label for="combine-bip39-passphrase">BIP39 passphrase ("25th word"), if your wallet uses one</label>
+        <input type="text" id="combine-bip39-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
+        <p class="notice mt-035">Only used to show your wallet's real addresses below; the shares don't contain it.</p>
 
-        <button type="submit">Combine</button>
+        <details class="advanced">
+          <summary>Advanced</summary>
+          <div class="field mt-075">
+            <label for="combine-passphrase" class="mt-0">SLIP-39 passphrase</label>
+            <input type="text" id="combine-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none was set">
+          </div>
+        </details>
+
+        <button type="submit">Recover</button>
       </form>
 
       <div class="error" id="combine-error"></div>
 
       <div class="results" id="combine-results" hidden>
-        <div class="field">
-          <div class="field-label" id="combine-out-hex-label">Recovered private key (hex)</div>
-          <input type="text" readonly spellcheck="false" id="combine-out-hex" class="mono-output">
+        <div id="combine-phrase-block">
+          <div class="field">
+            <div class="field-label" id="combine-words-label">Recovered phrase</div>
+            <textarea readonly spellcheck="false" id="combine-out-words" class="mono-output" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <div class="field-label">Fingerprint — must match the one on your shares</div>
+            <input type="text" readonly spellcheck="false" id="combine-out-fingerprint" class="mono-output">
+          </div>
+          <div class="field">
+            <div class="field-label">First Ethereum address</div>
+            <input type="text" readonly spellcheck="false" id="combine-out-eth" class="mono-output">
+          </div>
+          <div class="field">
+            <div class="field-label">First Bitcoin address (native SegWit)</div>
+            <input type="text" readonly spellcheck="false" id="combine-out-btc" class="mono-output">
+          </div>
         </div>
-        <div class="field" id="combine-field-eth">
-          <div class="field-label">Ethereum address</div>
-          <input type="text" readonly spellcheck="false" id="combine-out-eth" class="mono-output">
+        <div id="combine-rawkey-block" hidden>
+          <p class="notice">These shares hold 32 bytes, which could also be a raw private key backed up with the command-line tool. If so, this is it:</p>
+          <div class="field">
+            <div class="field-label">Private key (hex)</div>
+            <input type="text" readonly spellcheck="false" id="combine-out-rawkey" class="mono-output">
+          </div>
+          <div class="field">
+            <div class="field-label">Its Ethereum address</div>
+            <input type="text" readonly spellcheck="false" id="combine-out-rawkey-eth" class="mono-output">
+          </div>
         </div>
-        <div class="field" id="combine-field-btc">
-          <div class="field-label">Bitcoin address (P2PKH)</div>
-          <input type="text" readonly spellcheck="false" id="combine-out-btc" class="mono-output">
+        <div id="combine-secret-block" hidden>
+          <div class="field">
+            <div class="field-label" id="combine-secret-label">Recovered secret (hex) — not a recovery phrase</div>
+            <input type="text" readonly spellcheck="false" id="combine-out-secret" class="mono-output">
+          </div>
         </div>
-        <p class="notice">A wrong passphrase is <strong>not</strong> reported as an error — recovery "succeeds" but silently produces the wrong key. Check that these addresses are the ones you expect before trusting this result.</p>
+        <p class="notice">A wrong passphrase or a wrong share is <strong>not</strong> reported as an error — recovery "succeeds" with a different result. Check the fingerprint matches the one on your shares before trusting it.</p>
       </div>
     </div>
-  </div>
   </div>
 
   <p class="notice">
     Everything runs locally in your browser via WebAssembly — nothing you type is sent anywhere.
-    For real keys, download this project and run it offline: open <code>web/index.html</code> served
-    from a local static server with no network connection.
+    For a real phrase, use the release file offline: one HTML file that opens from disk, on a machine with no network connection.
   </p>
 </main>
 <script type="module" src="./app.js"></script>

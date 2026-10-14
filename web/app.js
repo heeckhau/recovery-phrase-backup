@@ -1,4 +1,4 @@
-import init, { convert, slip39_split, slip39_combine, slip39_inspect } from "./pkg/pkc_wasm.js";
+import init, { phrase_check, slip39_split, slip39_combine, slip39_inspect } from "./pkg/pkc_wasm.js";
 
 function setupTabs(tabs) {
   for (const { button } of tabs) {
@@ -13,49 +13,12 @@ function setupTabs(tabs) {
 }
 
 setupTabs([
-  { button: document.getElementById("page-tab-convert"), panel: document.getElementById("page-panel-convert") },
-  { button: document.getElementById("page-tab-slip39"), panel: document.getElementById("page-panel-slip39") },
-]);
-
-setupTabs([
-  { button: document.getElementById("tab-eth"), panel: document.getElementById("panel-eth") },
-  { button: document.getElementById("tab-btc"), panel: document.getElementById("panel-btc") },
-]);
-
-setupTabs([
   { button: document.getElementById("tab-split"), panel: document.getElementById("panel-split") },
   { button: document.getElementById("tab-combine"), panel: document.getElementById("panel-combine") },
 ]);
 
-// ---- Convert tab ----
-
-const form = document.getElementById("convert-form");
-const submitButton = form.querySelector("button[type=submit]");
-const keyInput = document.getElementById("input-key");
-const networkSelect = document.getElementById("input-network");
-const compressedCheckbox = document.getElementById("input-compressed");
-const errorBox = document.getElementById("error");
-
-const outputs = {
-  hex: document.getElementById("out-hex"),
-  mnemonic: document.getElementById("out-mnemonic"),
-  wif: document.getElementById("out-wif"),
-  btc: document.getElementById("out-btc"),
-  eth: document.getElementById("out-eth"),
-};
-
 function selectOnFocus(field) {
   field.addEventListener("focus", () => field.select());
-}
-
-for (const field of Object.values(outputs)) {
-  selectOnFocus(field);
-}
-
-function clearOutputs() {
-  for (const field of Object.values(outputs)) {
-    field.value = "";
-  }
 }
 
 function showError(box, message) {
@@ -68,49 +31,6 @@ function clearError(box) {
   box.textContent = "";
 }
 
-function runConversion() {
-  clearError(errorBox);
-
-  const input = keyInput.value.trim();
-  if (!input) {
-    showError(errorBox, "Enter a private key first.");
-    clearOutputs();
-    return;
-  }
-
-  try {
-    const result = convert(input, networkSelect.value, compressedCheckbox.checked);
-    outputs.hex.value = result.private_key_hex;
-    outputs.mnemonic.value = result.mnemonic;
-    outputs.wif.value = result.wif;
-    outputs.btc.value = result.btc_address;
-    outputs.eth.value = result.eth_address;
-    networkSelect.value = result.network;
-    compressedCheckbox.checked = result.format === "compressed";
-  } catch (err) {
-    showError(errorBox, String(err));
-    clearOutputs();
-  }
-}
-
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  runConversion();
-});
-
-// ---- SLIP-39 Split tab ----
-
-const splitForm = document.getElementById("split-form");
-const splitKeyInput = document.getElementById("split-key");
-const splitPassphraseInput = document.getElementById("split-passphrase");
-const splitErrorBox = document.getElementById("split-error");
-const splitResults = document.getElementById("split-results");
-const groupRowsContainer = document.getElementById("group-rows");
-const addGroupButton = document.getElementById("add-group");
-const groupThresholdField = document.getElementById("group-threshold-field");
-const groupThresholdSelect = document.getElementById("group-threshold");
-const iterationExponentSelect = document.getElementById("iteration-exponent");
-
 function fillNumericOptions(select, min, max, defaultValue) {
   select.innerHTML = "";
   for (let i = min; i <= max; i++) {
@@ -122,9 +42,59 @@ function fillNumericOptions(select, min, max, defaultValue) {
   select.value = String(defaultValue);
 }
 
+// ---- Back up a phrase ----
+
+const splitForm = document.getElementById("split-form");
+const splitSubmit = splitForm.querySelector("button[type=submit]");
+const splitPhraseInput = document.getElementById("split-phrase");
+const splitBip39PassphraseInput = document.getElementById("split-bip39-passphrase");
+const splitPassphraseInput = document.getElementById("split-passphrase");
+const splitErrorBox = document.getElementById("split-error");
+const splitResults = document.getElementById("split-results");
+const groupRowsContainer = document.getElementById("group-rows");
+const addGroupButton = document.getElementById("add-group");
+const groupThresholdField = document.getElementById("group-threshold-field");
+const groupThresholdSelect = document.getElementById("group-threshold");
+const iterationExponentSelect = document.getElementById("iteration-exponent");
+
+const splitCheck = document.getElementById("split-check");
+const splitCheckTitle = document.getElementById("split-check-title");
+const splitOutputs = {
+  fingerprint: document.getElementById("split-out-fingerprint"),
+  eth: document.getElementById("split-out-eth"),
+  btc: document.getElementById("split-out-btc"),
+};
+for (const field of Object.values(splitOutputs)) {
+  selectOnFocus(field);
+}
+
 // 1 matches the reference implementation, python-slip39 and seedkit (the
 // spec sets no default).
 fillNumericOptions(iterationExponentSelect, 0, 15, 1);
+
+// Shows what identifies the phrase as soon as it parses, so the user can
+// confirm they typed their own phrase before anything is split. Silent
+// while it doesn't parse yet: half-typed input isn't an error.
+function updatePhraseCheck() {
+  try {
+    const check = phrase_check(splitPhraseInput.value, splitBip39PassphraseInput.value);
+    splitCheckTitle.textContent = `${check.word_count}-word phrase · fingerprint (goes on every share)`;
+    splitOutputs.fingerprint.value = check.fingerprint;
+    splitOutputs.eth.value = check.eth_address;
+    splitOutputs.btc.value = check.btc_address;
+    splitCheck.hidden = false;
+    return check;
+  } catch {
+    splitCheck.hidden = true;
+    for (const field of Object.values(splitOutputs)) {
+      field.value = "";
+    }
+    return null;
+  }
+}
+
+splitPhraseInput.addEventListener("input", updatePhraseCheck);
+splitBip39PassphraseInput.addEventListener("input", updatePhraseCheck);
 
 function relabelGroupRows() {
   const rows = groupRowsContainer.querySelectorAll(".group-row");
@@ -176,7 +146,7 @@ function addGroupRow(threshold, count) {
   ofText.textContent = "of";
 
   const membersText = document.createElement("span");
-  membersText.textContent = "members";
+  membersText.textContent = "shares";
 
   wrap.append(thresholdSelect, ofText, countSelect, membersText);
   column.appendChild(wrap);
@@ -212,8 +182,14 @@ function clearSplitResults() {
   splitResults.innerHTML = "";
 }
 
-function renderSplitResults(groups) {
+function renderSplitResults(groups, fingerprint) {
   splitResults.innerHTML = "";
+
+  const intro = document.createElement("p");
+  intro.className = "notice mt-0";
+  intro.textContent = `Fingerprint ${fingerprint}: write it on every share. It shows the shares belong together, and a recovery must reproduce it.`;
+  splitResults.appendChild(intro);
+
   groups.forEach((groupText, groupIndex) => {
     const members = groupText.split("\n");
     const groupBox = document.createElement("div");
@@ -237,7 +213,7 @@ function renderSplitResults(groups) {
       textarea.readOnly = true;
       textarea.spellcheck = false;
       textarea.className = "mono-output";
-      textarea.rows = 4; // 33 words needs 4 lines at this width, not 3 — same clipping bug as the BIP39 field earlier
+      textarea.rows = 4; // a 24-word phrase gives 33-word shares: 4 lines at this width
       textarea.value = mnemonic;
       selectOnFocus(textarea);
       field.appendChild(textarea);
@@ -254,44 +230,54 @@ splitForm.addEventListener("submit", (event) => {
   event.preventDefault();
   clearError(splitErrorBox);
 
-  const key = splitKeyInput.value.trim();
-  if (!key) {
-    showError(splitErrorBox, "Enter a private key first.");
+  if (!splitPhraseInput.value.trim()) {
+    showError(splitErrorBox, "Enter your recovery phrase first.");
     clearSplitResults();
     return;
   }
 
   try {
+    // Parse first, so a typo is reported as a phrase error rather than
+    // anything about shares.
+    const check = phrase_check(splitPhraseInput.value, splitBip39PassphraseInput.value);
     const groups = slip39_split(
-      key,
+      splitPhraseInput.value,
       Number(groupThresholdSelect.value),
       readGroupSpecs(),
       splitPassphraseInput.value,
       Number(iterationExponentSelect.value),
     );
-    renderSplitResults(groups);
+    renderSplitResults(groups, check.fingerprint);
   } catch (err) {
     showError(splitErrorBox, String(err));
     clearSplitResults();
   }
 });
 
-// ---- SLIP-39 Combine tab ----
+// ---- Recover a phrase ----
 
 const combineForm = document.getElementById("combine-form");
 const combinePassphraseInput = document.getElementById("combine-passphrase");
+const combineBip39PassphraseInput = document.getElementById("combine-bip39-passphrase");
 const combineErrorBox = document.getElementById("combine-error");
 const combineResults = document.getElementById("combine-results");
 const mnemonicRowsContainer = document.getElementById("mnemonic-rows");
 const addMnemonicButton = document.getElementById("add-mnemonic");
 
-const combineHexLabel = document.getElementById("combine-out-hex-label");
-const combineEthField = document.getElementById("combine-field-eth");
-const combineBtcField = document.getElementById("combine-field-btc");
+const combineBlocks = {
+  phrase: document.getElementById("combine-phrase-block"),
+  rawKey: document.getElementById("combine-rawkey-block"),
+  secret: document.getElementById("combine-secret-block"),
+};
+const combineWordsLabel = document.getElementById("combine-words-label");
 const combineOutputs = {
-  hex: document.getElementById("combine-out-hex"),
+  words: document.getElementById("combine-out-words"),
+  fingerprint: document.getElementById("combine-out-fingerprint"),
   eth: document.getElementById("combine-out-eth"),
   btc: document.getElementById("combine-out-btc"),
+  rawKey: document.getElementById("combine-out-rawkey"),
+  rawKeyEth: document.getElementById("combine-out-rawkey-eth"),
+  secret: document.getElementById("combine-out-secret"),
 };
 for (const field of Object.values(combineOutputs)) {
   selectOnFocus(field);
@@ -320,7 +306,7 @@ function addMnemonicRow() {
   textarea.autocomplete = "off";
   textarea.spellcheck = false;
   textarea.autocapitalize = "off";
-  textarea.placeholder = "paste a mnemonic share";
+  textarea.placeholder = "type or paste one share";
   field.appendChild(textarea);
 
   const badge = document.createElement("div");
@@ -362,68 +348,78 @@ function readMnemonics() {
 
 function clearCombineResults() {
   combineResults.hidden = true;
-  combineOutputs.hex.value = "";
-  combineOutputs.eth.value = "";
-  combineOutputs.btc.value = "";
+  for (const field of Object.values(combineOutputs)) {
+    field.value = "";
+  }
 }
 
 combineForm.addEventListener("submit", (event) => {
   event.preventDefault();
   clearError(combineErrorBox);
+  clearCombineResults();
 
   const mnemonics = readMnemonics();
   if (mnemonics.length === 0) {
-    showError(combineErrorBox, "Enter at least one mnemonic share.");
-    clearCombineResults();
+    showError(combineErrorBox, "Enter at least one share.");
     return;
   }
 
   try {
-    const hex = slip39_combine(mnemonics, combinePassphraseInput.value);
-    // Only a 32-byte secret can be a private key; shares from other tools
-    // may hold e.g. 16-byte BIP39 entropy, which has no addresses to show.
-    const isKey = hex.length === 64;
-    combineOutputs.hex.value = hex;
-    combineHexLabel.textContent = isKey ? "Recovered private key (hex)" : `Recovered secret (hex, ${hex.length * 4} bits — not a private key)`;
-    combineEthField.hidden = !isKey;
-    combineBtcField.hidden = !isKey;
-    if (isKey) {
-      const derived = convert(hex, "mainnet", true);
-      combineOutputs.eth.value = derived.eth_address;
-      combineOutputs.btc.value = derived.btc_address;
+    const recovered = slip39_combine(mnemonics, combinePassphraseInput.value, combineBip39PassphraseInput.value);
+
+    const check = recovered.check;
+    combineBlocks.phrase.hidden = !check;
+    if (check) {
+      combineWordsLabel.textContent = `Recovered phrase (${check.word_count} words)`;
+      combineOutputs.words.value = recovered.words;
+      combineOutputs.fingerprint.value = check.fingerprint;
+      combineOutputs.eth.value = check.eth_address;
+      combineOutputs.btc.value = check.btc_address;
     }
+
+    combineBlocks.rawKey.hidden = !recovered.raw_key_hex;
+    if (recovered.raw_key_hex) {
+      combineOutputs.rawKey.value = recovered.raw_key_hex;
+      combineOutputs.rawKeyEth.value = recovered.raw_key_eth_address;
+    }
+
+    combineBlocks.secret.hidden = !recovered.secret_hex;
+    if (recovered.secret_hex) {
+      combineOutputs.secret.value = recovered.secret_hex;
+    }
+
     combineResults.hidden = false;
   } catch (err) {
     showError(combineErrorBox, String(err));
-    clearCombineResults();
   }
 });
 
 // ---- wasm init ----
 
-submitButton.disabled = true;
-submitButton.textContent = "Loading…";
+splitSubmit.disabled = true;
+splitSubmit.textContent = "Loading…";
 
 init()
   .then(() => {
-    submitButton.disabled = false;
-    submitButton.textContent = "Convert";
+    splitSubmit.disabled = false;
+    splitSubmit.textContent = "Split";
 
     addGroupRow(2, 3);
     addMnemonicRow();
     addMnemonicRow();
 
     // BEGIN dev-only (scripts/build.py strips this from the release file)
-    // ?test prefills the well-known "private key = 1" vector and converts
-    // it immediately, for quick manual/visual testing. Never a real key —
-    // it's the most famous toy vector, so it demonstrably holds no funds.
+    // ?test prefills the canonical all-zero test phrase, for quick
+    // manual/visual testing. Never a real phrase — it's the most famous
+    // test vector there is, so it demonstrably holds no funds.
     if (new URLSearchParams(window.location.search).has("test")) {
-      keyInput.value = "0000000000000000000000000000000000000000000000000000000000000001";
-      runConversion();
+      splitPhraseInput.value =
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+      updatePhraseCheck();
     }
     // END dev-only
   })
   .catch((err) => {
-    submitButton.textContent = "Failed to load";
-    showError(errorBox, `Could not load the WebAssembly module: ${err}`);
+    splitSubmit.textContent = "Failed to load";
+    showError(splitErrorBox, `Could not load the WebAssembly module: ${err}`);
   });
