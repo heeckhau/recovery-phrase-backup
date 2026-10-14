@@ -717,12 +717,15 @@ window.addEventListener("afterprint", () => {
   printArea.innerHTML = "";
 });
 
-// One cut-out card per share. `withWords` false gives blank cards to fill in
-// by hand: the same labels and fingerprint, which are not secret.
+// One cut-out card per share, written for the friend who keeps it. It
+// carries nothing a finder could use to plan: no position, no threshold,
+// no group, no mention of a passphrase or what the backup is for. (The
+// share's own first words still encode its group and threshold for SLIP-39
+// software; that is part of the standard.) The owner's "how to recover"
+// sheet holds those details. `withWords` false gives blank cards.
 function shareCard(share, withWords) {
   const card = el("div", "print-card");
   card.appendChild(el("h2", null, "Recovery share"));
-  card.appendChild(el("p", "meta", shareLabel(share)));
   const fp = el("p", "meta", "Fingerprint: ");
   fp.appendChild(el("span", "fp", state.fingerprint));
   card.appendChild(fp);
@@ -735,11 +738,16 @@ function shareCard(share, withWords) {
     grid.appendChild(cell);
   }
   card.appendChild(grid);
-  let note =
-    "One share of a SLIP-39 backup of a wallet's recovery phrase; on its own it reveals nothing. Keep it apart from the other shares. " +
-    "To recover, bring enough shares together, type them into a SLIP-39 tool on an offline computer, and check it shows this fingerprint.";
-  if (state.passphrase) note += " This backup also needs its SLIP-39 passphrase, which is not written here.";
-  card.appendChild(el("p", "instructions", note));
+  const note = el("p", "instructions");
+  note.appendChild(el("strong", null, "To whoever keeps this card: "));
+  note.appendChild(
+    document.createTextNode(
+      "someone trusted you with it. It is one piece of a backup: useless on its own, but needed to restore it, so please don't throw it away. " +
+        "Keep it somewhere safe and private, and don't copy or photograph it. " +
+        "Give it back only to the person who gave it to you or, if something happens to them, to whoever they asked you to give it to.",
+    ),
+  );
+  card.appendChild(note);
   return card;
 }
 

@@ -336,9 +336,16 @@ recommendation in this design, it is the premise.
   word grid with per-word autocomplete and validation (paste into the
   first box still fills it). Cards carry no per-share label: a name tells
   a finder whose share it is.
-- **Print cards**: cut-out cards, labelled ("Share 2 of 3 (any 2
-  recover)"), numbered words, the fingerprint, and short recovery
-  instructions; plus a secret-free "how to recover" sheet. Blank cards for
+- **Print cards**: cut-out cards with the numbered words, the fingerprint,
+  and a note to whoever keeps the card (someone trusted you with this; it
+  is useless alone but needed, so keep it safe and private, don't copy it,
+  and give it back only to the owner or whoever they named). *Revised
+  2026-10-14:* cards carry nothing a finder could plan with: no position
+  ("share 2 of 3"), no threshold, no group, no passphrase hint, no mention
+  of SLIP-39 or a wallet. The share's own first words still encode group
+  and threshold for SLIP-39 software; that is part of the standard and
+  can't be hidden. Those details live on the secret-free "how to recover"
+  sheet the owner keeps for their heir. Blank cards for
   handwriting as well as filled ones. *Revised 2026-10-14 for usability:*
   the user picks how to record the shares before seeing any: **by hand**
   (the default; blank cards optional, nothing secret goes through a

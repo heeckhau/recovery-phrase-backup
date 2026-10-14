@@ -126,8 +126,9 @@ test("back up a phrase by hand: check, split, spot-check, test", async ({ page }
   expect(shares).toHaveLength(3);
   expect(shares.every((s) => s.split(" ").length === 20)).toBe(true);
 
-  // Blank cards carry labels and the fingerprint, but no words.
+  // Blank cards carry the title, the fingerprint and the keeper's note, but no words.
   expect(blank.text.match(/Recovery share/g)).toHaveLength(3);
+  expect(blank.text).not.toMatch(/\bany \d|\bof \d|SLIP-39|wallet|passphrase/i);
   expect(blank.text).toContain(FINGERPRINT);
   expect(blank.cells).toEqual(shares.flatMap((share) => share.split(" ").map((_, i) => `${i + 1}.`)));
 
@@ -182,6 +183,9 @@ test("back up a phrase by printing: both layouts, checking unlocked by printing"
     expect(printout.text.match(/Recovery share/g)).toHaveLength(3);
     expect(printout.text).toContain(FINGERPRINT);
     expect(printout.cells).toEqual(numbered);
+    // A card tells a finder nothing to plan with, and speaks to its keeper.
+    expect(printout.text).not.toMatch(/\bany \d|\bof \d|SLIP-39|wallet|passphrase/i);
+    expect(printout.text.match(/To whoever keeps this card/g)).toHaveLength(3);
   }
   const shareWords = new Set(shares.join(" ").split(" "));
   for (const word of PHRASE.split(" ").filter((w) => !shareWords.has(w))) expect(sheet.text).not.toMatch(new RegExp(`\\b${word}\\b`));
