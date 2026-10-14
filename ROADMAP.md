@@ -327,16 +327,28 @@ recommendation in this design, it is the premise.
   catches the transcription error that would otherwise surface in ten
   years) → a "test your recovery now" step. Recovery: shares one at a
   time with the existing inspect badge, then the phrase and its
-  fingerprint.
+  fingerprint. *Settled 2026-10-14 (from the step 5 sketch):* the
+  per-share check is a spot check of three random words — full re-entry
+  of 20–33 words per share is the kind of step people skip — and the
+  "test your recovery" step is the full check, with a threshold of shares
+  typed in completely and the fingerprint reproduced. Entry is a numbered
+  word grid with per-word autocomplete and validation (paste into the
+  first box still fills it). Cards carry no per-share label: a name tells
+  a finder whose share it is.
 - **Print cards**: one share per page, labelled ("Share 2 of 3 — any 2
   recover"), numbered words, the fingerprint, and recovery instructions an
   heir can follow; plus a secret-free "how to recover" sheet. Offer blank
   handwriting templates as well as filled cards. Each share is printed on
   its own, from its own wizard step — there is no "print all" — and the
   phrase never appears on any printed page.
-- **Hygiene**: a "clear everything" button, clear on tab hide, no storage
-  of any kind, no copy-to-clipboard for shares, a `navigator.onLine`
-  warning banner. The `?test` prefill goes away in release builds.
+- **Hygiene**: a "clear everything" button, fields wiped when the page
+  closes, no storage of any kind, no copy-to-clipboard for shares, a
+  `navigator.onLine` warning banner. The `?test` prefill goes away in
+  release builds. *Not* clearing on tab hide (settled 2026-10-14):
+  usability comes first — people switch to their wallet mid-wizard to
+  compare addresses — and the device is trusted for the session anyway
+  (malware on it would see every keystroke); clearing only guards
+  against a screen left open, which the button covers.
 - **Out of scope for now**: non-English BIP39 wordlists (MetaMask and
   Trezor are English-only in practice), mobile.
 - **Testing**: the wizard's verification steps are the correctness-
