@@ -1,4 +1,4 @@
-"""Cross-tool recovery suite (PLAN.md, "Cross-tool recovery test suite").
+"""Cross-tool recovery suite (see README.md in this directory).
 
 Run via ./run.sh (inside the pinned nix shell). For each oracle tool it:
 

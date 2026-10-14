@@ -1,6 +1,6 @@
-# Pinned toolchain for the cross-tool recovery suite (PLAN.md). Python and
+# Pinned toolchain for the cross-tool recovery suite (README.md). Python and
 # Go come from a fixed nixpkgs revision; the oracle packages themselves are
-# pinned by version (and hash) in requirements-*.txt and in run.sh.
+# pinned by version in requirements-*.txt and (seedkit) in run.py.
 let
   nixpkgs = fetchTarball {
     url = "https://github.com/NixOS/nixpkgs/archive/8edc0c72e3a38faf5434e40d1f19431125fe4b30.tar.gz";

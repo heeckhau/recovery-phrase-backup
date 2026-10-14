@@ -2,7 +2,7 @@
 // https://github.com/trezor/python-shamir-mnemonic/blob/master/vectors.json
 // (MIT license). This is the primary correctness net for this crate,
 // since (unlike BIP39) there is no audited Rust SLIP-39 crate to lean
-// on for confidence (see PLAN.md).
+// on for confidence (see ROADMAP.md).
 //
 // Format: [description, mnemonics, expected_secret_hex, expected_bip32_xprv].
 // An empty expected_secret_hex means combining the mnemonics MUST fail.
