@@ -613,11 +613,15 @@ Then, in order:
    review, one share at a time with a three-word spot check, a full
    recovery test that must reproduce the fingerprint, and guidance on the
    original phrase. Shares can be revisited (back always, forward only
-   past a checked share). The user picks by hand (default; optional blank
+   past a checked share). The spot check gives live feedback (green when a
+   word matches, red once a complete word doesn't) and moves on by itself
+   when all three match; the checks can be skipped only through a dialog
+   with a second confirmation ("I'll test restoring from my copies myself
+   before I rely on them"), which leads to the recovery test. The user picks by hand (default; optional blank
    cards) or printed (all shares in one job, one sheet with cut lines or
    one card per page); the "how to recover" sheet carries no secret. Recovery takes shares one
    at a time with progress towards the threshold and confirms the
-   fingerprint before showing addresses. Nine Playwright tests drive the
+   fingerprint before showing addresses. Ten Playwright tests drive the
    release file itself in CI (`tests/e2e/`), including that nothing
    reaches the clipboard or storage and the strict CSP never fires; a
    planted spot-check bug fails exactly the test that should catch it.

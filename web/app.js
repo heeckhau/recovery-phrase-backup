@@ -167,6 +167,9 @@ function createWordGrid(container, kind, { count, numbers, onChange, onPasteCoun
     words() {
       return inputs.map((input) => input.value.trim().toLowerCase());
     },
+    inputs() {
+      return inputs;
+    },
     complete() {
       return inputs.every((input) => list.set.has(input.value.trim().toLowerCase()));
     },
@@ -579,6 +582,7 @@ function showShare() {
   renderWords($("b4-words"), share.mnemonic.split(" "));
   $("b4-show").hidden = false;
   $("b4-verify").hidden = true;
+  $("b4-match").hidden = true;
   clearError($("b4-error"));
   updateShareNav();
 
@@ -600,6 +604,7 @@ function updateShareNav() {
   $("b4-written").disabled = state.method === "print" && !state.printed;
   $("b4-print").textContent = state.printed ? "Print the shares again" : "Print the shares";
   $("b4-prev").hidden = state.current === 0;
+  $("b4-skip").hidden = allChecked;
   const next = $("b4-next");
   next.textContent = state.current === last ? "Continue to the recovery test" : "Next share";
   next.disabled = state.current === last ? !allChecked : !checked;
@@ -621,7 +626,13 @@ $("b4-next").addEventListener("click", () => {
 $("b4-written").addEventListener("click", () => {
   $("b4-show").hidden = true;
   $("b4-verify").hidden = false;
-  b4CheckGrid = createWordGrid($("b4-check-grid"), "slip39", { count: 3, numbers: state.checkPositions.map((p) => p + 1) });
+  $("b4-match").hidden = true;
+  clearError($("b4-error"));
+  b4CheckGrid = createWordGrid($("b4-check-grid"), "slip39", {
+    count: 3,
+    numbers: state.checkPositions.map((p) => p + 1),
+    onChange: spotCheck,
+  });
   b4CheckGrid.focus();
 });
 
@@ -631,21 +642,73 @@ $("b4-show-again").addEventListener("click", () => {
   clearError($("b4-error"));
 });
 
-$("b4-check").addEventListener("click", () => {
+// Live feedback on the spot check: a word turns green as soon as it
+// matches, and red once it is a complete word that doesn't (a half-typed
+// word is just unfinished). When all three match, it moves on by itself.
+let advancing = false;
+
+function spotCheck() {
+  if (advancing) return;
   const expected = state.shares[state.current].mnemonic.split(" ");
-  const typed = b4CheckGrid.words();
-  const wrong = state.checkPositions.filter((p, i) => typed[i] !== expected[p]);
+  const inputs = b4CheckGrid.inputs();
+  const wrong = [];
+  let matches = 0;
+  inputs.forEach((input, i) => {
+    const typed = input.value.trim().toLowerCase();
+    const right = typed === expected[state.checkPositions[i]];
+    const isWrong = !right && typed !== "" && (wordlists.slip39.set.has(typed) || input.classList.contains("invalid"));
+    input.classList.toggle("valid", right);
+    input.classList.toggle("invalid", isWrong);
+    if (right) matches += 1;
+    if (isWrong) wrong.push(state.checkPositions[i] + 1);
+  });
   if (wrong.length > 0) {
-    showError($("b4-error"), `Word ${wrong.map((p) => p + 1).join(" and ")} doesn't match. Compare your copy with the share again.`);
+    showError($("b4-error"), `Word ${wrong.join(" and ")} doesn't match your share. Compare your copy with the share again.`);
+  } else {
+    clearError($("b4-error"));
+  }
+  if (matches === inputs.length) {
+    advancing = true;
+    for (const input of inputs) input.disabled = true;
+    $("b4-match").hidden = false;
+    const checkedShare = state.current;
+    setTimeout(() => {
+      advancing = false;
+      markChecked(checkedShare);
+    }, 700);
+  }
+}
+
+function markChecked(index) {
+  state.checked.add(index);
+  // If the user navigated away during the pause, just record the check.
+  if (state.current !== index || $("b4").hidden) {
+    if (!$("b4").hidden) updateShareNav();
     return;
   }
-  state.checked.add(state.current);
   const unchecked = state.shares.findIndex((_, i) => !state.checked.has(i));
   if (unchecked === -1) startRecoveryTest();
   else {
     state.current = unchecked;
     showShare();
   }
+}
+
+// Skipping the checks takes an explicit second confirmation; the recovery
+// test that follows is the real proof and can still be done (or skipped).
+$("b4-skip").addEventListener("click", () => {
+  $("skip-ack").checked = false;
+  $("skip-confirm").disabled = true;
+  $("skip-dialog").showModal();
+});
+$("skip-ack").addEventListener("change", () => {
+  $("skip-confirm").disabled = !$("skip-ack").checked;
+});
+$("skip-cancel").addEventListener("click", () => $("skip-dialog").close());
+$("skip-confirm").addEventListener("click", () => {
+  $("skip-dialog").close();
+  state.shares.forEach((_, i) => state.checked.add(i));
+  startRecoveryTest();
 });
 
 // ---- step 5: test the recovery ----

@@ -431,18 +431,17 @@
         <button type="button" id="b4-written">I've written it down</button>
       </div>
       <div id="b4-verify" hidden>
-        <p>Check your copy: type these words from what you wrote down.</p>
+        <p>Check your copy: type these words from what you wrote down. Each turns green when it matches.</p>
         <div class="word-grid" id="b4-check-grid"></div>
         <div class="error" id="b4-error"></div>
-        <div class="button-row">
-          <button type="button" class="btn-secondary" id="b4-show-again">Show the share again</button>
-          <button type="button" id="b4-check">Check</button>
-        </div>
+        <div class="banner success mt-075" id="b4-match" hidden>All three match.</div>
+        <button type="button" class="btn-secondary" id="b4-show-again">Show the share again</button>
       </div>
       <div class="button-row share-nav">
         <button type="button" class="btn-secondary" id="b4-prev">Previous share</button>
         <button type="button" class="btn-secondary" id="b4-next">Next share</button>
       </div>
+      <button type="button" class="link-button" id="b4-skip">Skip the checks</button>
     </div>
 
     <div class="step" id="b5" hidden>
@@ -542,6 +541,16 @@
     <div class="button-row">
       <button type="button" class="btn-secondary" id="print-cancel">Cancel</button>
       <button type="button" id="print-confirm">Print</button>
+    </div>
+  </dialog>
+
+  <dialog id="skip-dialog">
+    <h2>Skip checking your copies?</h2>
+    <p>The checks catch a word copied wrong now, while it's easy to fix. Without them, a mistake may only show up when someone needs to recover, possibly years from now.</p>
+    <label class="ack"><input type="checkbox" id="skip-ack"> I'll test restoring from my copies myself before I rely on them.</label>
+    <div class="button-row">
+      <button type="button" class="btn-secondary" id="skip-cancel">Cancel</button>
+      <button type="button" id="skip-confirm" disabled>Skip the checks</button>
     </div>
   </dialog>
 

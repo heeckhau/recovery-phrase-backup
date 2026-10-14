@@ -62,6 +62,11 @@ async function typeShare(page, entryId, share) {
   await page.locator(`#${entryId} button.btn-secondary`).click();
 }
 
+// The spot check moves on by itself once all three words match.
+async function waitForSpotCheckToPass(page) {
+  await page.waitForFunction(() => document.getElementById("b4").hidden || document.getElementById("b4-verify").hidden);
+}
+
 // Walks the share screens, passing every spot check; returns the shares.
 async function writeDownAllShares(page) {
   const shares = [];
@@ -72,7 +77,7 @@ async function writeDownAllShares(page) {
     const positions = (await page.locator("#b4-check-grid .num").allTextContents()).map((n) => Number(n) - 1);
     const inputs = page.locator("#b4-check-grid input");
     for (let i = 0; i < 3; i++) await inputs.nth(i).fill(words[positions[i]]);
-    await page.click("#b4-check");
+    await waitForSpotCheckToPass(page);
   }
   return shares;
 }
@@ -110,16 +115,19 @@ test("back up a phrase by hand: check, split, spot-check, test", async ({ page }
   await page.click("#b4-print-blank");
   const [blank] = await page.evaluate(() => window.__prints);
 
-  // A wrong spot-check word is caught.
+  // Live feedback: a half-typed word is just unfinished, a wrong complete
+  // word is flagged at once, and a right one turns green.
   await page.click("#b4-written");
   const positions = (await page.locator("#b4-check-grid .num").allTextContents()).map((n) => Number(n) - 1);
   const words = first.split(" ");
   const inputs = page.locator("#b4-check-grid input");
+  await inputs.nth(0).fill(words[positions[0]].slice(0, 2));
+  await expect(inputs.nth(0)).not.toHaveClass(/invalid/);
   await inputs.nth(0).fill(words[positions[0]] === "acid" ? "academic" : "acid");
-  await inputs.nth(1).fill(words[positions[1]]);
-  await inputs.nth(2).fill(words[positions[2]]);
-  await page.click("#b4-check");
+  await expect(inputs.nth(0)).toHaveClass(/invalid/);
   await expect(page.locator("#b4-error")).toContainText(`Word ${positions[0] + 1} doesn't match`);
+  await inputs.nth(1).fill(words[positions[1]]);
+  await expect(inputs.nth(1)).toHaveClass(/valid/);
   await page.click("#b4-show-again");
 
   const shares = [first, ...(await writeDownAllShares(page)).slice(1)];
@@ -206,7 +214,7 @@ test("shares can be revisited, but not skipped past unchecked", async ({ page })
   const words = await page.locator("#b4-words .word").allTextContents();
   const positions = (await page.locator("#b4-check-grid .num").allTextContents()).map((n) => Number(n) - 1);
   for (let i = 0; i < 3; i++) await page.locator("#b4-check-grid input").nth(i).fill(words[positions[i]]);
-  await page.click("#b4-check");
+  await waitForSpotCheckToPass(page);
 
   // On share 2 now: back to share 1, which shows as checked and can be left forward.
   await expect(page.locator("#b4-title")).toContainText("Share 2 of 3");
@@ -218,6 +226,25 @@ test("shares can be revisited, but not skipped past unchecked", async ({ page })
   await page.click("#b4-next");
   await expect(page.locator("#b4-title")).toContainText("Share 2 of 3");
   await expect(page.locator("#b4-checked")).toBeHidden();
+});
+
+test("the checks can be skipped, but only with a second confirmation", async ({ page }) => {
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.click("#b1-next");
+  await page.click("#b2-next");
+  await page.click("#b3-next");
+  await page.click("#b4-skip");
+  await expect(page.locator("#skip-dialog")).toHaveAttribute("open", "");
+  await expect(page.locator("#skip-confirm")).toBeDisabled();
+  await page.click("#skip-cancel");
+  await expect(page.locator("#b4")).toBeVisible();
+
+  await page.click("#b4-skip");
+  await page.check("#skip-ack");
+  await page.click("#skip-confirm");
+  // On to the recovery test, which is still there to prove the copies.
+  await expect(page.locator("#b5")).toBeVisible();
 });
 
 test("a miscopied share fails the recovery test", async ({ page }) => {
