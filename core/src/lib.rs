@@ -9,7 +9,7 @@ pub use btc::{btc_p2pkh_address, btc_p2wpkh_address};
 pub use error::Error;
 pub use eth::eth_address;
 pub use key::{KeyFormat, Network, PrivateKey};
-pub use phrase::{Addresses, Phrase};
+pub use phrase::{bip39_wordlist, Addresses, Phrase, Weakness};
 pub use wif::{encode_wif, parse_private_key, ParsedKey};
 
 /// Every representation of a private key, derived in one call.

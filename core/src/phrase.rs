@@ -30,9 +30,48 @@ pub struct Addresses {
     pub btc: String,
 }
 
+/// Why a phrase deserves a second look before it is backed up. Not errors:
+/// these phrases are valid, and backing one up is the user's call — but
+/// each almost always means a test or toy phrase, which anyone can sweep.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Weakness {
+    /// One of the official BIP39 test vectors (trezor/python-mnemonic
+    /// vectors.json), published in every wallet's test suite.
+    KnownTestPhrase,
+    /// The entropy is a single byte repeated — "abandon … about",
+    /// "zoo … wrong", "legal winner …" — never the output of a real
+    /// random generator.
+    RepeatedByte,
+    /// Fewer than half the words are distinct, e.g. Hardhat's
+    /// "test test … junk".
+    FewDistinctWords,
+}
+
+/// Entropy of the official BIP39 test vectors that aren't a single
+/// repeated byte (those are caught by [`Weakness::RepeatedByte`]).
+const KNOWN_TEST_ENTROPY: [&str; 12] = [
+    "9e885d952ad362caeb4efe34a8e91bd2",
+    "6610b25967cdcca9d59875f5cb50b0ea75433311869e930b",
+    "68a79eaca2324873eacc50cb9c6eca8cc68ea5d936f98787c60c7ebc74e6ce7c",
+    "c0ba5a8e914111210f2bd131f3d5e08d",
+    "6d9be1ee6ebd27a258115aad99b7317b9c8d28b6d76431c3",
+    "9f6a2878b2520799a44ef18bc7df394e7061a224d2c33cd015b157d746869863",
+    "23db8160a31d3e0dca3688ed941adbf3",
+    "8197a4a47f0425faeaa69deebc05ca29c0a5b5cc76ceacc0",
+    "066dca1a2bb7e8a1db2832148ce9933eea0f3ac9548d793112d9a95c9407efad",
+    "f30f8c1da665478f49b001d94c5fc452",
+    "c10ec20dc3cd9f652c7fac2f1230f7a3c828389a14392f05",
+    "f585c11aec520db57dd353c69554b21a89b20fb0650966fa0a9d6f74fd989d8f",
+];
+
 const HARDENED: bool = true;
 const ETH_PATH: [(u32, bool); 5] = [(44, HARDENED), (60, HARDENED), (0, HARDENED), (0, false), (0, false)];
 const BTC_PATH: [(u32, bool); 5] = [(84, HARDENED), (0, HARDENED), (0, HARDENED), (0, false), (0, false)];
+
+/// The 2048-word English BIP39 wordlist, in order — e.g. for autocomplete.
+pub fn bip39_wordlist() -> &'static [&'static str] {
+    Language::English.word_list()
+}
 
 impl Phrase {
     /// Parses and validates a phrase: known words, a standard length, and
@@ -66,6 +105,28 @@ impl Phrase {
     /// splits.
     pub fn entropy(&self) -> Zeroizing<Vec<u8>> {
         Zeroizing::new(self.0.to_entropy())
+    }
+
+    /// Reasons to question this phrase before backing it up; empty for a
+    /// phrase that looks like real wallet output.
+    pub fn weaknesses(&self) -> Vec<Weakness> {
+        let entropy = self.entropy();
+        let mut found = Vec::new();
+        if KNOWN_TEST_ENTROPY.contains(&hex::encode(entropy.as_slice()).as_str()) {
+            found.push(Weakness::KnownTestPhrase);
+        }
+        if entropy.iter().all(|&b| b == entropy[0]) {
+            found.push(Weakness::RepeatedByte);
+        }
+        let words = self.to_words();
+        let all: Vec<&str> = words.split(' ').collect();
+        let mut distinct = all.clone();
+        distinct.sort_unstable();
+        distinct.dedup();
+        if distinct.len() * 2 < all.len() {
+            found.push(Weakness::FewDistinctWords);
+        }
+        found
     }
 
     fn master_key(&self, bip39_passphrase: &str) -> XPrv {
@@ -143,6 +204,33 @@ mod tests {
             assert_eq!(phrase.word_count(), len * 3 / 4);
             let reparsed = Phrase::parse(&phrase.to_words()).unwrap();
             assert_eq!(*reparsed.entropy(), entropy);
+        }
+    }
+
+    #[test]
+    fn flags_test_and_toy_phrases_but_not_real_looking_ones() {
+        let weak = |p: &str| Phrase::parse(p).unwrap().weaknesses();
+        assert!(weak(ABANDON_ABOUT).contains(&Weakness::RepeatedByte));
+        assert!(weak(ABANDON_ABOUT).contains(&Weakness::FewDistinctWords));
+        // Official vector 9e885d95…, and Hardhat's default development phrase.
+        assert_eq!(
+            weak("ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic"),
+            vec![Weakness::KnownTestPhrase]
+        );
+        assert_eq!(weak("test test test test test test test test test test test junk"), vec![Weakness::FewDistinctWords]);
+        // A phrase from random entropy (entropy bytes chosen by hand, not a published vector).
+        let random_looking = Phrase::from_entropy(&[
+            0x3c, 0x91, 0x0e, 0xd7, 0x52, 0xa8, 0x6f, 0x14, 0xb3, 0x29, 0xe0, 0x7d, 0x45, 0x9a, 0xc6, 0x18,
+        ])
+        .unwrap();
+        assert!(random_looking.weaknesses().is_empty());
+    }
+
+    #[test]
+    fn every_official_non_pattern_vector_is_flagged() {
+        for hex_entropy in KNOWN_TEST_ENTROPY {
+            let phrase = Phrase::from_entropy(&hex::decode(hex_entropy).unwrap()).unwrap();
+            assert!(phrase.weaknesses().contains(&Weakness::KnownTestPhrase), "{hex_entropy}");
         }
     }
 

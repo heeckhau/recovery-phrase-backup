@@ -8,6 +8,11 @@ const WORDLIST_TXT: &str = include_str!("wordlist.txt");
 static WORDLIST: LazyLock<Vec<&'static str>> = LazyLock::new(|| WORDLIST_TXT.lines().collect());
 
 /// Looks up the word at a given 10-bit index (0..1024).
+/// All 1024 words, in order — e.g. for autocomplete in a UI.
+pub fn words() -> &'static [&'static str] {
+    &WORDLIST
+}
+
 pub fn word_at(index: u16) -> Option<&'static str> {
     WORDLIST.get(index as usize).copied()
 }

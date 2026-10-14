@@ -13,6 +13,11 @@ use zeroize::Zeroizing;
 use codec::ShareData;
 pub use error::Error;
 
+/// The 1024-word SLIP-39 wordlist, in order — e.g. for autocomplete in a UI.
+pub fn wordlist() -> &'static [&'static str] {
+    wordlist::words()
+}
+
 /// Secret-bearing bytes (share values, group secrets, the encrypted and
 /// plaintext master secret, Feistel state), scrubbed on drop.
 pub(crate) type SecretBytes = Zeroizing<Vec<u8>>;
