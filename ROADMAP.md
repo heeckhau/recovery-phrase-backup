@@ -245,8 +245,9 @@ shares one at a time, a recovery test, and done.
   and first Ethereum and native SegWit addresses appear on screen only, so
   the user can confirm it is their wallet. An optional wallet passphrase
   field changes only those addresses and says it is not part of the backup.
-  Published test phrases, single-byte patterns and phrases with few distinct
-  words get a warning and need an explicit "back it up anyway".
+  Published test phrases (BIP39 vectors and the default phrases of Hardhat,
+  Foundry, Truffle and Ganache), single-byte patterns and phrases with few
+  distinct words get a warning and need an explicit "back it up anyway".
 - Schemes come as presets (2 of 3, 3 of 5) or custom groups, with warnings
   for schemes weaker than they look (3 of 3, every group required, 1 of 1).
 - Each share gets a spot check of three random words, with live feedback

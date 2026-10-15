@@ -36,8 +36,9 @@ pub struct Addresses {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Weakness {
     /// One of the official BIP39 test vectors (trezor/python-mnemonic
-    /// vectors.json), published in every wallet's test suite, or one of the
-    /// sample phrases this project's online demo publishes.
+    /// vectors.json), published in every wallet's test suite, a default
+    /// phrase of an Ethereum development tool, or one of the sample phrases
+    /// this project's online demo publishes.
     KnownTestPhrase,
     /// The entropy is a single byte repeated ("abandon … about",
     /// "zoo … wrong", "legal winner …"), never the output of a real
@@ -63,6 +64,18 @@ const KNOWN_TEST_ENTROPY: [&str; 12] = [
     "f30f8c1da665478f49b001d94c5fc452",
     "c10ec20dc3cd9f652c7fac2f1230f7a3c828389a14392f05",
     "f585c11aec520db57dd353c69554b21a89b20fb0650966fa0a9d6f74fd989d8f",
+];
+
+/// Entropy of the default phrases of Ethereum development tools. Their
+/// accounts are funded on every local test chain, and bots sweep anything
+/// sent to them on mainnet within seconds.
+const DEV_TOOL_ENTROPY: [&str; 3] = [
+    // Hardhat and Foundry (Anvil): "test test … junk".
+    "df9bf37e6fcdf9bf37e6fcdf9bf37e3c",
+    // Truffle Develop: "candy maple cake sugar …".
+    "2150f0816c6ad265db4dcacce69b6ef3",
+    // Ganache, deterministic mode: "myth like bonus scare …".
+    "92903465e029df56cab416a53b015396",
 ];
 
 /// Entropy of the online demo's sample phrases: SHA-256 of
@@ -122,7 +135,8 @@ impl Phrase {
         let entropy = self.entropy();
         let mut found = Vec::new();
         let hex_entropy = hex::encode(entropy.as_slice());
-        if KNOWN_TEST_ENTROPY.contains(&hex_entropy.as_str()) || DEMO_SAMPLE_ENTROPY.contains(&hex_entropy.as_str()) {
+        let hex_entropy = hex_entropy.as_str();
+        if KNOWN_TEST_ENTROPY.contains(&hex_entropy) || DEV_TOOL_ENTROPY.contains(&hex_entropy) || DEMO_SAMPLE_ENTROPY.contains(&hex_entropy) {
             found.push(Weakness::KnownTestPhrase);
         }
         if entropy.iter().all(|&b| b == entropy[0]) {
@@ -222,12 +236,11 @@ mod tests {
         let weak = |p: &str| Phrase::parse(p).unwrap().weaknesses();
         assert!(weak(ABANDON_ABOUT).contains(&Weakness::RepeatedByte));
         assert!(weak(ABANDON_ABOUT).contains(&Weakness::FewDistinctWords));
-        // Official vector 9e885d95…, and Hardhat's default development phrase.
+        // Official vector 9e885d95….
         assert_eq!(
             weak("ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic"),
             vec![Weakness::KnownTestPhrase]
         );
-        assert_eq!(weak("test test test test test test test test test test test junk"), vec![Weakness::FewDistinctWords]);
         // A phrase from random entropy (entropy bytes chosen by hand, not a published vector).
         let random_looking = Phrase::from_entropy(&[
             0x3c, 0x91, 0x0e, 0xd7, 0x52, 0xa8, 0x6f, 0x14, 0xb3, 0x29, 0xe0, 0x7d, 0x45, 0x9a, 0xc6, 0x18,
@@ -242,6 +255,18 @@ mod tests {
         let twenty_four = "embark same leave age drama review decrease outdoor lobster shrug worry champion mango flush govern vehicle vintage scene notice lesson history era extra rose";
         for phrase in [twelve, twenty_four] {
             assert_eq!(Phrase::parse(phrase).unwrap().weaknesses(), vec![Weakness::KnownTestPhrase]);
+        }
+    }
+
+    #[test]
+    fn ethereum_dev_tool_phrases_are_flagged() {
+        let hardhat = "test test test test test test test test test test test junk";
+        assert_eq!(Phrase::parse(hardhat).unwrap().weaknesses(), vec![Weakness::KnownTestPhrase, Weakness::FewDistinctWords]);
+        // Twelve distinct words each, so only the list catches them.
+        let truffle = "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
+        let ganache = "myth like bonus scare over problem client lizard pioneer submit female collect";
+        for phrase in [truffle, ganache] {
+            assert_eq!(Phrase::parse(phrase).unwrap().weaknesses(), vec![Weakness::KnownTestPhrase], "{phrase}");
         }
     }
 
