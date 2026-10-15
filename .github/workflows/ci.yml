@@ -103,3 +103,31 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - name: Run every oracle live (nix shell pinned in scripts/interop/shell.nix)
         run: scripts/interop/run.sh --check-only
+
+  pages:
+    name: Deploy the website to GitHub Pages
+    # Only the files the reference build produced and the browser tests
+    # passed, only from main, and only once the repository is public (a
+    # private repository on the free plan has no Pages).
+    needs: [html, e2e]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && !github.event.repository.private
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: recovery-phrase-backup-html
+          path: dist
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist/site
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

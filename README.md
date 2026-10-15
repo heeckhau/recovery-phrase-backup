@@ -1,7 +1,7 @@
 # Recovery Phrase Backup
 
-Back up a wallet's recovery phrase so that no single place can lose it, or
-reveal it.
+Back up a wallet's recovery phrase (seed phrase) so that no single place can
+lose it, or reveal it.
 
 This tool splits an existing BIP39 recovery phrase (12 to 24 words) into
 **shares** using [SLIP-39](https://github.com/satoshilabs/slips/blob/master/slip-0039.md),
@@ -135,7 +135,8 @@ first use.
 
 CI (`.github/workflows/ci.yml`, actions pinned by commit) runs all of these
 on every push, plus `cargo audit` and a check that no em dash appears in the
-repository.
+repository. On `main`, once the repository is public, it then deploys the
+tested `dist/site/` (landing page and demo) to GitHub Pages.
 
 **Layout.**
 - `slip39/`: `rpb-slip39`, the SLIP-39 implementation (GF(256) Shamir
@@ -154,8 +155,8 @@ repository.
 
 ## License
 
-MIT OR Apache-2.0, at your option (LICENSE files land with the first
-release). Vendored data keeps its own terms: the SLIP-39 wordlist comes from
+MIT OR Apache-2.0, at your option ([LICENSE-MIT](LICENSE-MIT),
+[LICENSE-APACHE](LICENSE-APACHE)). Vendored data keeps its own terms: the SLIP-39 wordlist comes from
 `satoshilabs/slips` (CC-BY-SA-4.0) and the official test vectors from
 `trezor/python-shamir-mnemonic` (MIT); the files in `reference/` keep their
 original licenses.

@@ -33,9 +33,9 @@ Complete and tested, not yet released.
   checks against three other SLIP-39 tools), ten browser tests against the
   release file itself, and a check that no em dash appears in the repo.
 
-Not done yet: the independent review, LICENSE files, a public
-repository, a signed release, and putting the website online (it is built,
-not hosted).
+Not done yet: the independent review, a public repository, a signed
+release, and putting the website online (built, and deployed by CI once the
+repository is public).
 
 ## Next
 
@@ -53,14 +53,16 @@ not hosted).
    and `pkc`). Chosen over shorter names because it says what the tool does
    and is free everywhere; "key" names were dropped because the tool backs
    up phrases, not keys.
-3. **Release v1.** LICENSE files; make the repository public; a release job
+3. **Release v1.** LICENSE files (*done 2026-10-15*: MIT OR Apache-2.0);
+   make the repository public; a release job
    that builds the HTML in the reference container and publishes it with
    `SHA256SUMS` and a signature; verification steps in the README.
 4. **A website.** *Built (2026-10-15); hosting waits for the public
    repository.* `scripts/build.py` writes it to `dist/site/` next to the
    release file, CI builds it in the reference container and tests it, and
-   it will be served from GitHub Pages at `<user>.github.io/<repo>` (no
-   custom domain):
+   CI's `pages` job deploys those tested files from `main` to GitHub Pages at
+   `heeckhau.github.io/recovery-phrase-backup` (no custom domain) once the
+   repository is public and Pages is set to "GitHub Actions":
    - *A demo build* (`dist/demo.html`): the same page, but it only backs
      up a few published sample phrases (offered as buttons), refusing any
      other at its first word that isn't a sample's, with a pointer to the
