@@ -106,10 +106,10 @@ jobs:
 
   pages:
     name: Deploy the website to GitHub Pages
-    # Only the files the reference build produced and the browser tests
-    # passed, only from main, and only once the repository is public (a
-    # private repository on the free plan has no Pages).
-    needs: [html, e2e]
+    # Only the files the reference build produced, only once every check
+    # above passed, only from main, and only once the repository is public
+    # (a private repository on the free plan has no Pages).
+    needs: [test, audit, html, e2e, interop]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && !github.event.repository.private
     runs-on: ubuntu-24.04
     permissions:
