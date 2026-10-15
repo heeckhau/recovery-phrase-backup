@@ -13,7 +13,7 @@ to end over code that's merely tested.
 
 ## Where it stands (2026-10-15)
 
-Complete and tested, not yet released.
+Complete and tested; pre-releases (v0.x) until the review.
 
 - **`rpb-slip39`**: SLIP-39 written from the spec (no suitable Rust crate
   exists; see History), checked against all 45 official vectors. Accepts
@@ -33,9 +33,9 @@ Complete and tested, not yet released.
   checks against three other SLIP-39 tools), ten browser tests against the
   release file itself, and a check that no em dash appears in the repo.
 
-Not done yet: the independent review and a signed release. Until then the
-website offers the latest tested build of `main` for download, with its
-SHA-256.
+Not done yet: the independent review and a maintainer's signature on
+releases. Until then releases are pre-releases (v0.x), and the website
+offers the latest tested build of `main` for download, with its SHA-256.
 
 ## Next
 
@@ -55,8 +55,12 @@ SHA-256.
    up phrases, not keys.
 3. **Release v1.** LICENSE files (*done 2026-10-15*: MIT OR Apache-2.0);
    make the repository public (*done 2026-10-15*); a release job
-   that builds the HTML in the reference container and publishes it with
-   `SHA256SUMS` and a signature; verification steps in the README.
+   (*done 2026-10-15*): on a version tag, once every check passes, CI
+   drafts a GitHub release with the reference build, `SHA256SUMS` and a
+   GitHub attestation, and the page shows its version; verification steps
+   in the README (*done 2026-10-15*). Pre-releases (v0.x) come first. Still
+   open: a maintainer's own signature over `SHA256SUMS`, independent of
+   GitHub (an Ethereum signature from `heeckhau.eth`'s address, say).
 4. **A website.** *Online (2026-10-15)* at
    `heeckhau.github.io/recovery-phrase-backup` (no custom domain: a lapsed
    domain could serve a fake tool, and the cards and recovery sheet name no

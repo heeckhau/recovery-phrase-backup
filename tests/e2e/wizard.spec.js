@@ -36,6 +36,10 @@ test("the release file carries no dev-only code", async ({ page }) => {
   await expect(page.locator("#backup")).toBeHidden();
 });
 
+test("the release file shows its version", async ({ page }) => {
+  await expect(page.locator("#version")).toHaveText(/^v\d+\.\d+\.\d+(-[\w.]+)?$/);
+});
+
 test("back up a phrase by hand: check, split, spot-check, test", async ({ page }) => {
   await page.click("#start-backup");
   await pastePhrase(page, PHRASE);

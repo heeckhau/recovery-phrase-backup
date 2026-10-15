@@ -182,6 +182,7 @@
   .mt-1 { margin-top: 1rem !important; }
   /* ---- wizard ---- */
   .top { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+  .page-footer { margin-top: 2.5rem; color: var(--muted); font-size: 0.8rem; }
   .btn-small {
     margin: 0;
     width: auto;
@@ -587,6 +588,8 @@
       <button type="button" id="skip-confirm" disabled>Skip the checks</button>
     </div>
   </dialog>
+
+  <footer class="page-footer">Recovery Phrase Backup <span id="version">development build</span></footer>
 
   <datalist id="bip39-words"></datalist>
   <datalist id="slip39-words"></datalist>

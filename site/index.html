@@ -225,9 +225,9 @@
 
   <section id="download">
     <h2>Use it for real</h2>
-    <div class="note"><p class="warn">Not released yet.</p><p>The download below is the latest build of <a href="https://github.com/heeckhau/recovery-phrase-backup">the source</a>, published after every test passes. Version 1, signed and versioned, comes after an independent review. Until then, don't use it for a phrase that guards real funds.</p></div>
+    <div class="note"><p class="warn">Not reviewed yet.</p><p>The download below is the latest build of <a href="https://github.com/heeckhau/recovery-phrase-backup">the source</a>, published after every test passes; tagged versions are on the <a href="https://github.com/heeckhau/recovery-phrase-backup/releases">releases page</a>. Version 1 comes after an independent review. Until then, don't use it for a phrase that guards real funds.</p></div>
     <ol>
-      <li>Download <a href="recovery-phrase-backup.html" download>recovery-phrase-backup.html</a>. Its SHA-256 is <code class="hash">{{RELEASE_SHA256}}</code>.</li>
+      <li>Download <a href="recovery-phrase-backup.html" download>recovery-phrase-backup.html</a> (version {{VERSION}}). Its SHA-256 is <code class="hash">{{RELEASE_SHA256}}</code>.</li>
       <li>Check the hash (<code>shasum -a 256 recovery-phrase-backup.html</code>). To check that the file matches the source, rebuild it from the latest commit with Docker (<code>scripts/build-reproducible.sh</code>) and compare.</li>
       <li>Start the computer from a live USB system such as Tails, and don't connect it to the network. If you can't, at least disconnect, and use a fresh browser profile with no extensions.</li>
       <li>Open the file and follow the steps.</li>

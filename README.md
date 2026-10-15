@@ -14,10 +14,9 @@ SLIP-39.
 It is one HTML file that runs offline in your browser. It is not a wallet: it
 never signs anything and never touches a network.
 
-> **Status: not released yet.** The code is complete and tested, but it has
-> not been through its independent review or a signed release
-> ([ROADMAP.md](ROADMAP.md)). Until v1, don't use it for a phrase that
-> guards real funds.
+> **Status: pre-release.** The code is complete and tested, but it has not
+> been through its independent review yet ([ROADMAP.md](ROADMAP.md)).
+> Until v1, don't use it for a phrase that guards real funds.
 
 ## How it works
 
@@ -51,26 +50,38 @@ SLIP-39 tool), then restore the phrase in your wallet.
 
 ## Using it
 
-**The release file**: download `recovery-phrase-backup.html` from the
-[website](https://heeckhau.github.io/recovery-phrase-backup/#download),
-which shows its SHA-256, then disconnect from the network and open the file
-in a browser. Until v1 that file is the latest build of `main`, published
-once every test passes; v1 adds a versioned, signed GitHub release. The
+**The release file**: download `recovery-phrase-backup.html` and
+`SHA256SUMS` from a
+[release](https://github.com/heeckhau/recovery-phrase-backup/releases),
+then disconnect from the network and open the file in a browser. (The
+[website](https://heeckhau.github.io/recovery-phrase-backup/#download)
+offers the latest build of `main` instead, with its SHA-256.) The page
+shows its version at the bottom. The
 recommended setup is a live USB system such as Tails, without a network
 connection:
 offline alone doesn't stop malware or a malicious extension from recording
 the phrase and sending it once the computer is back online. If you can't,
 at least disconnect and use a fresh browser profile without extensions.
 
-**Check that the release matches the source.** The release file is built
-reproducibly in a pinned Linux x86-64 container, so anyone with Docker gets
-the same bytes:
+**Check the download.** Each release carries `SHA256SUMS` and a GitHub
+attestation: a record, signed by GitHub, that this repository's CI built
+the file from the release's tag.
 
 ```sh
+shasum -a 256 -c SHA256SUMS
+gh attestation verify recovery-phrase-backup.html --repo heeckhau/recovery-phrase-backup
+```
+
+**Check that the release matches the source.** The attestation trusts
+GitHub; this doesn't. The release file is built reproducibly in a pinned
+Linux x86-64 container, so anyone with Docker gets the same bytes:
+
+```sh
+git checkout v0.1.0             # the release's tag
 scripts/build-reproducible.sh   # writes dist/recovery-phrase-backup.html and prints its SHA-256
 ```
 
-Compare that hash with the published one. (Builds are byte-identical on one
+Compare that hash with the one in `SHA256SUMS`. (Builds are byte-identical on one
 platform but differ across platforms, which is why the reference build runs
 in a container. On Apple Silicon it runs under emulation and takes a couple
 of minutes.)
@@ -143,6 +154,19 @@ CI (`.github/workflows/ci.yml`, actions pinned by commit) runs all of these
 on every push, plus `cargo audit` and a check that no em dash appears in the
 repository. On `main` it then deploys the tested `dist/site/` (landing
 page, demo and release file) to GitHub Pages.
+
+**Releasing.** The version lives in `Cargo.toml` (`[workspace.package]`),
+and the build shows it on the page and the website.
+1. Set the version (say `0.2.0`) in `Cargo.toml`, run `cargo check` to
+   update `Cargo.lock`, and commit.
+2. Tag and push: `git tag -a v0.2.0 -m v0.2.0 && git push origin v0.2.0`.
+   CI runs every check on the tag, then its `release` job checks that the
+   tag matches `Cargo.toml` and drafts a GitHub release (a pre-release
+   before 1.0) with the tested file, `SHA256SUMS` and an attestation.
+3. Rebuild with `scripts/build-reproducible.sh`, check the hash matches the
+   draft's `SHA256SUMS`, and publish the draft.
+4. Set `main` to the next version with a `-dev` suffix (`0.3.0-dev`), so
+   builds of `main` don't carry the release's version.
 
 **Layout.**
 - `slip39/`: `rpb-slip39`, the SLIP-39 implementation (GF(256) Shamir

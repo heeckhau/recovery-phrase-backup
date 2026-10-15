@@ -10,7 +10,8 @@ the `html` profile; run wasm-bindgen, pinned to the version in Cargo.lock;
 then inline everything into web/index.html (the wasm as base64, the
 wasm-bindgen glue and app.js as one inline module script) and replace the
 page's development CSP with a strict one: default-src 'none', the script
-and the stylesheet allowed only by hash.
+and the stylesheet allowed only by hash. The page and the website show the
+workspace version from Cargo.toml.
 
 Reproducible per platform: the same commit gives byte-identical output on
 any machine of the same host platform (checked: two Linux x86-64
@@ -43,6 +44,7 @@ DIST = ROOT / "dist"
 SITE = ROOT / "site"
 RELEASE_NAME = "recovery-phrase-backup.html"
 RELEASE_SHA256 = "{{RELEASE_SHA256}}"
+RELEASE_VERSION = "{{VERSION}}"
 
 APP_IMPORT = re.compile(r'^import init, \{ ([\w, ]+) \} from "\./pkg/rpb_wasm\.js";\n', re.M)
 GLUE_EXPORT_TAIL = "export { initSync, __wbg_init as default };\n"
@@ -51,6 +53,8 @@ SCRIPT_TAG = '<script type="module" src="./app.js"></script>'
 CSP_META = re.compile(r'<meta http-equiv="Content-Security-Policy" content="[^"]*">')
 # Anchored to line starts, so a "<style>" mentioned in a comment can't match.
 STYLE_BLOCK = re.compile(r"^<style>(.*?)^</style>", re.S | re.M)
+# The development page says it is one; the build puts the version there.
+VERSION_MARK = '<span id="version">development build</span>'
 
 
 def fail(message):
@@ -66,6 +70,14 @@ def locked_version(crate):
     m = re.search(rf'\[\[package\]\]\nname = "{re.escape(crate)}"\nversion = "([^"]+)"', lock)
     if not m:
         fail(f"{crate} not found in Cargo.lock")
+    return m.group(1)
+
+
+def workspace_version():
+    toml = (ROOT / "Cargo.toml").read_text()
+    m = re.search(r'^\[workspace\.package\]\n(?:[^\[\n].*\n)*?version = "([^"]+)"$', toml, re.M)
+    if not m:
+        fail("no version under [workspace.package] in Cargo.toml")
     return m.group(1)
 
 
@@ -156,9 +168,12 @@ def csp_hash(text):
 DEMO_SWITCH = "let DEMO_MODE = false;\n"
 
 
-def assemble(html, glue, app, wasm_bytes, demo=False):
+def assemble(html, glue, app, wasm_bytes, version, demo=False):
     if app.count(DEMO_SWITCH) != 1:
         fail("app.js should have exactly one DEMO_MODE switch")
+    if html.count(VERSION_MARK) != 1:
+        fail(f"index.html should have exactly one {VERSION_MARK}")
+    html = html.replace(VERSION_MARK, f'<span id="version">v{version}</span>')
     if demo:
         app = app.replace(DEMO_SWITCH, "let DEMO_MODE = true;\n")
     wasm_b64 = base64.b64encode(wasm_bytes).decode()
@@ -188,13 +203,15 @@ def assemble(html, glue, app, wasm_bytes, demo=False):
     return CSP_META.sub(lambda _: f'<meta http-equiv="Content-Security-Policy" content="{csp}">', html)
 
 
-def landing_page(html, release):
+def landing_page(html, release, version):
     """The static landing page: no script at all, its stylesheet allowed by
-    hash, same as the tool, and the SHA-256 of the release file it offers
-    for download filled in."""
-    if html.count(RELEASE_SHA256) != 1:
-        fail(f"site/index.html should have exactly one {RELEASE_SHA256} placeholder")
+    hash, same as the tool, and the version and SHA-256 of the release file
+    it offers for download filled in."""
+    for placeholder in (RELEASE_SHA256, RELEASE_VERSION):
+        if html.count(placeholder) != 1:
+            fail(f"site/index.html should have exactly one {placeholder} placeholder")
     html = html.replace(RELEASE_SHA256, hashlib.sha256(release).hexdigest())
+    html = html.replace(RELEASE_VERSION, version)
     styles = STYLE_BLOCK.findall(html)
     if len(styles) != 1:
         fail("site/index.html should have exactly one <style> block")
@@ -213,11 +230,12 @@ def build(target_dir):
     wasm = build_wasm(target_dir)
     glue, wasm_bytes = bindgen(ensure_wasm_bindgen(), wasm, target_dir / "bindgen")
     page, app = (WEB / "index.html").read_text(), (WEB / "app.js").read_text()
-    release = assemble(page, glue, app, wasm_bytes).encode()
-    demo = assemble(page, glue, app, wasm_bytes, demo=True).encode()
+    version = workspace_version()
+    release = assemble(page, glue, app, wasm_bytes, version).encode()
+    demo = assemble(page, glue, app, wasm_bytes, version, demo=True).encode()
     outputs = {RELEASE_NAME: release, "demo.html": demo}
     if (SITE / "index.html").exists():
-        outputs["site/index.html"] = landing_page((SITE / "index.html").read_text(), release).encode()
+        outputs["site/index.html"] = landing_page((SITE / "index.html").read_text(), release, version).encode()
         outputs["site/demo.html"] = demo
         outputs[f"site/{RELEASE_NAME}"] = release
     return outputs
