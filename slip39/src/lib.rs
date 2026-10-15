@@ -173,7 +173,9 @@ pub fn inspect(mnemonic: &str) -> Result<ShareInfo, Error> {
 /// rejected, since every share has already been checked to share the same
 /// id/ext/iteration-exponent/group-threshold/count/length, so "extra"
 /// input is already confirmed to be genuinely part of the *same* backup,
-/// not a mixed-up foreign one.
+/// not a mixed-up foreign one. Likewise a group short of its member
+/// threshold is skipped, not fatal, as long as enough other groups are
+/// complete.
 ///
 /// A wrong `passphrase` is **not** detected here: SLIP-39's decryption is
 /// intentionally unauthenticated (a plausible-deniability property), so a
@@ -222,9 +224,12 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<Zeroizing<Vec<u8>
     }
 
     // BTreeMap iterates in ascending group_index order, so stopping once
-    // we have enough deterministically prefers the lowest-indexed groups
-    // and simply never looks at surplus ones beyond that.
+    // we have enough deterministically prefers the lowest-indexed complete
+    // groups and simply never looks at surplus ones beyond that. An
+    // incomplete group is skipped, not fatal: whoever recovers types in
+    // every share they found, and other groups may still be enough.
     let mut group_points: Vec<shamir::Point> = Vec::with_capacity(group_threshold as usize);
+    let mut first_incomplete = None;
     for (group_index, mut members) in groups {
         let member_threshold = members[0].member_threshold;
         for m in &members[1..] {
@@ -241,7 +246,8 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<Zeroizing<Vec<u8>
         }
 
         if (members.len() as u8) < member_threshold {
-            return Err(Error::NotEnoughMemberShares { group_index, have: members.len() as u8, need: member_threshold });
+            first_incomplete.get_or_insert(Error::NotEnoughMemberShares { group_index, have: members.len() as u8, need: member_threshold });
+            continue;
         }
         members.sort_by_key(|m| m.member_index);
         members.truncate(member_threshold as usize);
@@ -253,6 +259,12 @@ pub fn combine(mnemonics: &[&str], passphrase: &str) -> Result<Zeroizing<Vec<u8>
         if group_points.len() == group_threshold as usize {
             break;
         }
+    }
+    // At least group_threshold groups are present, so falling short here
+    // means at least one was incomplete: name the first one.
+    if group_points.len() < group_threshold as usize {
+        let have = group_points.len() as u8;
+        return Err(first_incomplete.unwrap_or(Error::NotEnoughGroups { have, need: group_threshold }));
     }
 
     let ems = shamir::recover_secret(group_threshold, &group_points)?;
@@ -430,6 +442,29 @@ mod tests {
         let shares = split(&ms, 1, &single_group(2, 3), "", 0).unwrap();
         let all_three: Vec<&str> = shares[0].iter().map(String::as_str).collect();
         assert_eq!(*combine(&all_three, "").unwrap(), ms);
+    }
+
+    fn two_of_three_groups_of_two() -> Vec<Vec<String>> {
+        let groups_spec = vec![GroupSpec { member_threshold: 2, member_count: 2 }; 3];
+        split(&secret(), 2, &groups_spec, "", 0).unwrap()
+    }
+
+    #[test]
+    fn skips_incomplete_groups_when_enough_others_are_complete() {
+        // An heir types in every share they found: group 0 is short a
+        // share, groups 1 and 2 are complete. Two complete groups is
+        // enough, so the incomplete one must not block recovery.
+        let shares = two_of_three_groups_of_two();
+        let found = [shares[0][0].as_str(), shares[1][0].as_str(), shares[1][1].as_str(), shares[2][0].as_str(), shares[2][1].as_str()];
+        assert_eq!(*combine(&found, "").unwrap(), secret());
+    }
+
+    #[test]
+    fn reports_an_incomplete_group_when_too_few_groups_are_complete() {
+        // Three groups present, but only group 1 is complete.
+        let shares = two_of_three_groups_of_two();
+        let found = [shares[0][0].as_str(), shares[1][0].as_str(), shares[1][1].as_str(), shares[2][0].as_str()];
+        assert_eq!(combine(&found, ""), Err(Error::NotEnoughMemberShares { group_index: 0, have: 1, need: 2 }));
     }
 
     #[test]

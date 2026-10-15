@@ -41,9 +41,8 @@ repository is public).
 
 1. **Independent review.** Several other LLMs each review `rpb-slip39`, the
    page and the build, given the code and the threat model (offline, single
-   file, real recovery phrases). Findings and fixes go in the repo (e.g.
-   `reviews/`), with the reviewing model and the commit reviewed. v1 does not
-   wait for a professional audit, and the project never calls itself
+   file, real recovery phrases). Findings are fixed as they come in, like
+   any other bug. v1 does not wait for a professional audit, and the project never calls itself
    "audited": an LLM review is a useful second pair of eyes, not an audit,
    and claiming otherwise would spend the trust the rest of the plan earns. A
    human audit stays welcome if one ever becomes possible.

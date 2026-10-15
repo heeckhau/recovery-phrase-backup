@@ -116,8 +116,8 @@ python-slip39 and seedkit, and that theirs recover here.
 - **Your wallet's own BIP39 passphrase (the "25th word") is not part of the
   backup.** If your wallet uses one, back it up separately.
 - **Reviewed, not audited.** Before v1 the code is reviewed by several other
-  LLMs, with their findings and fixes published. That is a second pair of
-  eyes, not a professional audit, and this project doesn't claim one.
+  LLMs, and what they find is fixed. That is a second pair of eyes, not a
+  professional audit, and this project doesn't claim one.
 
 ## Building and testing
 
