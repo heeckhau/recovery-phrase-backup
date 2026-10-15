@@ -139,6 +139,47 @@ test("back up a phrase by printing: both layouts, checking unlocked by printing"
   await expect(page.locator("#b5")).toBeVisible();
 });
 
+test("switching between writing and printing midway keeps the same shares", async ({ page }) => {
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.click("#b1-next");
+  await page.click("#b2-next");
+  await page.click("#b3-next");
+
+  // Share 1 by hand, checked.
+  const first = (await page.locator("#b4-words .word").allTextContents()).join(" ");
+  await page.click("#b4-written");
+  const positions = (await page.locator("#b4-check-grid .num").allTextContents()).map((n) => Number(n) - 1);
+  for (let i = 0; i < 3; i++) await page.locator("#b4-check-grid input").nth(i).fill(first.split(" ")[positions[i]]);
+  await waitForSpotCheckToPass(page);
+
+  // Then print after all: the dialog opens, and the printout is the same
+  // backup, share 1 included, not a new split.
+  await expect(page.locator("#b4-switch")).toHaveText("Print the shares instead");
+  await page.click("#b4-switch");
+  await expect(page.locator("#print-dialog")).toHaveAttribute("open", "");
+  await page.click("#print-confirm");
+  const [printout] = await page.evaluate(() => window.__prints);
+  expect(printout.cells.slice(0, 20)).toEqual(first.split(" ").map((word, i) => `${i + 1}.${word}`));
+  await expect(page.locator("#b4-written")).toHaveText("Check this card");
+  await expect(page.locator("#b4-written")).toBeEnabled();
+
+  // And back to writing, without another print dialog.
+  await expect(page.locator("#b4-switch")).toHaveText("Write them by hand instead");
+  await page.click("#b4-switch");
+  await expect(page.locator("#print-dialog")).not.toHaveAttribute("open", "");
+  await expect(page.locator("#b4-written")).toHaveText("I've written it down");
+
+  // Share 1 is still checked, and the mixed set recovers.
+  await page.click("#b4-prev");
+  await expect(page.locator("#b4-checked")).toBeVisible();
+  await page.click("#b4-next");
+  const rest = await writeDownAllShares(page);
+  await typeShare(page, "b5-entry", first);
+  await typeShare(page, "b5-entry", rest.at(-1));
+  await expect(page.locator("#b5-result")).toContainText("Recovery works");
+});
+
 test("shares can be revisited, but not skipped past unchecked", async ({ page }) => {
   await page.click("#start-backup");
   await pastePhrase(page, PHRASE);

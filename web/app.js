@@ -665,14 +665,7 @@ function showShare() {
   // With groups, the label alone doesn't say how far along the user is.
   $("b4-sub").hidden = state.scheme.groups.length === 1;
   $("b4-sub").textContent = `Share ${state.current + 1} of ${state.shares.length}.`;
-  const byHand = state.method === "hand";
-  $("b4-howto").textContent = byHand
-    ? "Write the words down in order, numbered as shown, on paper or a printed blank card."
-    : "Print the shares (all at once), then check each printed card here.";
-  $("b4-print-blank").hidden = !byHand;
-  $("b4-print").hidden = byHand;
-  $("b4-print-note").hidden = byHand;
-  $("b4-written").textContent = byHand ? "I've written it down" : "Check this card";
+  showMethod();
   $("b4-fingerprint").textContent = state.fingerprint;
   renderWords($("b4-words"), share.mnemonic.split(" "));
   $("b4-show").hidden = false;
@@ -686,6 +679,28 @@ function showShare() {
   while (positions.size < 3) positions.add(randomBelow(state.shareWords));
   state.checkPositions = [...positions].sort((a, b) => a - b);
 }
+
+// The parts of step 4 that depend on how the shares are recorded.
+function showMethod() {
+  const byHand = state.method === "hand";
+  $("b4-howto").textContent = byHand
+    ? "Write the words down in order, numbered as shown, on paper or a printed blank card."
+    : "Print the shares (all at once), then check each printed card here.";
+  $("b4-print-blank").hidden = !byHand;
+  $("b4-print").hidden = byHand;
+  $("b4-print-note").hidden = byHand;
+  $("b4-written").textContent = byHand ? "I've written it down" : "Check this card";
+  $("b4-switch").textContent = byHand ? "Print the shares instead" : "Write them by hand instead";
+}
+
+// Switching keeps the same shares and the checks already passed: going back
+// to step 3 would split again, and orphan any card already made.
+$("b4-switch").addEventListener("click", () => {
+  state.method = state.method === "hand" ? "print" : "hand";
+  showMethod();
+  updateShareNav();
+  if (state.method === "print") printDialog.showModal();
+});
 
 // Back is always allowed; forward only past a share whose spot check has
 // passed, so navigating can't become a way to skip checking.

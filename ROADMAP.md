@@ -270,7 +270,9 @@ same backup (the spec and the reference implementation reject them instead).
 **Recording and printing.** Before seeing any share, the user picks how to
 record them: **by hand** (the default; optional blank cards to write on;
 nothing secret goes through a printer) or **printed**, all shares in one job,
-as one sheet with dashed cut lines or one card per page. The risk with
+as one sheet with dashed cut lines or one card per page. The choice can be
+switched while recording, keeping the same shares and checks: going back to
+choose again would split again and orphan any card already made. The risk with
 printing is a lasting copy of enough shares to recover the phrase in one
 place: until the cards are cut apart and separated (and in any saved file or
 print spool), the printout is the whole phrase. The page can't prevent this
