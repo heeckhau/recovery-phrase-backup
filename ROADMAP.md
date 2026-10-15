@@ -262,6 +262,9 @@ shares one at a time, a recovery test, and done.
 - The last step asks what to do with the original phrase: a backup that
   leaves the single original in a drawer hasn't removed the risk it exists
   to remove. It explains the trade-off and leaves the choice to the user.
+  It also offers the "how to recover" sheet (see Share cards) and says to
+  keep it with a copy of the HTML file, for example on a USB stick: without
+  the file, an heir needs someone technical.
 
 **Recovery.** Shares go in one at a time, with progress towards the
 threshold; then the phrase, and a fingerprint check before any address is
@@ -293,7 +296,13 @@ finder could plan with: no position ("share 2 of 3"), no threshold, no group,
 no passphrase hint, no mention of SLIP-39 or a wallet. (A share's first words
 still encode its group and threshold for SLIP-39 software; that is part of
 the standard.) Those details go on the secret-free "how to recover" sheet the
-owner keeps for their heir.
+owner keeps for their heir. Written for someone who isn't technical, it has
+the fingerprint, the threshold, the steps, and lines the owner fills in by
+hand: where the HTML file is kept, which wallet app to restore in, who has
+the shares, and whether there is a wallet passphrase. It warns against typing
+the shares into a hardware wallet (a Trezor accepts them and opens a
+different, empty wallet), and ends with recovery without the file for
+someone technical. It names no URL, like the cards.
 
 **Hygiene.** A "Clear all" button, fields wiped when the page closes, no
 storage of any kind, no clipboard writes, a banner whenever the machine is

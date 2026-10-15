@@ -961,18 +961,46 @@ function recoverySheet() {
     groups.length === 1
       ? `any ${groups[0][0]} of the ${groups[0][1]} shares`
       : `${groupThreshold} of the ${groups.length} groups (${groups.map(([t, n], i) => `group ${i + 1}: ${t} of ${n}`).join("; ")})`;
-  const lines = [
-    `A wallet's recovery phrase was split into SLIP-39 shares: numbered word lists on separate cards. Recovering it needs ${needed}. This sheet holds no secret.`,
-    "Gather the shares. Use a computer with no network connection.",
-    "Open the Recovery Phrase Backup file, choose \"Recover a phrase\", and type the shares in one at a time.",
-    "Check the fingerprint it shows matches the one above. If it doesn't, a share or the passphrase is wrong; nothing is reported as an error.",
-    "The result is a recovery phrase (12 to 24 words). Restore it in a wallet with its \"import\" or \"restore\" option.",
-    "Without that file: SLIP-39 is an open standard. Trezor's reference tool (python-shamir-mnemonic, \"shamir recover\") gives the secret as hex; that hex is the phrase's entropy, which any BIP39 tool turns back into the words.",
+  page.appendChild(
+    el(
+      "p",
+      "instructions",
+      `A wallet's recovery phrase was split into shares: numbered word lists on separate cards, kept in different places. Recovering it needs ${needed}. This sheet holds no secret.`,
+    ),
+  );
+
+  // Filled in by hand: what an heir needs to know besides the steps, and
+  // what the page can't know (or shouldn't print) itself.
+  page.appendChild(el("h2", null, "Filled in by the owner"));
+  const fill = el("div", "fill");
+  for (const label of [
+    "The Recovery Phrase Backup file (recovery-phrase-backup.html) is kept",
+    "The wallet app this phrase was used in",
+    "The shares are with",
+    "",
+    "Wallet passphrase (\"25th word\"): none / yes, kept",
+  ]) {
+    fill.appendChild(el("div", null, label ? `${label}:` : ""));
+  }
+  page.appendChild(fill);
+
+  page.appendChild(el("h2", null, "How to recover"));
+  const steps = [
+    "Gather enough shares. Use a computer that is not connected to the internet.",
+    "Open the Recovery Phrase Backup file in a web browser (double-click it), choose \"Recover a phrase\", and type the shares in one at a time.",
+    "Check that the fingerprint it shows matches the one above. If it doesn't, a share or the passphrase is wrong; this is never reported as an error.",
+    "The result is the wallet's recovery phrase (12 to 24 words). Restore it in the wallet app named above with its \"import\" or \"restore\" option, with the wallet passphrase if there is one.",
   ];
-  if (state.passphrase) lines.splice(1, 0, "This backup uses a SLIP-39 passphrase. Recovery needs it exactly; it is kept separately from the shares.");
+  if (state.passphrase) steps.splice(1, 0, "This backup uses a SLIP-39 passphrase, kept separately from the shares. Recovery needs it exactly.");
   const list = el("ol", "instructions");
-  for (const line of lines) list.appendChild(el("li", null, line));
+  for (const step of steps) list.appendChild(el("li", null, step));
   page.appendChild(list);
+
+  const notes = [
+    "Never type the shares into a hardware wallet such as a Trezor. It would accept them but open a different, empty wallet. Recover the phrase first, then restore the phrase.",
+    "Without the file: the shares follow SLIP-39, an open standard. Someone technical can recover them with any SLIP-39 tool, such as Trezor's reference tool (python-shamir-mnemonic, \"shamir recover\"). It gives the phrase's entropy as hex, which any BIP39 tool turns back into the words.",
+  ];
+  for (const note of notes) page.appendChild(el("p", "instructions", note));
   return page;
 }
 

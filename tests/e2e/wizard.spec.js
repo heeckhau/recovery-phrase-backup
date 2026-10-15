@@ -89,6 +89,11 @@ test("back up a phrase by hand: check, split, spot-check, test", async ({ page }
   await page.click("#b6-print-sheet");
   const sheet = (await page.evaluate(() => window.__prints)).at(-1).text;
   expect(sheet).toContain(FINGERPRINT);
+  // What an heir needs besides the steps: where the tool is, the wallet app,
+  // who has the shares, and not to type them into a hardware wallet.
+  expect(sheet).toContain("recovery-phrase-backup.html) is kept:");
+  expect(sheet).toContain("The shares are with:");
+  expect(sheet).toContain("Never type the shares into a hardware wallet");
   for (const word of PHRASE.split(" ")) expect(sheet).not.toMatch(new RegExp(`\\b${word}\\b`));
 
   await page.click("#b6-finish");

@@ -320,6 +320,8 @@
   }
   .print-page .words .n { display: inline-block; width: 2.4em; color: #555; }
   .print-page .instructions { font-size: 10.5pt; line-height: 1.45; }
+  .print-page > h2 { font-size: 13pt; margin: 16pt 0 4pt; }
+  .print-page .fill div { font-size: 10.5pt; min-height: 26pt; padding-top: 12pt; border-bottom: 1px solid #888; }
   .print-page .instructions li { margin-bottom: 3pt; }
 </style>
 </head>
@@ -476,6 +478,8 @@
       <h2 class="mt-1">What about the original?</h2>
       <p>Your phrase now exists twice: as these shares, and as the copy you started from. The shares protect you only as far as that original lets them: lose it and nothing is lost, but whoever finds it has your whole wallet.</p>
       <p>Once you've tested recovery, you can destroy it, or keep it somewhere as safe as you'd keep any full backup. Your call: the shares work either way.</p>
+      <h2 class="mt-1">Make sure it can be recovered without you</h2>
+      <p>Print a "how to recover" sheet: it has no secret on it, and has lines for you to fill in, such as who has the shares. Keep it with a copy of this file (recovery-phrase-backup.html), for example on a USB stick, somewhere the person who would recover will find it. Without the file they'd need someone technical.</p>
       <button type="button" class="btn-secondary" id="b6-print-sheet">Print a "How to recover" sheet (no secrets on it)</button>
       <button type="button" id="b6-finish">Finish and clear this page</button>
     </div>
