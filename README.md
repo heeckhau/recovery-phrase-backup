@@ -55,9 +55,12 @@ SLIP-39 tool), then restore the phrase in your wallet.
 [website](https://heeckhau.github.io/recovery-phrase-backup/#download),
 which shows its SHA-256, then disconnect from the network and open the file
 in a browser. Until v1 that file is the latest build of `main`, published
-once every test passes; v1 adds a versioned, signed GitHub release. Best of all is a live USB system such as Tails; otherwise use a
-fresh browser profile without extensions, since a malicious extension could
-read what you type.
+once every test passes; v1 adds a versioned, signed GitHub release. The
+recommended setup is a live USB system such as Tails, without a network
+connection:
+offline alone doesn't stop malware or a malicious extension from recording
+the phrase and sending it once the computer is back online. If you can't,
+at least disconnect and use a fresh browser profile without extensions.
 
 **Check that the release matches the source.** The release file is built
 reproducibly in a pinned Linux x86-64 container, so anyone with Docker gets
@@ -103,9 +106,11 @@ python-slip39 and seedkit, and that theirs recover here.
 
 ## What to know before relying on it
 
-- **Use it offline.** The page sends nothing, but other software in your
-  browser could. The machine is trusted for the session; nothing protects a
-  phrase typed into a compromised computer.
+- **Use it on a clean system, offline.** The page sends nothing, but other
+  software on the computer could, even later once it is back online. The
+  machine is trusted for the session; nothing protects a phrase typed into a
+  compromised computer, which is why a live USB system such as Tails is the
+  recommendation.
 - **Printing is the one moment everything is in one place.** Until the cards
   are cut apart and stored separately, a printout of all shares is your whole
   phrase. A home printer on your own network is fine; avoid office, shared
