@@ -380,3 +380,30 @@ test("schemes that are weaker than they look are flagged", async ({ page }) => {
   await page.selectOption("#group-threshold", "2");
   await expect(page.locator("#b2-guard")).not.toContainText("Only 1 group is needed");
 });
+
+test("a slow iteration exponent is flagged, and still backs up and recovers", async ({ page }) => {
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.click("#b1-next");
+  await page.click("details.advanced summary");
+  await page.selectOption("#iteration-exponent", "12");
+  await expect(page.locator("#b2-guard")).toContainText("Iteration exponent 12: making the shares takes roughly 11 seconds");
+  // Slow enough to go through the "working" path, quick enough for a test.
+  await page.selectOption("#iteration-exponent", "8");
+  await expect(page.locator("#b2-guard")).toBeEmpty();
+  await page.click("#b2-next");
+  await page.click("#b3-next");
+  await expect(page.locator("#b4")).toBeVisible();
+  const shares = await writeDownAllShares(page);
+  await typeShare(page, "b5-entry", shares[0]);
+  await typeShare(page, "b5-entry", shares[1]);
+  await expect(page.locator("#b5-result")).toContainText("Recovery works");
+  await page.click("#b5-next");
+  await page.click("#b6-finish");
+
+  await page.click("#start-recover");
+  await typeShare(page, "r1-entry", shares[1]);
+  await typeShare(page, "r1-entry", shares[2]);
+  await page.click("#r1-recover");
+  await expect(page.locator("#r2-fingerprint")).toHaveText(FINGERPRINT);
+});

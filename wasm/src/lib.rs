@@ -116,6 +116,7 @@ pub struct JsShareInfo {
     pub group_threshold: u32,
     pub member_number: u32,
     pub member_threshold: u32,
+    pub iteration_exponent: u32,
 }
 
 /// Identifies a single SLIP-39 mnemonic share (which group/member it is,
@@ -130,6 +131,7 @@ pub fn slip39_inspect(mnemonic: &str) -> Result<JsShareInfo, JsValue> {
         group_threshold: info.group_threshold as u32,
         member_number: info.member_index as u32 + 1,
         member_threshold: info.member_threshold as u32,
+        iteration_exponent: info.iteration_exponent as u32,
     })
 }
 

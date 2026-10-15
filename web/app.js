@@ -384,6 +384,7 @@ function createShareEntry(container, { fixedLength, enoughHint = "", onProgress,
       addButton.focus();
     },
     mnemonics: () => shares.map((s) => s.mnemonic),
+    iterationExponent: () => Math.max(0, ...shares.map((s) => s.info.iteration_exponent)),
     reset() {
       shares = [];
       adding = true;
@@ -508,6 +509,38 @@ const iterationExponentSelect = $("iteration-exponent");
 // 1 matches the reference implementation, python-slip39 and seedkit (the
 // spec sets no default).
 fillOptions(iterationExponentSelect, range(0, 15), 1);
+iterationExponentSelect.addEventListener("change", b2Guard);
+
+// The SLIP-39 key derivation runs on the page's only thread: four rounds of
+// 2500 << exponent PBKDF2 iterations, about 3 s at exponent 10 on a fast
+// computer and twice that for each step up. From SLOW_EXPONENT on, say so
+// and let the browser paint that before the page stops responding.
+const SLOW_EXPONENT = 8;
+let working = false;
+
+function slowWork(exponent, anchor, work) {
+  if (exponent < SLOW_EXPONENT) return work();
+  if (working) return;
+  working = true;
+  const notice = el("div", "banner info mt-075", "Working. With this iteration exponent it can take a while, and the page won't respond until it's done.");
+  anchor.before(notice);
+  requestAnimationFrame(() =>
+    setTimeout(() => {
+      try {
+        work();
+      } finally {
+        notice.remove();
+        working = false;
+      }
+    }, 0),
+  );
+}
+
+// Roughly how long one split or recovery takes on a fast computer.
+function slowEstimate(exponent) {
+  const seconds = 2.8 * 2 ** (exponent - 10);
+  return seconds < 60 ? `${Math.round(seconds)} seconds` : `${Math.round(seconds / 6) / 10} minutes`;
+}
 
 function relabelGroupRows() {
   const rows = groupRowsContainer.querySelectorAll(".group-row");
@@ -603,7 +636,14 @@ function schemeWarnings({ groupThreshold, groups }) {
 function b2Guard() {
   const guard = $("b2-guard");
   guard.innerHTML = "";
-  for (const warning of schemeWarnings(chosenScheme())) guard.appendChild(el("div", "banner warning mt-075", warning));
+  const warnings = schemeWarnings(chosenScheme());
+  const exponent = Number(iterationExponentSelect.value);
+  if (exponent >= 10) {
+    warnings.push(
+      `Iteration exponent ${exponent}: making the shares takes roughly ${slowEstimate(exponent)} on a fast computer and several times that on a phone, and the page can't respond meanwhile. Testing them takes as long again, and so does every recovery.`,
+    );
+  }
+  for (const warning of warnings) guard.appendChild(el("div", "banner warning mt-075", warning));
 }
 
 for (const radio of document.querySelectorAll("input[name=scheme]")) {
@@ -641,23 +681,26 @@ $("b3-next").addEventListener("click", () => {
   state.method = document.querySelector("input[name=method]:checked").value;
   state.printed = false;
   const { groupThreshold, groups } = state.scheme;
-  let result;
-  try {
-    result = slip39_split(state.phrase, groupThreshold, new Uint8Array(groups.flat()), state.passphrase, Number(iterationExponentSelect.value));
-  } catch (err) {
-    backupStep(2);
-    showError($("b2-error"), String(err));
-    return;
-  }
-  state.shares = [];
-  result.forEach((groupText, g) => {
-    const members = groupText.split("\n");
-    members.forEach((mnemonic, m) => {
-      state.shares.push({ mnemonic, group: g + 1, groupCount: groups.length, member: m + 1, members: members.length, threshold: groups[g][0] });
+  const exponent = Number(iterationExponentSelect.value);
+  slowWork(exponent, $("b3-next").parentElement, () => {
+    let result;
+    try {
+      result = slip39_split(state.phrase, groupThreshold, new Uint8Array(groups.flat()), state.passphrase, exponent);
+    } catch (err) {
+      backupStep(2);
+      showError($("b2-error"), String(err));
+      return;
+    }
+    state.shares = [];
+    result.forEach((groupText, g) => {
+      const members = groupText.split("\n");
+      members.forEach((mnemonic, m) => {
+        state.shares.push({ mnemonic, group: g + 1, groupCount: groups.length, member: m + 1, members: members.length, threshold: groups[g][0] });
+      });
     });
+    state.current = 0;
+    showShare();
   });
-  state.current = 0;
-  showShare();
 });
 
 // ---- step 4: one share at a time ----
@@ -855,23 +898,26 @@ function startRecoveryTest() {
         $("b5-next").hidden = true;
         return;
       }
-      result.hidden = false;
-      let recovered = null;
-      try {
-        recovered = slip39_combine(b5Entry.mnemonics(), state.passphrase, "");
-      } catch (err) {
-        result.className = "banner warning";
-        result.textContent = `These shares don't recover: ${err}. Check them against your written copies.`;
-        return;
-      }
-      if (recovered.check && recovered.check.fingerprint === state.fingerprint) {
-        result.className = "banner success";
-        result.textContent = `Recovery works: your written shares give back the phrase with fingerprint ${state.fingerprint}.`;
-        $("b5-next").hidden = false;
-      } else {
-        result.className = "banner warning";
-        result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Go back to the shares and compare each with your copy.";
-      }
+      result.hidden = true;
+      slowWork(b5Entry.iterationExponent(), result, () => {
+        result.hidden = false;
+        let recovered = null;
+        try {
+          recovered = slip39_combine(b5Entry.mnemonics(), state.passphrase, "");
+        } catch (err) {
+          result.className = "banner warning";
+          result.textContent = `These shares don't recover: ${err}. Check them against your written copies.`;
+          return;
+        }
+        if (recovered.check && recovered.check.fingerprint === state.fingerprint) {
+          result.className = "banner success";
+          result.textContent = `Recovery works: your written shares give back the phrase with fingerprint ${state.fingerprint}.`;
+          $("b5-next").hidden = false;
+        } else {
+          result.className = "banner warning";
+          result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Go back to the shares and compare each with your copy.";
+        }
+      });
     },
   });
 }
@@ -1042,6 +1088,10 @@ function startRecover() {
 
 $("r1-recover").addEventListener("click", () => {
   clearError($("r1-error"));
+  slowWork(r1Entry.iterationExponent(), $("r1-error"), recoverFromShares);
+});
+
+function recoverFromShares() {
   let recovered;
   try {
     recovered = slip39_combine(r1Entry.mnemonics(), $("r1-passphrase").value, $("r2-bip39").value);
@@ -1068,7 +1118,7 @@ $("r1-recover").addEventListener("click", () => {
   $("r2-rawkey-eth").value = recovered.raw_key_eth_address || "";
   $("r2-secret-block").hidden = !recovered.secret_hex;
   $("r2-secret").value = recovered.secret_hex || "";
-});
+}
 
 // The wallet passphrase changes only the addresses, so it is asked for here,
 // next to them, rather than with the shares.

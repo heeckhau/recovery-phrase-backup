@@ -411,7 +411,7 @@
         <div class="field mt-075">
           <label for="iteration-exponent" class="mt-0">Iteration exponent</label>
           <select id="iteration-exponent" class="inline"></select>
-          <p class="notice mt-035">PBKDF2 cost is 2500 &times; 2^exponent per round. 1 matches other SLIP-39 tools; it only matters with a SLIP-39 passphrase.</p>
+          <p class="notice mt-035">PBKDF2 cost is 2500 &times; 2^exponent per round. 1 matches other SLIP-39 tools. The work is done on every split and every recovery, and each step up doubles it, but it only adds protection with a SLIP-39 passphrase.</p>
         </div>
       </details>
       <div class="error" id="b2-error"></div>
