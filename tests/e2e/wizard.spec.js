@@ -365,4 +365,13 @@ test("schemes that are weaker than they look are flagged", async ({ page }) => {
   await page.check("input[name=scheme][value=custom]");
   await page.selectOption("#group-rows .group-threshold-input", "3");
   await expect(page.locator("#b2-guard")).toContainText("every share is needed");
+  await page.selectOption("#group-rows .group-threshold-input", "1");
+  await expect(page.locator("#b2-guard")).toContainText("can't be made");
+  await page.selectOption("#group-rows .group-count-input", "1");
+  await expect(page.locator("#b2-guard")).toContainText("your phrase in other words");
+  // One group of two is enough, and group 1 is a single share.
+  await page.click("#add-group");
+  await expect(page.locator("#b2-guard")).toContainText("Only 1 group is needed and group 1 is 1 of 1");
+  await page.selectOption("#group-threshold", "2");
+  await expect(page.locator("#b2-guard")).not.toContainText("Only 1 group is needed");
 });

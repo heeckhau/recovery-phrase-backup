@@ -580,8 +580,20 @@ function schemeWarnings({ groupThreshold, groups }) {
   groups.forEach(([t, n], i) => {
     const where = single ? "" : ` in group ${i + 1}`;
     if (t === n && n > 1) warnings.push(`${t} of ${n}${where}: every share is needed, so losing any one of them loses ${single ? "everything" : "that group"}. That is riskier than a single copy.`);
-    if (t === 1 && n === 1 && single) warnings.push("1 of 1: one share that is just your phrase in other words, with no protection against losing it.");
+    if (t === 1 && n > 1) warnings.push(`1 of ${n}${where}: a threshold of 1 only works with a single share, so these shares can't be made. Choose 1 of 1 or a higher threshold.`);
   });
+  // The fewest shares that give the phrase back: the thresholds of the
+  // groupThreshold easiest groups, added up. At 1, a single share is enough.
+  const fewest = groups.map(([t]) => t).sort((a, b) => a - b).slice(0, groupThreshold).reduce((sum, t) => sum + t, 0);
+  const lone = groups.flatMap(([t, n], i) => (t === 1 && n === 1 ? [i + 1] : []));
+  if (fewest === 1 && lone.length) {
+    const which = lone.length === 1 ? `group ${lone[0]} is 1 of 1` : `groups ${lone.join(", ")} are 1 of 1`;
+    warnings.push(
+      single
+        ? "1 of 1: one share that is just your phrase in other words, with no protection against losing it."
+        : `Only 1 group is needed and ${which}: that one share gives your phrase back on its own, so anyone who finds it has your phrase.`,
+    );
+  }
   if (!single && groupThreshold === groups.length && groups.length > 1) {
     warnings.push(`Every group is needed (${groupThreshold} of ${groups.length}): losing any one group loses everything.`);
   }
