@@ -174,22 +174,26 @@ jobs:
         run: |
           hash=$(cut -d' ' -f1 dist/SHA256SUMS)
           prerelease=
-          case "$GITHUB_REF_NAME" in v0.*) prerelease=--prerelease ;; esac
-          cat > notes.md <<NOTES
-          **Not reviewed yet.** Until v1, don't use this for a phrase that guards real funds.
+          : > notes.md
+          case "$GITHUB_REF_NAME" in
+            v0.*)
+              prerelease=--prerelease
+              printf '%s\n\n' "**Pre-release, not yet independently reviewed.** Until v1, don't use it for a phrase that guards real funds." > notes.md
+              ;;
+          esac
+          cat >> notes.md <<NOTES
+          Recovery Phrase Backup splits a BIP39 recovery phrase into SLIP-39 shares, so that no single place can lose it or reveal it, and recovers it from them. It is one HTML file that runs offline in a browser. See the [README](https://github.com/$GITHUB_REPOSITORY#readme) for how it works.
 
-          Download \`recovery-phrase-backup.html\`, disconnect from the network (ideally on a live USB system such as Tails), and open it in a browser.
-
-          SHA-256: \`$hash\`
-
-          Check the download:
+          **Check the download.** Download \`recovery-phrase-backup.html\` and \`SHA256SUMS\` into one folder and, while still online, run:
 
           \`\`\`sh
           shasum -a 256 -c SHA256SUMS
           gh attestation verify recovery-phrase-backup.html --repo $GITHUB_REPOSITORY
           \`\`\`
 
-          The attestation shows the file was built by this repository's CI from tag $GITHUB_REF_NAME. To check it against the source yourself, check out the tag and run \`scripts/build-reproducible.sh\` (Docker): it prints the same hash.
+          The first command checks the file's SHA-256 (\`$hash\`). The second needs the [GitHub CLI](https://cli.github.com): it checks GitHub's attestation that this repository's CI built the file from tag $GITHUB_REF_NAME. To check the file against the source without trusting GitHub, run \`git checkout $GITHUB_REF_NAME\` and then \`scripts/build-reproducible.sh\` (needs Docker): it prints the same hash.
+
+          **Use it.** Start a computer from a live USB system such as Tails, keep it offline, and open the file in a browser. If you can't, at least disconnect from the network and use a fresh browser profile without extensions.
           NOTES
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag $prerelease \
             --title "$GITHUB_REF_NAME" --notes-file notes.md \
