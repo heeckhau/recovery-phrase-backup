@@ -897,6 +897,7 @@ $("b6-print-sheet").addEventListener("click", () => printPage(recoverySheet()));
 // ---- recover ----
 
 let r1Entry;
+let r2Phrase = ""; // the recovered phrase, for the addresses under a wallet passphrase
 
 function startRecover() {
   showScreen("recover");
@@ -915,7 +916,7 @@ $("r1-recover").addEventListener("click", () => {
   clearError($("r1-error"));
   let recovered;
   try {
-    recovered = slip39_combine(r1Entry.mnemonics(), $("r1-passphrase").value, $("r1-bip39").value);
+    recovered = slip39_combine(r1Entry.mnemonics(), $("r1-passphrase").value, $("r2-bip39").value);
   } catch (err) {
     showError($("r1-error"), String(err));
     return;
@@ -933,14 +934,28 @@ $("r1-recover").addEventListener("click", () => {
     $("r2-title").textContent = `Your recovery phrase (${check.word_count} words)`;
     renderWords($("r2-words"), recovered.words.split(" "));
     $("r2-fingerprint").textContent = check.fingerprint;
-    $("r2-eth").value = check.eth_address;
-    $("r2-btc").value = check.btc_address;
+    r2Phrase = recovered.words;
+    showAddresses(check);
   }
   $("r2-rawkey-block").hidden = !recovered.raw_key_hex;
   $("r2-rawkey").value = recovered.raw_key_hex || "";
   $("r2-rawkey-eth").value = recovered.raw_key_eth_address || "";
   $("r2-secret-block").hidden = !recovered.secret_hex;
   $("r2-secret").value = recovered.secret_hex || "";
+});
+
+// The wallet passphrase changes only the addresses, so it is asked for here,
+// next to them, rather than with the shares.
+function showAddresses(check) {
+  const bip39 = $("r2-bip39").value;
+  $("r2-eth").value = check.eth_address;
+  $("r2-btc").value = check.btc_address;
+  $("r2-address-note").textContent = bip39 ? "With the wallet passphrase you entered below." : "Without a wallet passphrase.";
+  if (bip39) $("r2-bip39-box").open = true;
+}
+
+$("r2-bip39").addEventListener("input", () => {
+  if (r2Phrase) showAddresses(phrase_check(r2Phrase, $("r2-bip39").value));
 });
 
 $("r2-yes").addEventListener("click", () => {
@@ -975,6 +990,8 @@ function wipeFields() {
   for (const node of [$("b4-words"), $("r2-words"), $("r1-entry"), $("b5-entry"), $("b4-check-grid"), printArea]) {
     node.innerHTML = "";
   }
+  $("r2-bip39-box").open = false;
+  r2Phrase = "";
 }
 
 function clearAll() {

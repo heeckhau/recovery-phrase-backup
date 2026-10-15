@@ -225,6 +225,41 @@ test("recover a phrase from shares, typed with 4-letter prefixes", async ({ page
   await expect(page.locator("#r2-addresses")).toBeVisible();
 });
 
+test("the wallet passphrase is asked for next to the recovered addresses, and only changes them", async ({ page }) => {
+  // What the backup's first step shows for this phrase, with and without it.
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.fill("#b1-bip39", "correct horse");
+  const withPassphrase = await page.inputValue("#b1-eth");
+  await page.fill("#b1-bip39", "");
+  const without = await page.inputValue("#b1-eth");
+  expect(withPassphrase).not.toBe(without);
+  await page.click("#b1-next");
+  await page.click("#b2-next");
+  await page.click("#b3-next");
+  const shares = await writeDownAllShares(page);
+  await page.click("#b5-skip");
+  await page.click("#b6-finish");
+
+  await page.click("#start-recover");
+  await expect(page.locator("#r1")).not.toContainText("Wallet passphrase");
+  await typeShare(page, "r1-entry", shares[0]);
+  await typeShare(page, "r1-entry", shares[1]);
+  await page.click("#r1-recover");
+  await page.click("#r2-yes");
+  await expect(page.locator("#r2-eth")).toHaveValue(without);
+  await expect(page.locator("#r2-address-note")).toHaveText("Without a wallet passphrase.");
+  await expect(page.locator("#r2-bip39")).toBeHidden();
+
+  await page.locator("#r2-bip39-box summary").click();
+  await page.fill("#r2-bip39", "correct horse");
+  await expect(page.locator("#r2-eth")).toHaveValue(withPassphrase);
+  await expect(page.locator("#r2-address-note")).toContainText("With the wallet passphrase");
+  await expect(page.locator("#r2-fingerprint")).toHaveText(FINGERPRINT);
+  await page.fill("#r2-bip39", "");
+  await expect(page.locator("#r2-eth")).toHaveValue(without);
+});
+
 test("a wrong SLIP-39 passphrase gives a different fingerprint, not an error", async ({ page }) => {
   const shares = await backUp(page);
   await page.click("#b5-skip");

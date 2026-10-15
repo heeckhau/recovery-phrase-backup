@@ -489,9 +489,6 @@
         <button type="button" class="btn-secondary" data-share="2">Share 3</button>
       </div>
       <div id="r1-entry"></div>
-      <label for="r1-bip39">Wallet passphrase ("25th word"), only if your wallet uses one</label>
-      <input type="text" id="r1-bip39" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="leave blank if none">
-      <p class="notice mt-035">Only used to show your wallet's addresses below; the shares don't contain it.</p>
       <details class="advanced">
         <summary>Advanced: SLIP-39 passphrase</summary>
         <div class="field mt-075">
@@ -525,6 +522,15 @@
             <div class="field-label">First Bitcoin address (native SegWit)</div>
             <input type="text" readonly spellcheck="false" id="r2-btc" class="mono-output">
           </div>
+          <p class="notice mt-035" id="r2-address-note">Without a wallet passphrase.</p>
+          <details class="advanced" id="r2-bip39-box">
+            <summary>Addresses don't match? Your wallet may use a passphrase</summary>
+            <div class="field mt-075">
+              <label for="r2-bip39" class="mt-0">Wallet passphrase ("25th word")</label>
+              <input type="text" id="r2-bip39" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="exactly as in your wallet">
+              <p class="notice mt-035">It only changes the addresses shown above. The shares don't contain it: if your wallet uses one, you enter it there again when you restore.</p>
+            </div>
+          </details>
           <p class="notice mt-035">Restore this phrase in your wallet with its "import" or "restore from recovery phrase" option.</p>
         </div>
       </div>
