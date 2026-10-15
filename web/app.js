@@ -1,8 +1,8 @@
 import init, { bip39_wordlist, phrase_check, slip39_combine, slip39_inspect, slip39_split, slip39_wordlist } from "./pkg/rpb_wasm.js";
 
-// Everything secret lives in the DOM inputs and in `state`, and nowhere
-// else: no storage, no clipboard writes. "Clear all" and closing the page
-// wipe both.
+// Everything secret lives in the DOM, in `state`, in `r2Phrase` and in the
+// share entries, and nowhere else: no storage, no clipboard writes.
+// clearAll() drops all of it, on "Clear all" and when the page is closed.
 
 const $ = (id) => document.getElementById(id);
 
@@ -1053,7 +1053,10 @@ function startBackup() {
 $("start-backup").addEventListener("click", startBackup);
 $("start-recover").addEventListener("click", startRecover);
 
-function wipeFields() {
+// The one place secrets are dropped: the fields, the rendered words, `state`,
+// and the share entries, whose closures hold every added share. JavaScript
+// can't overwrite memory, but nothing keeps a reference to them after this.
+function clearAll() {
   for (const field of document.querySelectorAll("input, textarea")) {
     if (field.type === "checkbox" || field.type === "radio") field.checked = field.defaultChecked;
     else field.value = "";
@@ -1062,12 +1065,11 @@ function wipeFields() {
     node.innerHTML = "";
   }
   $("r2-bip39-box").open = false;
-  r2Phrase = "";
-}
-
-function clearAll() {
-  wipeFields();
   state = freshState();
+  r2Phrase = "";
+  r1Entry = undefined;
+  b5Entry = undefined;
+  b4CheckGrid = undefined;
   $("custom-scheme").hidden = true;
   showScreen("home");
 }
@@ -1076,9 +1078,9 @@ $("clear-all").addEventListener("click", () => {
   if (confirm("Erase every word, share and passphrase on this page and go back to the start?")) clearAll();
 });
 
-// Closing or navigating away wipes the fields, so a back/forward cache or
+// Closing or navigating away clears everything, so a back/forward cache or
 // form restoration can't bring the words back.
-window.addEventListener("pagehide", wipeFields);
+window.addEventListener("pagehide", clearAll);
 
 function updateOnlineBanner() {
   $("online-banner").hidden = DEMO_MODE || !navigator.onLine;
