@@ -98,6 +98,33 @@ not hosted).
   (`std::time::Instant::now()`) and yields a ~6 MB wasm, and its ~231k lines
   in one young crate weigh against auditability. If it lands, the CLI writes
   one file per share, never all shares in one file.
+- **A smarter word grid.** Nice to have; the grid works, this only saves
+  typing. Ideas so far, none decided:
+  - *Complete as you type.* As soon as the letters typed can only be one
+    word, show the rest of it selected (as a browser's address bar does):
+    typing on over the matching letters keeps it, any other letter drops
+    it, space or Enter accepts it. No jumping to the next cell, or a word
+    typed out in full spills over. Three letters already identify 687 of the
+    2048 BIP39 words and 431 of the 1024 SLIP-39 words; today's completion
+    always needs four. Android keyboards may hold back the completion until
+    space, which is no worse than now.
+  - *Offer a fix for a typo, never apply it silently.* A red cell whose word
+    is one typo away from exactly one word offers it ("uncover?") as a
+    button or on Enter. One typo points to a single word 99% of the time in
+    SLIP-39 (its list is built so one typo never turns a word into another)
+    and 90% in BIP39, where 1,624 typos land on another valid word that no
+    check can catch. Silent correction is out: a wrong fix passes a 12-word
+    phrase's checksum 1 time in 16 and backs up the wrong wallet, and in the
+    spot check it would hide the very mistake the check exists to find.
+    Open: whether the spot check offers fixes at all.
+  - *Find a wrong word in a share.* A share whose words are all valid but
+    whose checksum fails most likely has one misread word. With RS1024's 30
+    checksum bits, trying every position and word nearly always finds a
+    single fix ("word 7 is probably *ocean*"), offered the same way. BIP39's
+    4 to 8 checksum bits are too weak for this.
+  - *A suggestion list of our own* instead of the browser's `<datalist>`,
+    which filters by prefix only, looks different in every browser and can
+    show neither typo fixes nor ranked candidates.
 - **Tests for the CLI and the wasm bindings.** The risk sits in `core` and
   `slip39`, which are tested, and the page is covered by browser tests; the
   thin layers in between are not.
