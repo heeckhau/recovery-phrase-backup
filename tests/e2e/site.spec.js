@@ -1,6 +1,9 @@
 // The landing page (dist/site/): no script, a strict CSP that holds, a
-// working link to the demo, and an animation that respects reduced motion.
+// working link to the demo, the release file to download with its hash, and
+// an animation that respects reduced motion.
 const { test, expect } = require("@playwright/test");
+const crypto = require("node:crypto");
+const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
@@ -21,6 +24,16 @@ test("the landing page links to a working demo and holds its CSP", async ({ page
   await page.click("text=Try the demo");
   await expect(page).toHaveTitle(/\(demo\)$/);
   await expect(page.locator("#demo-banner")).toBeVisible();
+});
+
+test("offers the release file for download, with its SHA-256", async ({ page }) => {
+  await page.goto(pathToFileURL(path.join(SITE, "index.html")).href);
+  const link = page.locator('#download a[download]');
+  await expect(link).toHaveAttribute("href", "recovery-phrase-backup.html");
+  const file = fs.readFileSync(path.join(SITE, "recovery-phrase-backup.html"));
+  expect(file.equals(fs.readFileSync(process.env.RPB_HTML))).toBe(true);
+  const sha256 = crypto.createHash("sha256").update(file).digest("hex");
+  await expect(page.locator("#download .hash")).toHaveText(sha256);
 });
 
 test("with reduced motion, the story is told without the animation", async ({ page }) => {

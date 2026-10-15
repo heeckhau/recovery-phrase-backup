@@ -2,7 +2,7 @@
 disk (file://) with no network access.
 
     python3 scripts/build.py                        # -> dist/recovery-phrase-backup.html,
-                                                    #    dist/demo.html, dist/site/
+                                                    #    dist/demo.html, dist/site/ (with both)
     python3 scripts/build.py --verify-reproducible  # build twice, compare bytes
 
 Steps: compile rpb-wasm with the pinned toolchain (rust-toolchain.toml) and
@@ -42,6 +42,7 @@ TOOLS = ROOT / "target" / "tools"
 DIST = ROOT / "dist"
 SITE = ROOT / "site"
 RELEASE_NAME = "recovery-phrase-backup.html"
+RELEASE_SHA256 = "{{RELEASE_SHA256}}"
 
 APP_IMPORT = re.compile(r'^import init, \{ ([\w, ]+) \} from "\./pkg/rpb_wasm\.js";\n', re.M)
 GLUE_EXPORT_TAIL = "export { initSync, __wbg_init as default };\n"
@@ -187,9 +188,13 @@ def assemble(html, glue, app, wasm_bytes, demo=False):
     return CSP_META.sub(lambda _: f'<meta http-equiv="Content-Security-Policy" content="{csp}">', html)
 
 
-def landing_page(html):
+def landing_page(html, release):
     """The static landing page: no script at all, its stylesheet allowed by
-    hash, same as the tool."""
+    hash, same as the tool, and the SHA-256 of the release file it offers
+    for download filled in."""
+    if html.count(RELEASE_SHA256) != 1:
+        fail(f"site/index.html should have exactly one {RELEASE_SHA256} placeholder")
+    html = html.replace(RELEASE_SHA256, hashlib.sha256(release).hexdigest())
     styles = STYLE_BLOCK.findall(html)
     if len(styles) != 1:
         fail("site/index.html should have exactly one <style> block")
@@ -203,7 +208,8 @@ def landing_page(html):
 
 def build(target_dir):
     """Every output, as {path under dist/: bytes}: the release file, the
-    demo (the same page with DEMO_MODE on), and the website."""
+    demo (the same page with DEMO_MODE on), and the website, which offers
+    the release file for download."""
     wasm = build_wasm(target_dir)
     glue, wasm_bytes = bindgen(ensure_wasm_bindgen(), wasm, target_dir / "bindgen")
     page, app = (WEB / "index.html").read_text(), (WEB / "app.js").read_text()
@@ -211,8 +217,9 @@ def build(target_dir):
     demo = assemble(page, glue, app, wasm_bytes, demo=True).encode()
     outputs = {RELEASE_NAME: release, "demo.html": demo}
     if (SITE / "index.html").exists():
-        outputs["site/index.html"] = landing_page((SITE / "index.html").read_text()).encode()
+        outputs["site/index.html"] = landing_page((SITE / "index.html").read_text(), release).encode()
         outputs["site/demo.html"] = demo
+        outputs[f"site/{RELEASE_NAME}"] = release
     return outputs
 
 

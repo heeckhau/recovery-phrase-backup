@@ -42,6 +42,7 @@
   .note { border: 1px solid var(--border); background: var(--panel); padding: 12px 14px; }
   .warn { color: var(--warn); }
   code { color: var(--accent); }
+  .hash { overflow-wrap: anywhere; }
 
   /* ---- the explainer: one 14 s loop ---- */
   figure { margin: 0; border: 1px solid var(--border); background: var(--panel); }
@@ -218,10 +219,10 @@
 
   <section id="download">
     <h2>Use it for real</h2>
-    <div class="note"><p class="warn">Not released yet.</p><p>Version 1 comes after an independent review. Until then, try the demo, or build it yourself from <a href="https://github.com/heeckhau/recovery-phrase-backup">the source</a>.</p></div>
+    <div class="note"><p class="warn">Not released yet.</p><p>The download below is the latest build of <a href="https://github.com/heeckhau/recovery-phrase-backup">the source</a>, published after every test passes. Version 1, signed and versioned, comes after an independent review. Until then, don't use it for a phrase that guards real funds.</p></div>
     <ol>
-      <li>Download the HTML file and its checksum and signature from the release page.</li>
-      <li>Verify them. To check that the file matches the source, rebuild it with Docker (<code>scripts/build-reproducible.sh</code>) and compare the hash.</li>
+      <li>Download <a href="recovery-phrase-backup.html" download>recovery-phrase-backup.html</a>. Its SHA-256 is <code class="hash">{{RELEASE_SHA256}}</code>.</li>
+      <li>Check the hash (<code>shasum -a 256 recovery-phrase-backup.html</code>). To check that the file matches the source, rebuild it from the latest commit with Docker (<code>scripts/build-reproducible.sh</code>) and compare.</li>
       <li>Disconnect from the network. Best is a live USB system such as Tails; otherwise a fresh browser profile with no extensions.</li>
       <li>Open the file and follow the steps.</li>
     </ol>
@@ -233,7 +234,7 @@
       <li><strong>Use it offline.</strong> The page sends nothing, but other software in your browser could, such as a malicious extension.</li>
       <li><strong>Printing puts everything in one place</strong> until you cut the cards apart. Use a printer at home, never "Save as PDF", or write the shares by hand.</li>
       <li><strong>Your wallet's own passphrase</strong> (the "25th word"), if it has one, is not part of the backup. Back it up separately.</li>
-      <li><strong>Reviewed, not audited.</strong> The code is reviewed by several AI models before release, with their findings published. That is a second pair of eyes, not a professional audit.</li>
+      <li><strong>Reviewed, not audited.</strong> The code is reviewed by several AI models before release, and what they find is fixed. That is a second pair of eyes, not a professional audit.</li>
     </ul>
   </section>
 

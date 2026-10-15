@@ -51,10 +51,11 @@ SLIP-39 tool), then restore the phrase in your wallet.
 
 ## Using it
 
-**The release file** (once v1 is out): download
-`recovery-phrase-backup.html` and its checksum and signature from the GitHub
-release, verify them, then disconnect from the network and open the file in
-a browser. Best of all is a live USB system such as Tails; otherwise use a
+**The release file**: download `recovery-phrase-backup.html` from the
+[website](https://heeckhau.github.io/recovery-phrase-backup/#download),
+which shows its SHA-256, then disconnect from the network and open the file
+in a browser. Until v1 that file is the latest build of `main`, published
+once every test passes; v1 adds a versioned, signed GitHub release. Best of all is a live USB system such as Tails; otherwise use a
 fresh browser profile without extensions, since a malicious extension could
 read what you type.
 
@@ -135,8 +136,8 @@ first use.
 
 CI (`.github/workflows/ci.yml`, actions pinned by commit) runs all of these
 on every push, plus `cargo audit` and a check that no em dash appears in the
-repository. On `main`, once the repository is public, it then deploys the
-tested `dist/site/` (landing page and demo) to GitHub Pages.
+repository. On `main` it then deploys the tested `dist/site/` (landing
+page, demo and release file) to GitHub Pages.
 
 **Layout.**
 - `slip39/`: `rpb-slip39`, the SLIP-39 implementation (GF(256) Shamir

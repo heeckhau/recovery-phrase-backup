@@ -33,9 +33,9 @@ Complete and tested, not yet released.
   checks against three other SLIP-39 tools), ten browser tests against the
   release file itself, and a check that no em dash appears in the repo.
 
-Not done yet: the independent review, a public repository, a signed
-release, and putting the website online (built, and deployed by CI once the
-repository is public).
+Not done yet: the independent review and a signed release. Until then the
+website offers the latest tested build of `main` for download, with its
+SHA-256.
 
 ## Next
 
@@ -54,15 +54,17 @@ repository is public).
    and is free everywhere; "key" names were dropped because the tool backs
    up phrases, not keys.
 3. **Release v1.** LICENSE files (*done 2026-10-15*: MIT OR Apache-2.0);
-   make the repository public; a release job
+   make the repository public (*done 2026-10-15*); a release job
    that builds the HTML in the reference container and publishes it with
    `SHA256SUMS` and a signature; verification steps in the README.
-4. **A website.** *Built (2026-10-15); hosting waits for the public
-   repository.* `scripts/build.py` writes it to `dist/site/` next to the
-   release file, CI builds it in the reference container and tests it, and
-   CI's `pages` job deploys those tested files from `main` to GitHub Pages at
-   `heeckhau.github.io/recovery-phrase-backup` (no custom domain) once the
-   repository is public and Pages is set to "GitHub Actions":
+4. **A website.** *Online (2026-10-15)* at
+   `heeckhau.github.io/recovery-phrase-backup` (no custom domain: a lapsed
+   domain could serve a fake tool, and the cards and recovery sheet name no
+   URL anyway). `scripts/build.py` writes it to `dist/site/`, CI builds it
+   in the reference container and tests it, and CI's `pages` job deploys
+   those tested files from `main`. Until v1 it also offers the release file
+   itself for download, with its SHA-256: a moving latest build, but better
+   than no download at all.
    - *A demo build* (`dist/demo.html`): the same page, but it only backs
      up a few published sample phrases (offered as buttons), refusing any
      other at its first word that isn't a sample's, with a pointer to the
