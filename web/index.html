@@ -255,7 +255,11 @@
     font-size: 0.85rem;
     font-weight: 400;
   }
-  .collected { margin: 0.75rem 0 0; padding-left: 1.2rem; font-size: 0.85rem; }
+  .collected { margin: 0; padding: 0; list-style: none; font-size: 0.9rem; }
+  .collected li { padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+  .collected summary { cursor: pointer; }
+  .collected .word-grid { margin-bottom: 0.25rem; }
+  .info { border: 1px solid var(--border); color: var(--text); }
   dialog {
     max-width: 460px;
     padding: 1.25rem;
@@ -326,7 +330,7 @@
     <button type="button" id="clear-all" class="btn-small" title="Erases every word, share and passphrase typed or shown on this page, and goes back to the start. Nothing is ever saved, so the page is then as if freshly opened.">Clear all</button>
   </div>
   <p class="subtitle">Split a wallet's recovery phrase into shares with SLIP-39, an open standard. An agreed number of shares gives it back; fewer reveal nothing.</p>
-  <div class="banner warning" id="demo-banner" hidden><strong>Demo with sample data only.</strong> It refuses real phrases. To back up your own, <a href="index.html#download">download the tool</a> and use it offline.</div>
+  <div class="banner warning" id="demo-banner" hidden><strong>Demo with sample data only.</strong> Never type a real phrase or share here: <a href="index.html#download">download the tool</a> and use it offline.</div>
   <div class="banner warning" id="online-banner" hidden>You're online. For a real phrase, disconnect from the network first. This page never sends anything, but other software in your browser can: a malicious browser extension, for example, can read what you type here and send your phrase away. Offline, it has nowhere to send it. A fresh browser profile without extensions is safer still.</div>
 
   <section class="card" id="home">
@@ -483,11 +487,12 @@
       <h2>Your shares</h2>
       <p>Type one share at a time. Shares from any SLIP-39 tool work.</p>
       <div class="sample-row" id="r1-samples" hidden>
-        <span>Try sample shares (any 2 of 3):</span>
+        <span>Fill in a sample share:</span>
         <button type="button" class="btn-secondary" data-share="0">Share 1</button>
         <button type="button" class="btn-secondary" data-share="1">Share 2</button>
         <button type="button" class="btn-secondary" data-share="2">Share 3</button>
       </div>
+      <div class="banner warning" id="r1-demo-warning" hidden><strong>This isn't a sample share.</strong> Never type real shares into a web page while online: <a href="index.html#download">download the tool</a> and use it offline. If you go on, the demo still recovers them, but then treat what they hold as exposed.</div>
       <div id="r1-entry"></div>
       <details class="advanced">
         <summary>Advanced: SLIP-39 passphrase</summary>
@@ -504,6 +509,7 @@
     </div>
 
     <div class="step" id="r2" hidden>
+      <div class="banner warning" id="r2-demo-warning" hidden><strong>These weren't the sample shares.</strong> If they're real, they have now been typed into a web page on a device that's online. Treat this phrase as exposed: move its funds to a new wallet, made offline, and back that one up with the <a href="index.html#download">downloaded tool</a>.</div>
       <div id="r2-phrase-block">
         <h2 id="r2-title">Your recovery phrase</h2>
         <div class="word-grid" id="r2-words"></div>

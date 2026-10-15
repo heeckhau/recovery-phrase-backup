@@ -213,9 +213,9 @@ test("recover a phrase from shares, typed with 4-letter prefixes", async ({ page
     await page.keyboard.type(`${words[i].slice(0, 4)} `);
   }
   await page.locator("#r1-entry button.btn-secondary").click();
-  await expect(page.locator("#r1-entry p.notice")).toHaveText("You have 1 of the 2 shares needed.");
+  await expect(page.locator("#r1-entry .share-progress")).toHaveText("You have 1 of the 2 shares needed. Add the next one above.");
   await typeShare(page, "r1-entry", shares[2]);
-  await expect(page.locator("#r1-entry p.notice")).toContainText("enough");
+  await expect(page.locator("#r1-entry .share-progress")).toContainText("enough");
 
   await page.click("#r1-recover");
   expect((await page.locator("#r2-words .word").allTextContents()).join(" ")).toBe(PHRASE);
@@ -223,6 +223,35 @@ test("recover a phrase from shares, typed with 4-letter prefixes", async ({ page
   await expect(page.locator("#r2-addresses")).toBeHidden();
   await page.click("#r2-yes");
   await expect(page.locator("#r2-addresses")).toBeVisible();
+});
+
+test("added shares can be looked at again, and removed", async ({ page }) => {
+  const shares = await backUp(page);
+  await page.click("#b5-skip");
+  await page.click("#b6-finish");
+
+  await page.click("#start-recover");
+  await typeShare(page, "r1-entry", shares[0]);
+  await typeShare(page, "r1-entry", shares[0]);
+  await expect(page.locator("#r1-entry .error")).toContainText("already added");
+  await page.locator("#r1-entry .word-grid input").first().fill("");
+  await typeShare(page, "r1-entry", shares[1]);
+
+  // Enough: the grid folds away, and each share opens to its words.
+  const items = page.locator("#r1-entry .collected li");
+  await expect(items).toHaveCount(2);
+  await expect(page.locator("#r1-entry .word-grid input").first()).toBeHidden();
+  await items.nth(1).locator("summary").click();
+  expect((await items.nth(1).locator(".word").allTextContents()).join(" ")).toBe(shares[1]);
+
+  // Removing one opens the grid again for another.
+  await items.nth(1).locator(".btn-remove").click();
+  await expect(items).toHaveCount(1);
+  await expect(page.locator("#r1-entry .share-progress")).toContainText("1 of the 2");
+  await expect(page.locator("#r1-entry .word-grid input").first()).toBeVisible();
+  await typeShare(page, "r1-entry", shares[2]);
+  await page.click("#r1-recover");
+  expect((await page.locator("#r2-words .word").allTextContents()).join(" ")).toBe(PHRASE);
 });
 
 test("the wallet passphrase is asked for next to the recovered addresses, and only changes them", async ({ page }) => {
@@ -267,7 +296,7 @@ test("a wrong SLIP-39 passphrase gives a different fingerprint, not an error", a
   await page.click("#start-recover");
   await typeShare(page, "r1-entry", shares[0]);
   await typeShare(page, "r1-entry", shares[1]);
-  await page.locator("#r1 details summary").click();
+  await page.locator("#r1 details.advanced summary").click();
   await page.fill("#r1-passphrase", "not the passphrase");
   await page.click("#r1-recover");
   await expect(page.locator("#r2-fingerprint")).not.toHaveText(FINGERPRINT);

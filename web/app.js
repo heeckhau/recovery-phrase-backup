@@ -24,6 +24,17 @@ const DEMO = {
 };
 const isDemoSample = (phrase) => Object.values(DEMO.phrases).includes(phrase);
 
+// Whether the words typed so far in `grid` could still become one of
+// `samples`. A word counts once it's on the list and its box is left, so a
+// word being typed never trips this halfway.
+function couldBeDemo(grid, samples) {
+  const typed = grid
+    .inputs()
+    .map((input, i) => ({ i, word: input.value.trim().toLowerCase(), focused: input === document.activeElement }))
+    .filter(({ word, focused }) => !focused && word !== "");
+  return samples.some((sample) => typed.every(({ i, word }) => sample.split(" ")[i] === word));
+}
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -224,33 +235,45 @@ const SHARE_LENGTHS = [20, 23, 27, 30, 33, 59];
 
 // Builds the "type one share, add it, repeat" UI inside `container`.
 // `fixedLength` hides the length picker (the backup's own test knows it).
-function createShareEntry(container, { fixedLength, onProgress }) {
+// Once the added shares are enough, the grid folds away behind "Add another
+// share", so the next step is the obvious one; `enoughHint` names it. Every
+// added share can be opened to compare it with its copy, or removed.
+function createShareEntry(container, { fixedLength, enoughHint = "", onProgress, onInput }) {
   container.innerHTML = "";
   let shares = [];
+  let adding = true; // the grid is open even though the shares are enough
 
   const lengthLabel = el("label", null, "Words in this share");
   const lengthSelect = el("select", "inline");
   lengthSelect.id = `${container.id}-length`;
   lengthLabel.htmlFor = lengthSelect.id;
   fillOptions(lengthSelect, SHARE_LENGTHS, fixedLength || 20);
-  if (fixedLength) {
-    lengthLabel.hidden = true;
-    lengthSelect.hidden = true;
-  }
+  const lengthRow = el("div");
+  lengthRow.append(lengthLabel, lengthSelect);
+  lengthRow.hidden = Boolean(fixedLength);
   const gridBox = el("div", "word-grid");
   const error = el("div", "error");
   const addButton = el("button", "btn-secondary", "Add this share");
   addButton.type = "button";
   addButton.disabled = true;
-  const progress = el("p", "notice mt-075");
+  const typing = el("div");
+  typing.append(lengthRow, gridBox, error, addButton);
+  const progress = el("div", "banner share-progress mt-1");
+  progress.hidden = true;
+  const collectedLabel = el("div", "field-label mt-1", "Shares added: open one to compare it with your copy");
   const collected = el("ul", "collected");
+  const another = el("button", "link-button", "Add another share");
+  another.type = "button";
+  collectedLabel.hidden = true;
+  another.hidden = true;
 
-  container.append(lengthLabel, lengthSelect, gridBox, error, addButton, progress, collected);
+  container.append(typing, progress, collectedLabel, collected, another);
 
   const grid = createWordGrid(gridBox, "slip39", {
     count: Number(lengthSelect.value),
     onChange: () => {
       addButton.disabled = !grid.complete();
+      onInput?.(grid.words());
     },
     onPasteCount: fixedLength
       ? null
@@ -277,21 +300,45 @@ function createShareEntry(container, { fixedLength, onProgress }) {
     let text;
     if (first.group_count === 1) {
       const g = groups.get(1);
-      text = enough ? `You have ${g.have} of the ${g.need} shares needed. That's enough.` : `You have ${g.have} of the ${g.need} shares needed.`;
+      text = enough ? `You have ${g.have} of the ${g.need} shares needed. That's enough.` : `You have ${g.have} of the ${g.need} shares needed. Add the next one above.`;
     } else {
       const parts = [...groups.entries()].map(([n, g]) => `group ${n}: ${g.have} of ${g.need}`);
       text = `${parts.join(", ")} · ${complete} of ${first.group_threshold} groups complete${enough ? ". That's enough." : "."}`;
     }
+    if (enough && enoughHint) text += ` ${enoughHint}`;
     return { enough, text };
+  }
+
+  function shareLabel(info) {
+    return info.group_count === 1 ? `Share ${info.member_number}` : `Group ${info.group_number} of ${info.group_count} · share ${info.member_number}`;
   }
 
   function refresh() {
     collected.innerHTML = "";
-    shares.forEach(({ info }) => {
-      collected.appendChild(el("li", null, `Group ${info.group_number} of ${info.group_count} · share ${info.member_number}`));
+    collectedLabel.hidden = shares.length === 0;
+    shares.forEach(({ mnemonic, info }, i) => {
+      const item = el("li");
+      const details = el("details");
+      details.appendChild(el("summary", null, shareLabel(info)));
+      const words = el("div", "word-grid");
+      renderWords(words, mnemonic.split(" "));
+      const remove = el("button", "btn-remove mt-075", "Remove this share");
+      remove.type = "button";
+      remove.addEventListener("click", () => {
+        shares.splice(i, 1);
+        refresh();
+      });
+      details.append(words, remove);
+      item.appendChild(details);
+      collected.appendChild(item);
     });
     const s = status();
     progress.textContent = s.text;
+    progress.hidden = shares.length === 0;
+    progress.classList.toggle("success", s.enough);
+    progress.classList.toggle("info", !s.enough);
+    typing.hidden = s.enough && !adding;
+    another.hidden = !typing.hidden;
     onProgress?.(s.enough, shares.length);
   }
 
@@ -314,19 +361,32 @@ function createShareEntry(container, { fixedLength, onProgress }) {
       return;
     }
     shares.push({ mnemonic, info });
+    adding = false;
     grid.clear();
-    grid.focus();
     refresh();
+    if (!typing.hidden) grid.focus();
+  });
+
+  another.addEventListener("click", () => {
+    adding = true;
+    refresh();
+    grid.focus();
   });
 
   return {
-    add(mnemonic) {
-      grid.fill(mnemonic.split(" "));
-      addButton.click();
+    fill(mnemonic) {
+      const words = mnemonic.split(" ");
+      if (!fixedLength && words.length !== Number(lengthSelect.value)) {
+        lengthSelect.value = String(words.length);
+        grid.setCount(words.length);
+      }
+      grid.fill(words);
+      addButton.focus();
     },
     mnemonics: () => shares.map((s) => s.mnemonic),
     reset() {
       shares = [];
+      adding = true;
       grid.clear();
       clearError(error);
       refresh();
@@ -392,8 +452,10 @@ function b1Update() {
   const filled = words.every((w) => w !== "");
   let check = null;
   let sample = false;
-  if (b1Grid.complete() && DEMO_MODE && !isDemoSample(words.join(" "))) {
-    showError($("b1-error"), "This online demo only works with the sample phrases above. To back up your own phrase, download the tool and use it offline.");
+  const samples = Object.values(DEMO.phrases).filter((p) => p.split(" ").length === words.length);
+  if (DEMO_MODE && (b1Grid.complete() ? !isDemoSample(words.join(" ")) : !couldBeDemo(b1Grid, samples))) {
+    // Refused at the first word that isn't a sample's, not after the last.
+    showError($("b1-error"), "This online demo only works with the sample phrases above. Never type your real phrase into a web page: download the tool and use it offline.");
   } else if (b1Grid.complete()) {
     sample = DEMO_MODE;
     try {
@@ -760,8 +822,12 @@ function startRecoveryTest() {
   b5Entry = createShareEntry($("b5-entry"), {
     fixedLength: state.shareWords,
     onProgress: (enough) => {
-      if (!enough) return;
       const result = $("b5-result");
+      if (!enough) {
+        result.hidden = true;
+        $("b5-next").hidden = true;
+        return;
+      }
       result.hidden = false;
       let recovered = null;
       try {
@@ -903,12 +969,19 @@ function startRecover() {
   showScreen("recover");
   showStep(screens.recover, "r1", "Step 1 of 2 · Your shares");
   r1Entry = createShareEntry($("r1-entry"), {
+    enoughHint: "Click Recover below.",
     onProgress: (enough, count) => {
       $("r1-recover").disabled = count === 0;
       $("r1-recover").textContent = enough || count === 0 ? "Recover" : "Recover (may need more shares)";
+      if (enough) $("r1-recover").focus();
+      if (DEMO_MODE) demoShareUpdate();
+    },
+    onInput: () => {
+      if (DEMO_MODE) demoShareUpdate();
     },
   });
   $("r1-recover").disabled = true;
+  if (DEMO_MODE) demoShareUpdate();
   r1Entry.grid.focus();
 }
 
@@ -921,11 +994,9 @@ $("r1-recover").addEventListener("click", () => {
     showError($("r1-error"), String(err));
     return;
   }
-  if (DEMO_MODE && !(recovered.words && isDemoSample(recovered.words))) {
-    showError($("r1-error"), "This online demo only recovers backups of its sample phrases. To recover your own, download the tool and use it offline.");
-    return;
-  }
   showStep(screens.recover, "r2", "Step 2 of 2 · Result");
+  // Refusing here would protect nothing: the words are already typed.
+  $("r2-demo-warning").hidden = !DEMO_MODE || Boolean(recovered.words && isDemoSample(recovered.words));
   const check = recovered.check;
   $("r2-phrase-block").hidden = !check;
   $("r2-mismatch").hidden = true;
@@ -1035,8 +1106,22 @@ for (const button of document.querySelectorAll("[data-sample]")) {
   });
 }
 
+// A sample button fills the grid and leaves adding it to the user, as
+// with a real share. A typed share that isn't a sample gets a warning as
+// soon as it shows, not after the last word.
 for (const button of document.querySelectorAll("[data-share]")) {
-  button.addEventListener("click", () => r1Entry.add(DEMO.shares[Number(button.dataset.share)]));
+  button.addEventListener("click", () => r1Entry.fill(DEMO.shares[Number(button.dataset.share)]));
+}
+
+function demoShareUpdate() {
+  const added = r1Entry.mnemonics();
+  for (const button of document.querySelectorAll("[data-share]")) {
+    const done = added.includes(DEMO.shares[Number(button.dataset.share)]);
+    button.disabled = done;
+    button.textContent = `Share ${Number(button.dataset.share) + 1}${done ? " ✓" : ""}`;
+  }
+  const foreign = added.some((m) => !DEMO.shares.includes(m)) || !couldBeDemo(r1Entry.grid, DEMO.shares);
+  $("r1-demo-warning").hidden = !foreign;
 }
 
 // ---- start ----

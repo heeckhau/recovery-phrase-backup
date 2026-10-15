@@ -61,12 +61,16 @@ not hosted).
    release file, CI builds it in the reference container and tests it, and
    it will be served from GitHub Pages at `<user>.github.io/<repo>` (no
    custom domain):
-   - *A demo build* (`dist/demo.html`): the same page, but it only accepts
-     a few published sample phrases (offered as buttons) and refuses any
-     other phrase with a pointer to the download. A permanent "demo, sample
-     data only" banner, and "DEMO, NOT A REAL BACKUP" across every printed
-     card. Accepting arbitrary or randomly generated phrases would invite
-     real use online, which the whole design argues against. The two sample
+   - *A demo build* (`dist/demo.html`): the same page, but it only backs
+     up a few published sample phrases (offered as buttons), refusing any
+     other at its first word that isn't a sample's, with a pointer to the
+     download. A permanent "demo, sample data only" banner, and "DEMO, NOT A
+     REAL BACKUP" across every printed card. Backing up arbitrary phrases
+     would invite real use online, which the whole design argues against.
+     Recovery warns as soon as a typed share isn't a sample, but still
+     recovers it, with a warning to treat the phrase as exposed: once the
+     words are typed, refusing protects nothing and only fails someone who
+     may be in a real emergency. The two sample
      phrases are derived from fixed labels, and `rpb-core` flags them in the
      real tool like any published test phrase.
    - *A landing page*: the problem, how splitting solves it, "try the demo",
@@ -118,10 +122,17 @@ not hosted).
     spot check it would hide the very mistake the check exists to find.
     Open: whether the spot check offers fixes at all.
   - *Find a wrong word in a share.* A share whose words are all valid but
-    whose checksum fails most likely has one misread word. With RS1024's 30
-    checksum bits, trying every position and word nearly always finds a
-    single fix ("word 7 is probably *ocean*"), offered the same way. BIP39's
-    4 to 8 checksum bits are too weak for this.
+    whose checksum fails most likely has one misread word. RS1024 detects
+    any 3 wrong words, so a single one can be located without ambiguity:
+    trying every word in every position (about 20,000 checksums, instant)
+    finds it. Point to the position only ("word 7 doesn't match the
+    checksum; compare it with your copy"), not the word that would fit: the
+    right word is the one on the paper, and an offered word invites
+    accepting it without looking. With two wrong words the search finds
+    nothing and the message stays as it is; with three or more it can,
+    rarely, point to a word that is right, which comparing with the copy
+    shows. BIP39's 4 to 8 checksum
+    bits are too weak for this.
   - *A suggestion list of our own* instead of the browser's `<datalist>`,
     which filters by prefix only, looks different in every browser and can
     show neither typo fixes nor ranked candidates.
