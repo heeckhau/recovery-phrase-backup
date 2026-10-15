@@ -5,7 +5,7 @@ const { test, expect } = require("@playwright/test");
 const { pathToFileURL } = require("node:url");
 const { openRecorded, expectNothingLeftBehind, pastePhrase, typeShare, writeDownAllShares } = require("./helpers");
 
-const URL = pathToFileURL(process.env.PKC_DEMO_HTML).href;
+const URL = pathToFileURL(process.env.RPB_DEMO_HTML).href;
 const SAMPLE_12 = "leopard involve vital powder diary motion comfort foil width later gasp year";
 const SAMPLE_FINGERPRINT = "4d7461d8";
 

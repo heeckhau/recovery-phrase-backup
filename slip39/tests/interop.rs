@@ -3,7 +3,7 @@
 // scripts/interop/run.py, must recover here: with no external tool needed.
 // The ours -> theirs half needs the tools themselves and runs in that script.
 // For tools that work with BIP39 phrases, the recovered secret must also be
-// the original phrase, word for word, through pkc-core's Phrase.
+// the original phrase, word for word, through rpb-core's Phrase.
 
 use serde::Deserialize;
 
@@ -42,7 +42,7 @@ fn check(fixture: &Fixture, failures: &mut Vec<String>) {
     let tool = format!("{} {}", fixture.tool, fixture.version);
     for case in &fixture.cases {
         let name = format!("{tool}, {}", case.name);
-        let combine = |set: &[String], passphrase: &str| pkc_slip39::combine(&refs(set), passphrase).map(|s| hex_encode(&s));
+        let combine = |set: &[String], passphrase: &str| rpb_slip39::combine(&refs(set), passphrase).map(|s| hex_encode(&s));
 
         for (i, set) in case.recovery_sets.iter().enumerate() {
             match combine(set, &case.passphrase) {
@@ -50,9 +50,9 @@ fn check(fixture: &Fixture, failures: &mut Vec<String>) {
                 other => failures.push(format!("{name}: recovery set {i}: got {other:?}")),
             }
             if let Some(expected) = &case.bip39_phrase {
-                let recovered = pkc_slip39::combine(&refs(set), &case.passphrase)
+                let recovered = rpb_slip39::combine(&refs(set), &case.passphrase)
                     .map_err(|e| e.to_string())
-                    .and_then(|s| pkc_core::Phrase::from_entropy(&s).map_err(|e| e.to_string()))
+                    .and_then(|s| rpb_core::Phrase::from_entropy(&s).map_err(|e| e.to_string()))
                     .map(|p| p.to_words().to_string());
                 if recovered.as_ref() != Ok(expected) {
                     failures.push(format!("{name}: recovery set {i} as a phrase: got {recovered:?}"));
@@ -60,7 +60,7 @@ fn check(fixture: &Fixture, failures: &mut Vec<String>) {
             }
         }
         if let Some(phrase) = &case.bip39_phrase {
-            match pkc_core::Phrase::parse(phrase) {
+            match rpb_core::Phrase::parse(phrase) {
                 Ok(p) if hex_encode(&p.entropy()) == case.secret_hex => {}
                 _ => failures.push(format!("{name}: the tool's phrase doesn't parse to the case's secret")),
             }
@@ -86,7 +86,7 @@ fn check(fixture: &Fixture, failures: &mut Vec<String>) {
         }
 
         for mnemonic in case.mnemonics.iter().flatten() {
-            match pkc_slip39::inspect(mnemonic) {
+            match rpb_slip39::inspect(mnemonic) {
                 Ok(info) if info.extendable == case.extendable && info.iteration_exponent == case.iteration_exponent => {}
                 other => failures.push(format!("{name}: inspect: got {other:?}")),
             }

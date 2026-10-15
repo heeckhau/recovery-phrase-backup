@@ -1,4 +1,4 @@
-import init, { bip39_wordlist, phrase_check, slip39_combine, slip39_inspect, slip39_split, slip39_wordlist } from "./pkg/pkc_wasm.js";
+import init, { bip39_wordlist, phrase_check, slip39_combine, slip39_inspect, slip39_split, slip39_wordlist } from "./pkg/rpb_wasm.js";
 
 // Everything secret lives in the DOM inputs and in `state`, and nowhere
 // else: no storage, no clipboard writes. "Clear all" and closing the page
@@ -8,7 +8,7 @@ const $ = (id) => document.getElementById(id);
 
 // The online demo is this same page with DEMO_MODE on (scripts/build.py
 // writes it as dist/demo.html). It accepts only the sample phrases below,
-// which are public, and pkc-core flags them in the real tool too.
+// which are public, and rpb-core flags them in the real tool too.
 let DEMO_MODE = false;
 const DEMO = {
   phrases: {

@@ -3,10 +3,10 @@
 Run via ./run.sh (inside the pinned nix shell). For each oracle tool it:
 
   theirs -> ours   generates shares with the oracle, checks the oracle
-                   recovers them itself, checks pkc-slip39 recovers them too,
+                   recovers them itself, checks rpb-slip39 recovers them too,
                    and writes them to slip39/tests/interop/<tool>.json, which
                    a plain `cargo test` re-checks without any of these tools;
-  ours -> theirs   splits the same secrets with pkc-slip39 and checks the
+  ours -> theirs   splits the same secrets with rpb-slip39 and checks the
                    oracle recovers them (live only: needs the oracle).
 
 Plus, both ways: a wrong passphrase gives the *same* wrong bytes in both
@@ -70,7 +70,7 @@ def ensure_seedkit():
 
 
 def build_ours():
-    run(["cargo", "build", "-q", "--release", "-p", "pkc-slip39", "--example", "interop"], cwd=ROOT)
+    run(["cargo", "build", "-q", "--release", "-p", "rpb-slip39", "--example", "interop"], cwd=ROOT)
 
 
 # ---- line-protocol subprocesses --------------------------------------------
@@ -144,6 +144,7 @@ class Seedkit:
 # ---- cases -----------------------------------------------------------------
 
 def secret_for(tool, name, length):
+    # The label predates the rename to rpb; changing it would change every fixture.
     digest = hashlib.sha512(f"pkc-slip39 interop {tool} {name}".encode()).digest()
     return digest[:length].hex()
 

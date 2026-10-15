@@ -1,7 +1,7 @@
 {
-  "name": "pkc-e2e",
+  "name": "rpb-e2e",
   "private": true,
-  "description": "Browser tests for the release HTML (dist/private-key-convertor.html). Test tooling only; nothing here ships.",
+  "description": "Browser tests for the release HTML (dist/recovery-phrase-backup.html). Test tooling only; nothing here ships.",
   "scripts": {
     "test": "playwright test"
   },

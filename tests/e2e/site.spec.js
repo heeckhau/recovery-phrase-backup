@@ -4,7 +4,7 @@ const { test, expect } = require("@playwright/test");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
-const SITE = process.env.PKC_SITE || path.resolve(__dirname, "../../dist/site");
+const SITE = process.env.RPB_SITE || path.resolve(__dirname, "../../dist/site");
 
 test("the landing page links to a working demo and holds its CSP", async ({ page }) => {
   await page.addInitScript(() => {

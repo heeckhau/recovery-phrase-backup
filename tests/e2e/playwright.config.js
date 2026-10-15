@@ -1,11 +1,11 @@
 // Runs against the built release file, opened from disk exactly as a user
 // would: build it first (scripts/build.py or scripts/build-reproducible.sh),
-// or point PKC_HTML at another copy.
+// or point RPB_HTML at another copy.
 const path = require("node:path");
 const { defineConfig, devices } = require("@playwright/test");
 
-process.env.PKC_HTML ||= path.resolve(__dirname, "../../dist/private-key-convertor.html");
-process.env.PKC_DEMO_HTML ||= path.resolve(__dirname, "../../dist/demo.html");
+process.env.RPB_HTML ||= path.resolve(__dirname, "../../dist/recovery-phrase-backup.html");
+process.env.RPB_DEMO_HTML ||= path.resolve(__dirname, "../../dist/demo.html");
 
 module.exports = defineConfig({
   testDir: ".",

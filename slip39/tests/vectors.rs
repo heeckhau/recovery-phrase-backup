@@ -31,7 +31,7 @@ fn official_test_vectors() {
     let mut failures = Vec::new();
     for Vector(description, mnemonics, expected_secret_hex, _expected_xprv) in vectors {
         let refs: Vec<&str> = mnemonics.iter().map(String::as_str).collect();
-        let result = pkc_slip39::combine(&refs, "TREZOR");
+        let result = rpb_slip39::combine(&refs, "TREZOR");
 
         if expected_secret_hex.is_empty() {
             if let Ok(actual) = result {

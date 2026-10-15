@@ -547,61 +547,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pkc-cli"
-version = "0.1.0"
-dependencies = [
- "clap",
- "pkc-core",
- "pkc-slip39",
- "rpassword",
- "zeroize",
-]
-
-[[package]]
-name = "pkc-core"
-version = "0.1.0"
-dependencies = [
- "bech32",
- "bip32",
- "bip39",
- "bs58",
- "hex",
- "k256",
- "ripemd",
- "sha2 0.11.0",
- "sha3",
- "thiserror",
- "zeroize",
-]
-
-[[package]]
-name = "pkc-slip39"
-version = "0.1.0"
-dependencies = [
- "bitvec",
- "getrandom",
- "hmac",
- "pbkdf2",
- "pkc-core",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "subtle",
- "thiserror",
- "zeroize",
-]
-
-[[package]]
-name = "pkc-wasm"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "pkc-core",
- "pkc-slip39",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "primefield"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -690,6 +635,61 @@ dependencies = [
  "libc",
  "rtoolbox",
  "windows-sys",
+]
+
+[[package]]
+name = "rpb-cli"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "rpassword",
+ "rpb-core",
+ "rpb-slip39",
+ "zeroize",
+]
+
+[[package]]
+name = "rpb-core"
+version = "0.1.0"
+dependencies = [
+ "bech32",
+ "bip32",
+ "bip39",
+ "bs58",
+ "hex",
+ "k256",
+ "ripemd",
+ "sha2 0.11.0",
+ "sha3",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
+name = "rpb-slip39"
+version = "0.1.0"
+dependencies = [
+ "bitvec",
+ "getrandom",
+ "hmac",
+ "pbkdf2",
+ "rpb-core",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "subtle",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
+name = "rpb-wasm"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "rpb-core",
+ "rpb-slip39",
+ "wasm-bindgen",
 ]
 
 [[package]]

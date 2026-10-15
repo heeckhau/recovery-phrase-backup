@@ -15,17 +15,17 @@ to end over code that's merely tested.
 
 Complete and tested, not yet released.
 
-- **`pkc-slip39`**: SLIP-39 written from the spec (no suitable Rust crate
+- **`rpb-slip39`**: SLIP-39 written from the spec (no suitable Rust crate
   exists; see History), checked against all 45 official vectors. Accepts
   every length SLIP-39 allows. Secret material is zeroized; the share digest
   and GF(256) lookups are constant-time.
-- **`pkc-core`**: BIP39 phrases at all five lengths, their BIP32 fingerprint
+- **`rpb-core`**: BIP39 phrases at all five lengths, their BIP32 fingerprint
   and first Ethereum and native SegWit addresses, and a weak-phrase check;
   raw keys (hex, WIF) for the CLI.
 - **The page**: backup and recovery wizards with spot checks, a recovery
   test, print cards (or handwriting), and a terminal look. Details under
   Decisions.
-- **The CLI** (`pkc`): split, combine and inspect shares, convert raw keys;
+- **The CLI** (`rpb`): split, combine and inspect shares, convert raw keys;
   secrets are prompted for with hidden input, never taken from argv.
 - **Trust**: a single-file release build that is reproducible (byte-identical
   in a pinned Linux x86-64 container), and CI on every push: tests, clippy,
@@ -33,13 +33,13 @@ Complete and tested, not yet released.
   checks against three other SLIP-39 tools), ten browser tests against the
   release file itself, and a check that no em dash appears in the repo.
 
-Not done yet: the independent review, a name, LICENSE files, a public
+Not done yet: the independent review, LICENSE files, a public
 repository, a signed release, and putting the website online (it is built,
 not hosted).
 
 ## Next
 
-1. **Independent review.** Several other LLMs each review `pkc-slip39`, the
+1. **Independent review.** Several other LLMs each review `rpb-slip39`, the
    page and the build, given the code and the threat model (offline, single
    file, real recovery phrases). Findings and fixes go in the repo (e.g.
    `reviews/`), with the reviewing model and the commit reviewed. v1 does not
@@ -47,9 +47,12 @@ not hosted).
    "audited": an LLM review is a useful second pair of eyes, not an audit,
    and claiming otherwise would spend the trust the rest of the plan earns. A
    human audit stays welcome if one ever becomes possible.
-2. **A name.** `private-key-convertor` no longer describes the tool. Rename
-   before anything goes public, since URLs and file names stick once shared:
-   the repository, the release file, and possibly the crates (`pkc-*`).
+2. **A name.** *Done (2026-10-15):* Recovery Phrase Backup. The
+   repository and release file are `recovery-phrase-backup`, the crates
+   `rpb-*` and the command `rpb` (formerly `private-key-convertor`, `pkc-*`
+   and `pkc`). Chosen over shorter names because it says what the tool does
+   and is free everywhere; "key" names were dropped because the tool backs
+   up phrases, not keys.
 3. **Release v1.** LICENSE files; make the repository public; a release job
    that builds the HTML in the reference container and publishes it with
    `SHA256SUMS` and a signature; verification steps in the README.
@@ -64,7 +67,7 @@ not hosted).
      data only" banner, and "DEMO, NOT A REAL BACKUP" across every printed
      card. Accepting arbitrary or randomly generated phrases would invite
      real use online, which the whole design argues against. The two sample
-     phrases are derived from fixed labels, and `pkc-core` flags them in the
+     phrases are derived from fixed labels, and `rpb-core` flags them in the
      real tool like any published test phrase.
    - *A landing page*: the problem, how splitting solves it, "try the demo",
      how to use it for real (download, verify, go offline), the comparisons
@@ -82,7 +85,7 @@ not hosted).
 
 ## Later, maybe
 
-- **Publish `pkc-slip39` on crates.io.** Postponed: nothing needs it
+- **Publish `rpb-slip39` on crates.io.** Postponed: nothing needs it
   published, and publishing is public and permanent. Worth doing once the
   API has settled and someone else could use it; there is still no audited,
   permissively licensed Rust SLIP-39 crate.
@@ -154,7 +157,7 @@ words is gone: indistinguishable from a seed phrase, it was a loss-of-funds
 trap. Its two jobs have better standard answers. As an interchange format
 for a raw key: hex for Ethereum and WIF for Bitcoin, always shown with the
 derived address, which catches a typo. As checksummed words on paper: a
-1-of-1 SLIP-39 share (`pkc slip39 split --group-threshold 1 --group 1:1`),
+1-of-1 SLIP-39 share (`rpb slip39 split --group-threshold 1 --group 1:1`),
 which uses a different wordlist (so no wallet mistakes it for a seed phrase)
 and a far stronger checksum (RS1024, three words, versus BIP39's 8 bits). The
 rule: **BIP39 wordlist, a seed phrase; SLIP-39 wordlist, a backup of some
@@ -170,7 +173,7 @@ converter stays in the CLI: a raw-key input next to a phrase input is
 confusion and attack surface the backup flow doesn't need.
 
 **C. Every length.** The page accepts all five BIP39 lengths and recovers
-the phrase at its original length. The library is more general: `pkc-slip39`
+the phrase at its original length. The library is more general: `rpb-slip39`
 accepts every length SLIP-39 allows (including 512-bit seeds that other tools
 produce), so it never refuses shares another tool made validly.
 
@@ -317,7 +320,7 @@ multi-coin derivation beyond the address check.
   removed by Decision A.
 - **2026-09, Phase 2: SLIP-39.** No suitable Rust crate existed: the one with
   a compatible license called itself "untested work-in-progress", and the
-  maintained one is GPL-3.0. So `pkc-slip39` was written from the spec and
+  maintained one is GPL-3.0. So `rpb-slip39` was written from the spec and
   checked against the official vectors. A security review on 2026-09-10 to
   14 fixed seven findings, including secrets passed as CLI arguments,
   non-constant-time comparisons and lookups, and a missing CSP.

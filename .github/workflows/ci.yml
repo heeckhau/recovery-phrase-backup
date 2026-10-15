@@ -61,9 +61,9 @@ jobs:
         run: scripts/build-reproducible.sh --verify-reproducible
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: private-key-convertor-html
+          name: recovery-phrase-backup-html
           path: |
-            dist/private-key-convertor.html
+            dist/recovery-phrase-backup.html
             dist/demo.html
             dist/site/
           if-no-files-found: error
@@ -80,7 +80,7 @@ jobs:
       # The exact files the reference build produced, not a rebuild.
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: private-key-convertor-html
+          name: recovery-phrase-backup-html
           path: dist
       - name: Install Playwright (pinned in tests/e2e/package-lock.json)
         working-directory: tests/e2e

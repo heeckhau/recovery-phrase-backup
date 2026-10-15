@@ -41,13 +41,13 @@ Each is pinned, and its version is recorded in every fixture.
 ## What is checked
 
 **Directions.** Theirs to ours: every oracle's shares recover in
-`pkc-slip39` to the same bytes, both live in the harness and from the
+`rpb-slip39` to the same bytes, both live in the harness and from the
 committed fixtures in a plain `cargo test` (`slip39/tests/interop.rs`). Ours
-to theirs: shares from `pkc-slip39` recover in every oracle; this half needs
+to theirs: shares from `rpb-slip39` recover in every oracle; this half needs
 the oracles, so it runs live only. For the oracles that work with BIP39
 phrases (python-slip39's BIP39 mode and seedkit), both sides go through the
 words: their shares must recover to the exact original phrase through
-`pkc_core::Phrase`, and our shares are split from the phrase itself.
+`rpb_core::Phrase`, and our shares are split from the phrase itself.
 
 **Per case**, in both directions where they apply:
 - two different minimal recovery sets;
@@ -73,7 +73,7 @@ These are recorded in the fixtures.
   lengths.
 - **Surplus shares.** The reference implementation and seedkit reject more
   groups or members than the thresholds need, as the spec says ("GM MUST be
-  equal to GT"); python-slip39 and `pkc-slip39` ignore the surplus. Ours is
+  equal to GT"); python-slip39 and `rpb-slip39` ignore the surplus. Ours is
   deliberate (commit `228e746`): the surplus is first checked to belong to
   the same backup. Each fixture records its tool's behaviour and the harness
   checks it, so a change on either side shows up.

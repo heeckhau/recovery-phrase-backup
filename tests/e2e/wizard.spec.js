@@ -6,7 +6,7 @@ const { test, expect } = require("@playwright/test");
 const { pathToFileURL } = require("node:url");
 const { openRecorded, expectNothingLeftBehind, pastePhrase, typeShare, waitForSpotCheckToPass, writeDownAllShares } = require("./helpers");
 
-const URL = pathToFileURL(process.env.PKC_HTML).href;
+const URL = pathToFileURL(process.env.RPB_HTML).href;
 
 // Not a published test vector: entropy 3c910ed752a86f14b329e07d459ac618.
 const PHRASE = "develop mask remind pipe manage medal smile despair later coast ranch cousin";

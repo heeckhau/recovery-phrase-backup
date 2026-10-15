@@ -1,11 +1,11 @@
 """Builds the release artifact: one self-contained HTML file that opens from
 disk (file://) with no network access.
 
-    python3 scripts/build.py                        # -> dist/private-key-convertor.html,
+    python3 scripts/build.py                        # -> dist/recovery-phrase-backup.html,
                                                     #    dist/demo.html, dist/site/
     python3 scripts/build.py --verify-reproducible  # build twice, compare bytes
 
-Steps: compile pkc-wasm with the pinned toolchain (rust-toolchain.toml) and
+Steps: compile rpb-wasm with the pinned toolchain (rust-toolchain.toml) and
 the `html` profile; run wasm-bindgen, pinned to the version in Cargo.lock;
 then inline everything into web/index.html (the wasm as base64, the
 wasm-bindgen glue and app.js as one inline module script) and replace the
@@ -41,9 +41,9 @@ WEB = ROOT / "web"
 TOOLS = ROOT / "target" / "tools"
 DIST = ROOT / "dist"
 SITE = ROOT / "site"
-RELEASE_NAME = "private-key-convertor.html"
+RELEASE_NAME = "recovery-phrase-backup.html"
 
-APP_IMPORT = re.compile(r'^import init, \{ ([\w, ]+) \} from "\./pkg/pkc_wasm\.js";\n', re.M)
+APP_IMPORT = re.compile(r'^import init, \{ ([\w, ]+) \} from "\./pkg/rpb_wasm\.js";\n', re.M)
 GLUE_EXPORT_TAIL = "export { initSync, __wbg_init as default };\n"
 DEV_ONLY = re.compile(r"[ \t]*// BEGIN dev-only.*?// END dev-only\n", re.S)
 SCRIPT_TAG = '<script type="module" src="./app.js"></script>'
@@ -104,17 +104,17 @@ def build_wasm(target_dir):
     env.pop("CARGO_ENCODED_RUSTFLAGS", None)
     run(
         ["cargo", "build", "--quiet", "--locked", "--profile", "html", "--target", "wasm32-unknown-unknown",
-         "-p", "pkc-wasm", "--target-dir", str(target_dir)],
+         "-p", "rpb-wasm", "--target-dir", str(target_dir)],
         env=env,
     )
-    return target_dir / "wasm32-unknown-unknown" / "html" / "pkc_wasm.wasm"
+    return target_dir / "wasm32-unknown-unknown" / "html" / "rpb_wasm.wasm"
 
 
 def bindgen(wasm_bindgen, wasm, out_dir):
     if out_dir.exists():
         shutil.rmtree(out_dir)
     run([str(wasm_bindgen), "--target", "web", "--no-typescript", "--out-dir", str(out_dir), str(wasm)])
-    return (out_dir / "pkc_wasm.js").read_text(), (out_dir / "pkc_wasm_bg.wasm").read_bytes()
+    return (out_dir / "rpb_wasm.js").read_text(), (out_dir / "rpb_wasm_bg.wasm").read_bytes()
 
 
 def wrap_glue(glue):
@@ -136,7 +136,7 @@ def wrap_glue(glue):
 def transform_app(app):
     m = APP_IMPORT.search(app)
     if not m or len(APP_IMPORT.findall(app)) != 1:
-        fail("app.js no longer starts with the expected pkc_wasm import")
+        fail("app.js no longer starts with the expected rpb_wasm import")
     names = m.group(1)
     seam = (
         f"const {{ {names} }} = wasmBindings;\n"

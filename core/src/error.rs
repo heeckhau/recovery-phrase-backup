@@ -20,6 +20,6 @@ pub enum Error {
     InvalidPhrase(String),
     #[error("a BIP39 phrase encodes 16, 20, 24, 28 or 32 bytes of entropy, got {0}")]
     InvalidPhraseEntropyLength(usize),
-    #[error("this looks like a recovery phrase, not a private key. A phrase is backed up as a whole: see `pkc slip39 split`")]
+    #[error("this looks like a recovery phrase, not a private key. A phrase is backed up as a whole: see `rpb slip39 split`")]
     InputIsAPhrase,
 }

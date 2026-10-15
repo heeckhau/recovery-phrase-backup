@@ -140,13 +140,13 @@ struct Slip39InspectArgs {
     mnemonic: Option<String>,
 }
 
-fn parse_group(spec: &str) -> Result<pkc_slip39::GroupSpec, String> {
+fn parse_group(spec: &str) -> Result<rpb_slip39::GroupSpec, String> {
     let (threshold, count) = spec
         .split_once(':')
         .ok_or_else(|| format!("group \"{spec}\" must be in THRESHOLD:COUNT form, e.g. \"2:3\""))?;
     let member_threshold: u8 = threshold.parse().map_err(|_| format!("invalid threshold in group \"{spec}\""))?;
     let member_count: u8 = count.parse().map_err(|_| format!("invalid count in group \"{spec}\""))?;
-    Ok(pkc_slip39::GroupSpec { member_threshold, member_count })
+    Ok(rpb_slip39::GroupSpec { member_threshold, member_count })
 }
 
 fn warn_argv_secret(what: &str) {
@@ -211,12 +211,12 @@ fn run_convert(args: ConvertArgs) -> Result<(), String> {
     let input = resolve_secret(args.input, "the private key", "Private key (hex or WIF): ")?;
 
     let network = match args.network {
-        NetworkArg::Mainnet => pkc_core::Network::Mainnet,
-        NetworkArg::Testnet => pkc_core::Network::Testnet,
+        NetworkArg::Mainnet => rpb_core::Network::Mainnet,
+        NetworkArg::Testnet => rpb_core::Network::Testnet,
     };
-    let format = if args.uncompressed { pkc_core::KeyFormat::Uncompressed } else { pkc_core::KeyFormat::Compressed };
+    let format = if args.uncompressed { rpb_core::KeyFormat::Uncompressed } else { rpb_core::KeyFormat::Compressed };
 
-    let result = pkc_core::convert(&input, network, format).map_err(|e| e.to_string())?;
+    let result = rpb_core::convert(&input, network, format).map_err(|e| e.to_string())?;
     println!("Network:      {:?}", result.network);
     println!("Format:       {:?}", result.format);
     println!("Private key:  {}", result.private_key_hex);
@@ -230,15 +230,15 @@ fn run_convert(args: ConvertArgs) -> Result<(), String> {
 /// single token is a raw private key (hex or WIF). SLIP-39 itself doesn't
 /// record which, so the output says it out loud.
 enum BackupInput {
-    Phrase(pkc_core::Phrase),
-    Key(pkc_core::PrivateKey),
+    Phrase(rpb_core::Phrase),
+    Key(rpb_core::PrivateKey),
 }
 
 fn parse_backup_input(input: &str) -> Result<BackupInput, String> {
     if input.split_whitespace().count() > 1 {
-        pkc_core::Phrase::parse(input).map(BackupInput::Phrase).map_err(|e| e.to_string())
+        rpb_core::Phrase::parse(input).map(BackupInput::Phrase).map_err(|e| e.to_string())
     } else {
-        pkc_core::parse_private_key(input).map(|p| BackupInput::Key(p.key)).map_err(|e| e.to_string())
+        rpb_core::parse_private_key(input).map(|p| BackupInput::Key(p.key)).map_err(|e| e.to_string())
     }
 }
 
@@ -247,7 +247,7 @@ fn resolve_bip39_passphrase(use_prompt: bool) -> Result<Zeroizing<String>, Strin
 }
 
 /// The fingerprint, and the first addresses for recognising the phrase.
-fn print_phrase_check(phrase: &pkc_core::Phrase, bip39_passphrase: &str) {
+fn print_phrase_check(phrase: &rpb_core::Phrase, bip39_passphrase: &str) {
     let addresses = phrase.addresses(bip39_passphrase);
     let which = if bip39_passphrase.is_empty() { "no BIP39 passphrase" } else { "with your BIP39 passphrase" };
     println!("Fingerprint:  {}", hex_encode(&phrase.fingerprint()));
@@ -263,7 +263,7 @@ fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
     )?);
     let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt)?;
     let bip39_passphrase = resolve_bip39_passphrase(args.bip39_passphrase_prompt)?;
-    let groups: Vec<pkc_slip39::GroupSpec> = args.groups.iter().map(|s| parse_group(s)).collect::<Result<_, _>>()?;
+    let groups: Vec<rpb_slip39::GroupSpec> = args.groups.iter().map(|s| parse_group(s)).collect::<Result<_, _>>()?;
 
     let secret: Zeroizing<Vec<u8>> = match parse_backup_input(&input)? {
         BackupInput::Phrase(phrase) => {
@@ -274,12 +274,12 @@ fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
         }
         BackupInput::Key(key) => {
             println!("Backing up a raw private key, not a recovery phrase.");
-            println!("ETH address: {}", pkc_core::eth_address(&key));
+            println!("ETH address: {}", rpb_core::eth_address(&key));
             Zeroizing::new(key.to_bytes().to_vec())
         }
     };
 
-    let shares = pkc_slip39::split(&secret, args.group_threshold, &groups, &passphrase, args.iteration_exponent)
+    let shares = rpb_slip39::split(&secret, args.group_threshold, &groups, &passphrase, args.iteration_exponent)
         .map_err(|e| e.to_string())?;
 
     println!();
@@ -298,21 +298,21 @@ fn run_slip39_combine(args: Slip39CombineArgs) -> Result<(), String> {
     let bip39_passphrase = resolve_bip39_passphrase(args.bip39_passphrase_prompt)?;
 
     let refs: Vec<&str> = mnemonics.iter().map(String::as_str).collect();
-    let secret = pkc_slip39::combine(&refs, &passphrase).map_err(|e| e.to_string())?;
+    let secret = rpb_slip39::combine(&refs, &passphrase).map_err(|e| e.to_string())?;
 
     // A backup doesn't record what it holds. A phrase-sized secret is shown
     // as a phrase; 32 bytes could also be a raw key, so it's shown both
     // ways: the fingerprint or address you recognise tells you which.
     let mut shown = false;
-    if let Ok(phrase) = pkc_core::Phrase::from_entropy(&secret) {
+    if let Ok(phrase) = rpb_core::Phrase::from_entropy(&secret) {
         println!("As a recovery phrase ({} words): {}", phrase.word_count(), phrase.to_words().as_str());
         print_phrase_check(&phrase, &bip39_passphrase);
         shown = true;
     }
     if let Ok(bytes) = <[u8; 32]>::try_from(secret.as_slice()) {
-        if let Ok(key) = pkc_core::PrivateKey::from_bytes(bytes) {
+        if let Ok(key) = rpb_core::PrivateKey::from_bytes(bytes) {
             println!("As a raw private key: {}", hex_encode(&secret));
-            println!("ETH address: {}", pkc_core::eth_address(&key));
+            println!("ETH address: {}", rpb_core::eth_address(&key));
             shown = true;
         }
     }
@@ -327,7 +327,7 @@ fn run_slip39_combine(args: Slip39CombineArgs) -> Result<(), String> {
 
 fn run_slip39_inspect(args: Slip39InspectArgs) -> Result<(), String> {
     let mnemonic = resolve_secret(args.mnemonic, "the mnemonic share", "Mnemonic share: ")?;
-    let info = pkc_slip39::inspect(&mnemonic).map_err(|e| e.to_string())?;
+    let info = rpb_slip39::inspect(&mnemonic).map_err(|e| e.to_string())?;
     println!("Group:           {} of {}", info.group_index + 1, info.group_count);
     println!("Member:          {} (this group needs {})", info.member_index + 1, info.member_threshold);
     println!("Groups required: {} of {}", info.group_threshold, info.group_count);

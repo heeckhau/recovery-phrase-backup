@@ -52,7 +52,7 @@ SLIP-39 tool), then restore the phrase in your wallet.
 ## Using it
 
 **The release file** (once v1 is out): download
-`private-key-convertor.html` and its checksum and signature from the GitHub
+`recovery-phrase-backup.html` and its checksum and signature from the GitHub
 release, verify them, then disconnect from the network and open the file in
 a browser. Best of all is a live USB system such as Tails; otherwise use a
 fresh browser profile without extensions, since a malicious extension could
@@ -63,7 +63,7 @@ reproducibly in a pinned Linux x86-64 container, so anyone with Docker gets
 the same bytes:
 
 ```sh
-scripts/build-reproducible.sh   # writes dist/private-key-convertor.html and prints its SHA-256
+scripts/build-reproducible.sh   # writes dist/recovery-phrase-backup.html and prints its SHA-256
 ```
 
 Compare that hash with the published one. (Builds are byte-identical on one
@@ -77,11 +77,11 @@ WIF. It asks for secrets with hidden input rather than taking them as
 arguments.
 
 ```sh
-cargo install --path cli        # installs `pkc`
-pkc slip39 split --group-threshold 1 --group 2:3    # prompts for the phrase
-pkc slip39 combine                                   # prompts for shares, one per line
-pkc slip39 inspect                                   # which group/share a single share is
-pkc convert                                          # raw key: hex <-> WIF, addresses
+cargo install --path cli        # installs `rpb`
+rpb slip39 split --group-threshold 1 --group 2:3    # prompts for the phrase
+rpb slip39 combine                                   # prompts for shares, one per line
+rpb slip39 inspect                                   # which group/share a single share is
+rpb convert                                          # raw key: hex <-> WIF, addresses
 ```
 
 ## Recovering without this tool
@@ -127,7 +127,7 @@ first use.
 | What | How |
 | --- | --- |
 | Rust tests and lints | `cargo test --workspace` and `cargo clippy --workspace --all-targets -- -D warnings` |
-| Release file, demo and website (this machine) | `python3 scripts/build.py` writes `dist/private-key-convertor.html`, `dist/demo.html` and `dist/site/` |
+| Release file, demo and website (this machine) | `python3 scripts/build.py` writes `dist/recovery-phrase-backup.html`, `dist/demo.html` and `dist/site/` |
 | Release file (reference) | `scripts/build-reproducible.sh` (Docker); `--verify-reproducible` builds twice and compares |
 | Browser tests | build the release file, then `cd tests/e2e && npm ci && npx playwright install chromium && npx playwright test` |
 | Cross-tool suite | `scripts/interop/run.sh --check-only` (nix) |
@@ -138,14 +138,14 @@ on every push, plus `cargo audit` and a check that no em dash appears in the
 repository.
 
 **Layout.**
-- `slip39/`: `pkc-slip39`, the SLIP-39 implementation (GF(256) Shamir
+- `slip39/`: `rpb-slip39`, the SLIP-39 implementation (GF(256) Shamir
   sharing, the Feistel encryption, RS1024, the share codec), written from
   the spec and checked against the official 45 test vectors. It has no
   dependency on the rest of the project.
-- `core/`: `pkc-core`, BIP39 phrases (fingerprint, addresses, weak-phrase
+- `core/`: `rpb-core`, BIP39 phrases (fingerprint, addresses, weak-phrase
   check) and raw-key encoding (hex, WIF, Bitcoin and Ethereum addresses).
 - `wasm/`: thin bindings for the browser.
-- `cli/`: the `pkc` command.
+- `cli/`: the `rpb` command.
 - `web/`: the page, plain HTML and JavaScript with no framework.
 - `scripts/`: the release build and the cross-tool suite.
 - `tests/e2e/`: browser tests that drive the built release file.
