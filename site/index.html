@@ -7,6 +7,7 @@
      only this page's stylesheet, by hash. The page has no script. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
 <title>Recovery Phrase Backup</title>
+<meta name="description" content="Back up the recovery phrase (seed phrase) of your Ethereum, Bitcoin or other crypto wallet as shares: any two of three give it back, and one alone reveals nothing. Free, open source and offline.">
 <style>
   /* One column: the message and two actions, the explainer animation, then
      short sections a newcomer reads top to bottom. Same terminal look as the
@@ -117,8 +118,8 @@
 <main>
   <header>
     <h1>Recovery Phrase Backup</h1>
-    <p class="lead">Back up your wallet's recovery phrase so that no single place can lose it, or reveal it.</p>
-    <p class="muted">Split your 12 to 24 words into shares. Any two of three (or the numbers you choose) give your phrase back; one share alone reveals nothing. Free, open source, and it works with every wallet.</p>
+    <p class="lead">Back up the recovery phrase of your Ethereum, Bitcoin or other crypto wallet so that no single place can lose it, or reveal it.</p>
+    <p class="muted">Split your 12 to 24 words (also called a seed phrase) into shares. Any two of three (or the numbers you choose) give your phrase back; one share alone reveals nothing. Free, open source, and it works with every wallet.</p>
     <div class="actions">
       <a class="button primary" href="demo.html">Try the demo</a>
       <a class="button" href="#download">Use it for real</a>
@@ -197,7 +198,7 @@
   <section>
     <h2>How it works</h2>
     <ol>
-      <li><strong>Type your phrase.</strong> The page shows its fingerprint and first addresses, so you can check it's your wallet. Test phrases get a warning.</li>
+      <li><strong>Type your phrase.</strong> The page shows its fingerprint and first Ethereum and Bitcoin addresses, so you can check it's your wallet. Test phrases get a warning.</li>
       <li><strong>Choose how to split it</strong>: 2 of 3, 3 of 5, or your own groups, such as "2 of 3 places, each needing 2 of 3 people".</li>
       <li><strong>Record each share</strong> by hand or on printed cards, and type back three of its words to check your copy.</li>
       <li><strong>Test the recovery</strong> from your written shares before you rely on them.</li>
@@ -213,7 +214,7 @@
       <li><strong>Checkable.</strong> Open source, a small codebase, and a reproducible build: anyone can rebuild the file and get the same bytes.</li>
       <li><strong>Private cards.</strong> A card never shows an address, a share number or how many shares exist.</li>
       <li><strong>Built around recovery</strong>: checks for every copy, a recovery test, and a "how to recover" sheet for your heir.</li>
-      <li><strong>No hardware, any wallet.</strong> It backs up the phrase you already have, for MetaMask, Ledger, Trezor or any other BIP39 wallet.</li>
+      <li><strong>No hardware, any wallet.</strong> It backs up the phrase you already have, for MetaMask, Ledger, Trezor or any other wallet that gave you 12 to 24 words (BIP39).</li>
     </ul>
   </section>
 
