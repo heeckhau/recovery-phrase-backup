@@ -1153,6 +1153,9 @@ function startBackup() {
   backupStep(1);
   b1Grid.setCount(Number(b1Count.value));
   b1Grid.focus();
+  // The demo starts with a sample phrase filled in, so a visitor can go
+  // straight on; the sample buttons switch between the two.
+  if (DEMO_MODE) fillSample(DEMO.phrases[b1Count.value] ? b1Count.value : "12");
 }
 
 $("start-backup").addEventListener("click", startBackup);
@@ -1204,13 +1207,15 @@ function applyDemo() {
   updateOnlineBanner();
 }
 
+function fillSample(count) {
+  const words = DEMO.phrases[count].split(" ");
+  b1Count.value = String(words.length);
+  b1Grid.setCount(words.length);
+  b1Grid.fill(words);
+}
+
 for (const button of document.querySelectorAll("[data-sample]")) {
-  button.addEventListener("click", () => {
-    const words = DEMO.phrases[button.dataset.sample].split(" ");
-    b1Count.value = String(words.length);
-    b1Grid.setCount(words.length);
-    b1Grid.fill(words);
-  });
+  button.addEventListener("click", () => fillSample(button.dataset.sample));
 }
 
 // A sample button fills the grid and leaves adding it to the user, as

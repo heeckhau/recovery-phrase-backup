@@ -35,6 +35,8 @@ test("refuses a phrase that isn't one of its samples", async ({ page }) => {
 
 test("backs up a sample phrase, and marks every printout as a demo", async ({ page }) => {
   await page.click("#start-backup");
+  // The 12-word sample is already filled in; the buttons switch samples.
+  await expect(page.locator("#b1-fingerprint")).toHaveText(SAMPLE_FINGERPRINT);
   await page.click('[data-sample="24"]');
   await expect(page.locator("#b1-grid input")).toHaveCount(24);
   await page.click('[data-sample="12"]');
@@ -93,6 +95,8 @@ test("a sample share fills the grid whatever length was picked", async ({ page }
 
 test("refuses a phrase at its first word that isn't a sample's", async ({ page }) => {
   await page.click("#start-backup");
+  // Clear the prefilled sample, as a visitor typing their own would.
+  for (const input of await page.locator("#b1-grid input").all()) await input.fill("");
   await page.locator("#b1-grid input").first().click();
   await page.keyboard.type("leopard ");
   await expect(page.locator("#b1-error")).toBeHidden();
