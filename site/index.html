@@ -202,20 +202,24 @@
       <li><strong>Choose how to split it</strong>: 2 of 3, 3 of 5, or your own groups, such as "2 of 3 places, each needing 2 of 3 people".</li>
       <li><strong>Record each share</strong> by hand or on printed cards, and type back three of its words to check your copy.</li>
       <li><strong>Test the recovery</strong> from your written shares before you rely on them.</li>
-      <li><strong>Give the shares to people and places you trust.</strong> Each card asks its keeper to keep it safe and return it only to you, and carries nothing a finder could use.</li>
+      <li><strong>Give the shares to people and places you trust.</strong> Each card asks its keeper to keep it safe and return it only to you, and carries nothing a finder could use: no address, no share number, not even how many shares exist.</li>
+      <li><strong>Leave a "how to recover" sheet</strong> for your heir. It holds no secret, only what to do and who has the shares.</li>
     </ol>
-    <p class="muted">Recovery gives back your original words, so you restore them in the same wallet as always. The shares use SLIP-39, an open standard: they also recover with other SLIP-39 tools, which this project checks on every change.</p>
+    <p class="muted">Recovery gives back your original words, so you restore them in the same wallet as always: MetaMask, Ledger, Trezor or any other wallet that gave you 12 to 24 words (BIP39). No extra hardware needed. The shares use SLIP-39, an open standard: they also recover with other SLIP-39 tools, which this project checks on every change.</p>
   </section>
 
   <section>
-    <h2>Why this one</h2>
+    <h2>You don't have to trust me</h2>
+    <p>You shouldn't have to trust anyone with your recovery phrase, including me, the author. The tool is built so that you don't:</p>
     <ul>
-      <li><strong>Nothing to install.</strong> One HTML file that opens offline in any browser, including on a live USB system like Tails.</li>
-      <li><strong>Checkable.</strong> Open source, a small codebase, and a reproducible build: anyone can rebuild the file and get the same bytes.</li>
-      <li><strong>Private cards.</strong> A card never shows an address, a share number or how many shares exist.</li>
-      <li><strong>Built around recovery</strong>: checks for every copy, a recovery test, and a "how to recover" sheet for your heir.</li>
-      <li><strong>No hardware, any wallet.</strong> It backs up the phrase you already have, for MetaMask, Ledger, Trezor or any other wallet that gave you 12 to 24 words (BIP39).</li>
+      <li><strong>It can't send anything.</strong> You run it on a live USB system such as Tails with the network off, so even a broken or malicious version has no way out.</li>
+      <li><strong>You can check what you run.</strong> The source is public and small enough to read, and the build is reproducible: anyone can rebuild the file and get exactly the same bytes as the download.</li>
+      <li><strong>Few dependencies.</strong> No JavaScript libraries and nothing loaded from elsewhere. The cryptography comes from a few widely used open-source Rust libraries.</li>
+      <li><strong>No new cryptography.</strong> It uses two open standards, BIP39 for your words and SLIP-39 for the shares.</li>
+      <li><strong>You don't depend on this project.</strong> Shares are tested against other SLIP-39 tools on every change, so you can <a href="#without">recover without this one</a>.</li>
+      <li><strong>Keep a copy of the tool.</strong> It's one HTML file built only on web standards (HTML and WebAssembly), with nothing to install and no server behind it. Store it with your shares or your "how to recover" sheet, and it will open in a browser years from now.</li>
     </ul>
+    <p><strong>What's left to trust:</strong> that the shares are made with good randomness. A recovery test can't show this; only reading the code can. That's why the code is kept small, and why version 1 waits for an independent review.</p>
   </section>
 
   <section>
@@ -245,7 +249,7 @@
     </ul>
   </section>
 
-  <section>
+  <section id="without">
     <h2>Recovery without this tool</h2>
     <p>Your backup doesn't depend on this project still existing. Any SLIP-39 tool, such as Trezor's reference implementation (<code>shamir recover</code>), recovers the secret from your shares as hex, and any BIP39 tool turns that hex back into your words.</p>
   </section>
