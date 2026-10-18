@@ -290,9 +290,9 @@ fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
 
     println!();
     for (i, group) in shares.iter().enumerate() {
-        println!("Group {i}:");
+        println!("Group {}:", i + 1);
         for (j, mnemonic) in group.iter().enumerate() {
-            println!("  Member {j}: {mnemonic}");
+            println!("  Member {}: {mnemonic}", j + 1);
         }
     }
     Ok(())
