@@ -669,7 +669,7 @@ $("b2-next").addEventListener("click", () => {
           ...groups.map(([t, n], i) => `Group ${i + 1}: any ${t} of its ${n} shares.`),
         ];
   lines.push(`Every share carries the fingerprint ${state.fingerprint}.`);
-  if (state.passphrase) lines.push("You set a SLIP-39 passphrase: recovery will need it exactly, and it is not written on the shares.");
+  if (state.passphrase) lines.push("You set a SLIP-39 passphrase. It is not written on the shares and recovery needs it exactly, so record it now: the recovery test asks you to type it again from your copy.");
   for (const line of lines) $("b3-summary").appendChild(el("p", null, line));
   backupStep(3);
 });
@@ -887,40 +887,68 @@ function startRecoveryTest() {
     groups.length === 1
       ? `Take any ${groups[0][0]} of the shares you wrote down and type them in, one at a time. This proves your written copies really give your phrase back.`
       : `Take enough of the shares you wrote down (${groupThreshold} of the groups, each with its own threshold) and type them in, one at a time. This proves your written copies really give your phrase back.`;
-  $("b5-result").hidden = true;
-  $("b5-next").hidden = true;
+  $("b5-passphrase-field").hidden = !state.passphrase;
+  $("b5-passphrase").value = "";
+  b5Enough = false;
+  b5Test();
   b5Entry = createShareEntry($("b5-entry"), {
     fixedLength: state.shareWords,
     onProgress: (enough) => {
-      const result = $("b5-result");
-      if (!enough) {
-        result.hidden = true;
-        $("b5-next").hidden = true;
-        return;
-      }
-      result.hidden = true;
-      slowWork(b5Entry.iterationExponent(), result, () => {
-        result.hidden = false;
-        let recovered = null;
-        try {
-          recovered = slip39_combine(b5Entry.mnemonics(), state.passphrase, "");
-        } catch (err) {
-          result.className = "banner warning";
-          result.textContent = `These shares don't recover: ${err}. Check them against your written copies.`;
-          return;
-        }
-        if (recovered.check && recovered.check.fingerprint === state.fingerprint) {
-          result.className = "banner success";
-          result.textContent = `Recovery works: your written shares give back the phrase with fingerprint ${state.fingerprint}.`;
-          $("b5-next").hidden = false;
-        } else {
-          result.className = "banner warning";
-          result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Go back to the shares and compare each with your copy.";
-        }
-      });
+      b5Enough = enough;
+      b5Test();
     },
   });
 }
+
+let b5Enough = false;
+
+// Runs the test once enough shares are in. A SLIP-39 passphrase comes from
+// the field above the shares, typed again from the user's copy, never from
+// state.passphrase: a passphrase recorded wrong would pass a test that used
+// the one typed at the start, and only fail at recovery, silently.
+function b5Test() {
+  const result = $("b5-result");
+  result.hidden = true;
+  $("b5-next").hidden = true;
+  if (!b5Enough) return;
+  const passphrase = $("b5-passphrase").value;
+  if (state.passphrase && !passphrase) {
+    result.className = "banner info";
+    result.textContent = "Now type your SLIP-39 passphrase above, from where you keep it.";
+    result.hidden = false;
+    return;
+  }
+  slowWork(b5Entry.iterationExponent(), result, () => {
+    result.hidden = false;
+    let recovered = null;
+    try {
+      recovered = slip39_combine(b5Entry.mnemonics(), passphrase, "");
+    } catch (err) {
+      result.className = "banner warning";
+      result.textContent = `These shares don't recover: ${err}. Check them against your written copies.`;
+      return;
+    }
+    if (recovered.check && recovered.check.fingerprint === state.fingerprint) {
+      result.className = "banner success";
+      result.textContent = `Recovery works: your written shares give back the phrase with fingerprint ${state.fingerprint}.`;
+      $("b5-next").hidden = false;
+    } else if (state.passphrase) {
+      result.className = "banner warning";
+      result.textContent = "These shares recover something, but not your phrase: the passphrase differs from the one you set, or a share differs from what was shown. Compare the passphrase with your copy first, then the shares.";
+    } else {
+      result.className = "banner warning";
+      result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Go back to the shares and compare each with your copy.";
+    }
+  });
+}
+
+// Checked as it's typed, unless each try is slow: then once it's left.
+$("b5-passphrase").addEventListener("input", () => {
+  if (b5Entry && b5Entry.iterationExponent() < SLOW_EXPONENT) b5Test();
+});
+$("b5-passphrase").addEventListener("change", () => {
+  if (b5Entry && b5Entry.iterationExponent() >= SLOW_EXPONENT) b5Test();
+});
 
 $("b5-next").addEventListener("click", finishBackup);
 $("b5-back").addEventListener("click", () => {

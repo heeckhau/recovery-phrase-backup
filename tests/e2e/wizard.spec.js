@@ -354,6 +354,35 @@ test("a wrong SLIP-39 passphrase gives a different fingerprint, not an error", a
   await expect(page.locator("#r2-mismatch")).toBeVisible();
 });
 
+test("the recovery test asks for the SLIP-39 passphrase again, and fails on a typo", async ({ page }) => {
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.click("#b1-next");
+  await page.click("details.advanced summary");
+  await page.fill("#split-passphrase", "correct horse");
+  await page.click("#b2-next");
+  await expect(page.locator("#b3-summary")).toContainText("asks you to type it again");
+  await page.click("#b3-next");
+  const shares = await writeDownAllShares(page);
+
+  await expect(page.locator("#b5-passphrase")).toBeVisible();
+  await expect(page.locator("#b5-passphrase")).toHaveValue("");
+  await typeShare(page, "b5-entry", shares[0]);
+  await typeShare(page, "b5-entry", shares[1]);
+  await expect(page.locator("#b5-result")).toContainText("Now type your SLIP-39 passphrase");
+  await page.fill("#b5-passphrase", "correct hrose");
+  await expect(page.locator("#b5-result")).toContainText("the passphrase differs from the one you set");
+  await expect(page.locator("#b5-next")).toBeHidden();
+  await page.fill("#b5-passphrase", "correct horse");
+  await expect(page.locator("#b5-result")).toContainText("Recovery works");
+  await page.click("#b5-next");
+  await page.click("#b6-finish");
+
+  // Without a SLIP-39 passphrase, the test doesn't ask for one.
+  await backUp(page);
+  await expect(page.locator("#b5-passphrase")).toBeHidden();
+});
+
 test("test phrases need an explicit acknowledgement; a bad checksum blocks", async ({ page }) => {
   await page.click("#start-backup");
   await pastePhrase(page, TEST_PHRASE);

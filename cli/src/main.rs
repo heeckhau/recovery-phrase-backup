@@ -85,8 +85,8 @@ struct Slip39SplitArgs {
     #[arg(long, conflicts_with = "passphrase_prompt")]
     passphrase: Option<String>,
 
-    /// Prompt for the passphrase interactively (hidden input) instead of
-    /// passing it inline with --passphrase.
+    /// Prompt for the passphrase interactively (hidden input, asked twice)
+    /// instead of passing it inline with --passphrase.
     #[arg(long)]
     passphrase_prompt: bool,
 
@@ -175,9 +175,15 @@ fn resolve_secret(provided: Option<String>, what: &str, prompt: &str) -> Result<
 /// Resolves a passphrase: `--passphrase-prompt` prompts with hidden input,
 /// `--passphrase <value>` uses it inline (with a warning), and neither
 /// means "no passphrase": the common case, not treated as "prompt me".
-fn resolve_passphrase(inline: Option<String>, use_prompt: bool) -> Result<String, String> {
+/// `confirm` asks twice: when splitting, a typo would be on every share,
+/// and recovery never reports a wrong passphrase.
+fn resolve_passphrase(inline: Option<String>, use_prompt: bool, confirm: bool) -> Result<String, String> {
     if use_prompt {
-        prompt_hidden("Passphrase: ")
+        let passphrase = prompt_hidden("Passphrase: ")?;
+        if confirm && *Zeroizing::new(prompt_hidden("Passphrase again: ")?) != passphrase {
+            return Err("the two passphrases differ; nothing was split".to_string());
+        }
+        Ok(passphrase)
     } else if let Some(value) = inline {
         warn_argv_secret("the passphrase");
         Ok(value)
@@ -261,7 +267,7 @@ fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
         "the recovery phrase or key",
         "Recovery phrase, or private key (hex or WIF): ",
     )?);
-    let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt)?;
+    let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt, true)?;
     let bip39_passphrase = resolve_bip39_passphrase(args.bip39_passphrase_prompt)?;
     let groups: Vec<rpb_slip39::GroupSpec> = args.groups.iter().map(|s| parse_group(s)).collect::<Result<_, _>>()?;
 
@@ -294,7 +300,7 @@ fn run_slip39_split(args: Slip39SplitArgs) -> Result<(), String> {
 
 fn run_slip39_combine(args: Slip39CombineArgs) -> Result<(), String> {
     let mnemonics = resolve_mnemonics(args.mnemonics)?;
-    let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt)?;
+    let passphrase = resolve_passphrase(args.passphrase, args.passphrase_prompt, false)?;
     let bip39_passphrase = resolve_bip39_passphrase(args.bip39_passphrase_prompt)?;
 
     let refs: Vec<&str> = mnemonics.iter().map(String::as_str).collect();

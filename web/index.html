@@ -467,6 +467,11 @@
     <div class="step" id="b5" hidden>
       <h2>Test your recovery</h2>
       <p id="b5-intro"></p>
+      <div class="field" id="b5-passphrase-field" hidden>
+        <label for="b5-passphrase" class="mt-0">Your SLIP-39 passphrase, typed again from where you keep it</label>
+        <input type="text" id="b5-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off">
+        <p class="notice mt-035">The test uses what you type here, so a passphrase recorded wrong shows up now rather than at recovery.</p>
+      </div>
       <div id="b5-entry"></div>
       <div class="banner" id="b5-result" hidden></div>
       <button type="button" id="b5-next" hidden>Continue</button>

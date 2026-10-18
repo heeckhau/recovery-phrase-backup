@@ -266,7 +266,9 @@ shares one at a time, a recovery test, and done.
   a second confirmation ("I'll test restoring from my copies myself before I
   rely on them") and leads to the recovery test.
 - The recovery test is the real proof: a threshold of the written or printed
-  shares typed in fully, reproducing the fingerprint. It can be skipped.
+  shares typed in fully, reproducing the fingerprint. A SLIP-39 passphrase is
+  typed again there, from the user's copy: a test that reused the one typed
+  at the start would pass with a passphrase recorded wrong. It can be skipped.
 - The last step asks what to do with the original phrase: a backup that
   leaves the single original in a drawer hasn't removed the risk it exists
   to remove. It explains the trade-off and leaves the choice to the user.

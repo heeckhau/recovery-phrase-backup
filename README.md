@@ -142,7 +142,8 @@ python-slip39 and seedkit, and that theirs recover here.
   entirely.
 - **A SLIP-39 passphrase is never checked.** A wrong one silently recovers a
   different phrase. That is why it is off by default and the fingerprint
-  exists: a recovery that doesn't reproduce the fingerprint is wrong.
+  exists: a recovery that doesn't reproduce the fingerprint is wrong. If you
+  set one, the recovery test asks you to type it again from your copy.
 - **Your wallet's own BIP39 passphrase (the "25th word") is not part of the
   backup.** If your wallet uses one, back it up separately.
 - **Reviewed, not audited.** Before v1 the code is reviewed by several other
