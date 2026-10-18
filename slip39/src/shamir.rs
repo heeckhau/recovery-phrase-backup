@@ -171,6 +171,22 @@ mod tests {
     }
 
     #[test]
+    fn every_threshold_and_share_count_round_trips() {
+        let secret = &secret_32_bytes()[..16];
+        for n in 1..=16u8 {
+            for t in 1..=n {
+                let shares = split_secret(t, n, secret).unwrap();
+                let (first, last) = (&shares[..t as usize], &shares[(n - t) as usize..]);
+                assert_eq!(*recover_secret(t, first).unwrap(), secret, "{t} of {n}, first shares");
+                assert_eq!(*recover_secret(t, last).unwrap(), secret, "{t} of {n}, last shares");
+                if t > 1 {
+                    assert_eq!(recover_secret(t, &last[1..]), Err(Error::ShareSetInconsistent), "{t} of {n}, one short");
+                }
+            }
+        }
+    }
+
+    #[test]
     fn too_few_shares_fails_the_digest_check() {
         let secret = secret_32_bytes();
         let shares = split_secret(3, 5, &secret).unwrap();
