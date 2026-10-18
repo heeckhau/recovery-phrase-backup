@@ -151,7 +151,7 @@ first use.
 | Rust tests and lints | `cargo test --workspace` and `cargo clippy --workspace --all-targets -- -D warnings` |
 | Release file, demo and website (this machine) | `python3 scripts/build.py` writes `dist/recovery-phrase-backup.html`, `dist/demo.html` and `dist/site/` |
 | Release file (reference) | `scripts/build-reproducible.sh` (Docker); `--verify-reproducible` builds twice and compares |
-| Browser tests | build the release file, then `cd tests/e2e && npm ci && npx playwright install chromium && npx playwright test` |
+| Browser tests | build the release file, then `cd tests/e2e && npm ci && npx playwright install chromium firefox && npx playwright test` |
 | Cross-tool suite | `scripts/interop/run.sh --check-only` (nix) |
 | Development page | `cd wasm && wasm-pack build --target web --out-dir ../web/pkg`, then serve `web/` with `python3 -m http.server` and open `index.html?test` |
 
@@ -184,7 +184,8 @@ and the build shows it on the page and the website.
 - `cli/`: the `rpb` command.
 - `web/`: the page, plain HTML and JavaScript with no framework.
 - `scripts/`: the release build and the cross-tool suite.
-- `tests/e2e/`: browser tests that drive the built release file.
+- `tests/e2e/`: browser tests that drive the built release file, in Chromium
+  and in Firefox (which Tor Browser, on Tails, is built on).
 - `reference/`: the legacy single-file tools this project started from, kept
   unmodified for reference.
 

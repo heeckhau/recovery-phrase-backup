@@ -33,8 +33,9 @@ Complete and tested; pre-releases (v0.x) until the review.
 - **Trust**: a single-file release build that is reproducible (byte-identical
   in a pinned Linux x86-64 container), and CI on every push: tests, clippy,
   `cargo audit`, the reproducible build, the cross-tool suite (266/266
-  checks against three other SLIP-39 tools), ten browser tests against the
-  release file itself, and a check that no em dash appears in the repo.
+  checks against three other SLIP-39 tools), browser tests against the
+  release file itself in Chromium and Firefox (the base of Tor Browser, on
+  Tails), and a check that no em dash appears in the repo.
 
 Not done yet: the independent review and a maintainer's signature on
 releases. Until then releases are pre-releases (v0.x), and the website

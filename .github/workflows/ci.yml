@@ -88,7 +88,7 @@ jobs:
         working-directory: tests/e2e
         run: |
           npm ci --no-audit --no-fund
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox
       - name: Run the wizard tests
         working-directory: tests/e2e
         run: npx playwright test
