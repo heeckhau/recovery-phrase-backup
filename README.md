@@ -68,6 +68,14 @@ offline alone doesn't stop malware or a malicious extension from recording
 the phrase and sending it once the computer is back online. If you can't,
 at least disconnect and use a fresh browser profile without extensions.
 
+**On Tails**: copy the file to the Tails computer (a USB stick works),
+start Tails with networking off ("Offline Mode" in the Welcome Screen's
+additional settings), and open the file in Tor Browser. Set Tor Browser's
+security level to Standard first (the shield icon): Safer and Safest block
+WebAssembly, which the page needs, and the page says so if it can't load.
+For this one file, offline, Standard is fine. Tails before 6.14.1 only lets
+Tor Browser open files in its `Tor Browser` folder, so put the file there.
+
 **Check the download.** Each release carries `SHA256SUMS` and a GitHub
 attestation: a record, signed by GitHub, that this repository's CI built
 the file from the release's tag.

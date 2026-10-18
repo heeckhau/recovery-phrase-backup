@@ -1277,5 +1277,10 @@ init()
     if (DEMO_MODE) applyDemo();
   })
   .catch((err) => {
-    showError($("load-error"), `Could not load the WebAssembly module: ${err}`);
+    // Tor Browser (on Tails, say) blocks WebAssembly at its Safer and Safest
+    // security levels.
+    showError(
+      $("load-error"),
+      `Could not load the WebAssembly module (${err}). In Tor Browser, as on Tails, set the security level to Standard and reload: Safer and Safest block WebAssembly, which this page needs. For this file, offline, Standard is fine.`,
+    );
   });

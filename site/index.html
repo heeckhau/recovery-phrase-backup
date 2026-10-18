@@ -235,6 +235,7 @@
       <li>Download <a href="recovery-phrase-backup.html" download>recovery-phrase-backup.html</a> (version {{VERSION}}). Its SHA-256 is <code class="hash">{{RELEASE_SHA256}}</code>.</li>
       <li>Check the hash (<code>shasum -a 256 recovery-phrase-backup.html</code>). To check that the file matches the source, rebuild it from the latest commit with Docker (<code>scripts/build-reproducible.sh</code>) and compare.</li>
       <li>Start the computer from a live USB system such as Tails, and don't connect it to the network. If you can't, at least disconnect, and use a fresh browser profile with no extensions.</li>
+      <li>In Tor Browser (the browser on Tails), set the security level to Standard: Safer and Safest block WebAssembly, which the tool needs. For this one file, offline, Standard is fine.</li>
       <li>Open the file and follow the steps.</li>
     </ol>
   </section>
