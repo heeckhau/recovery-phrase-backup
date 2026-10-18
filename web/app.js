@@ -218,6 +218,12 @@ function createWordGrid(container, kind, { count, numbers, onChange, onPasteCoun
   };
 }
 
+// The first two words of a share: its backup's random identifier, extendable
+// flag and iteration exponent (exactly 20 bits). Every share of one backup
+// starts with them, and every new backup, even of the same phrase, gets new
+// ones, so they tell backups apart where the fingerprint can't. Not secret.
+const backupWords = (mnemonic) => mnemonic.split(" ").slice(0, 2).join(" ");
+
 // A read-only numbered grid, for showing a share or a phrase.
 function renderWords(container, words) {
   container.innerHTML = "";
@@ -356,8 +362,14 @@ function createShareEntry(container, { fixedLength, enoughHint = "", onProgress,
       showError(error, "You've already added this share.");
       return;
     }
-    if (shares.length > 0 && shares[0].info.group_count !== info.group_count) {
-      showError(error, "This share is from a different backup than the ones already added.");
+    const start = backupWords(mnemonic);
+    const theirs = shares.length > 0 ? backupWords(shares[0].mnemonic) : start;
+    if (start !== theirs) {
+      showError(
+        error,
+        `This share is from a different backup: it starts with "${start}", but the shares already added start with "${theirs}". ` +
+          "Two backups of the same phrase have the same fingerprint, but their shares can't be mixed.",
+      );
       return;
     }
     shares.push({ mnemonic, info });
@@ -669,7 +681,7 @@ $("b2-next").addEventListener("click", () => {
           ...groups.map(([t, n], i) => `Group ${i + 1}: any ${t} of its ${n} shares.`),
         ];
   lines.push(`Every share carries the fingerprint ${state.fingerprint}.`);
-  if (state.passphrase) lines.push("You set a SLIP-39 passphrase: recovery will need it exactly, and it is not written on the shares.");
+  if (state.passphrase) lines.push("You set a SLIP-39 passphrase. It is not written on the shares and recovery needs it exactly, so record it now: the recovery test asks you to type it again from your copy.");
   for (const line of lines) $("b3-summary").appendChild(el("p", null, line));
   backupStep(3);
 });
@@ -887,40 +899,68 @@ function startRecoveryTest() {
     groups.length === 1
       ? `Take any ${groups[0][0]} of the shares you wrote down and type them in, one at a time. This proves your written copies really give your phrase back.`
       : `Take enough of the shares you wrote down (${groupThreshold} of the groups, each with its own threshold) and type them in, one at a time. This proves your written copies really give your phrase back.`;
-  $("b5-result").hidden = true;
-  $("b5-next").hidden = true;
+  $("b5-passphrase-field").hidden = !state.passphrase;
+  $("b5-passphrase").value = "";
+  b5Enough = false;
+  b5Test();
   b5Entry = createShareEntry($("b5-entry"), {
     fixedLength: state.shareWords,
     onProgress: (enough) => {
-      const result = $("b5-result");
-      if (!enough) {
-        result.hidden = true;
-        $("b5-next").hidden = true;
-        return;
-      }
-      result.hidden = true;
-      slowWork(b5Entry.iterationExponent(), result, () => {
-        result.hidden = false;
-        let recovered = null;
-        try {
-          recovered = slip39_combine(b5Entry.mnemonics(), state.passphrase, "");
-        } catch (err) {
-          result.className = "banner warning";
-          result.textContent = `These shares don't recover: ${err}. Check them against your written copies.`;
-          return;
-        }
-        if (recovered.check && recovered.check.fingerprint === state.fingerprint) {
-          result.className = "banner success";
-          result.textContent = `Recovery works: your written shares give back the phrase with fingerprint ${state.fingerprint}.`;
-          $("b5-next").hidden = false;
-        } else {
-          result.className = "banner warning";
-          result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Go back to the shares and compare each with your copy.";
-        }
-      });
+      b5Enough = enough;
+      b5Test();
     },
   });
 }
+
+let b5Enough = false;
+
+// Runs the test once enough shares are in. A SLIP-39 passphrase comes from
+// the field above the shares, typed again from the user's copy, never from
+// state.passphrase: a passphrase recorded wrong would pass a test that used
+// the one typed at the start, and only fail at recovery, silently.
+function b5Test() {
+  const result = $("b5-result");
+  result.hidden = true;
+  $("b5-next").hidden = true;
+  if (!b5Enough) return;
+  const passphrase = $("b5-passphrase").value;
+  if (state.passphrase && !passphrase) {
+    result.className = "banner info";
+    result.textContent = "Now type your SLIP-39 passphrase above, from where you keep it.";
+    result.hidden = false;
+    return;
+  }
+  slowWork(b5Entry.iterationExponent(), result, () => {
+    result.hidden = false;
+    let recovered = null;
+    try {
+      recovered = slip39_combine(b5Entry.mnemonics(), passphrase, "");
+    } catch (err) {
+      result.className = "banner warning";
+      result.textContent = `These shares don't recover: ${err}. Check them against your written copies.`;
+      return;
+    }
+    if (recovered.check && recovered.check.fingerprint === state.fingerprint) {
+      result.className = "banner success";
+      result.textContent = `Recovery works: your written shares give back the phrase with fingerprint ${state.fingerprint}.`;
+      $("b5-next").hidden = false;
+    } else if (state.passphrase) {
+      result.className = "banner warning";
+      result.textContent = "These shares recover something, but not your phrase: the passphrase differs from the one you set, or a share differs from what was shown. Compare the passphrase with your copy first, then the shares.";
+    } else {
+      result.className = "banner warning";
+      result.textContent = "These shares recover something, but not your phrase: one of them differs from what was shown. Go back to the shares and compare each with your copy.";
+    }
+  });
+}
+
+// Checked as it's typed, unless each try is slow: then once it's left.
+$("b5-passphrase").addEventListener("input", () => {
+  if (b5Entry && b5Entry.iterationExponent() < SLOW_EXPONENT) b5Test();
+});
+$("b5-passphrase").addEventListener("change", () => {
+  if (b5Entry && b5Entry.iterationExponent() >= SLOW_EXPONENT) b5Test();
+});
 
 $("b5-next").addEventListener("click", finishBackup);
 $("b5-back").addEventListener("click", () => {
@@ -932,6 +972,7 @@ $("b5-skip").addEventListener("click", finishBackup);
 function finishBackup() {
   backupStep(6);
   $("b6-fingerprint").textContent = state.fingerprint;
+  $("b6-backup-words").textContent = backupWords(state.shares[0].mnemonic);
 }
 
 $("b6-finish").addEventListener("click", () => clearAll());
@@ -1002,6 +1043,9 @@ function recoverySheet() {
   const fp = el("p", "meta", "Fingerprint of this backup: ");
   fp.appendChild(el("span", "fp", state.fingerprint));
   page.appendChild(fp);
+  const start = el("p", "meta", "Every share of this backup starts with: ");
+  start.appendChild(el("span", "fp", backupWords(state.shares[0].mnemonic)));
+  page.appendChild(start);
   const { groupThreshold, groups } = state.scheme;
   const needed =
     groups.length === 1
@@ -1043,6 +1087,7 @@ function recoverySheet() {
   page.appendChild(list);
 
   const notes = [
+    "A card that starts with other words is from a different backup, for example an older one of the same phrase. It has the same fingerprint but can't be combined with these.",
     "Never type the shares into a hardware wallet such as a Trezor. It would accept them but open a different, empty wallet. Recover the phrase first, then restore the phrase.",
     "Without the file: the shares follow SLIP-39, an open standard. Someone technical can recover them with any SLIP-39 tool, such as Trezor's reference tool (python-shamir-mnemonic, \"shamir recover\"). It gives the phrase's entropy as hex, which any BIP39 tool turns back into the words.",
   ];
@@ -1277,5 +1322,10 @@ init()
     if (DEMO_MODE) applyDemo();
   })
   .catch((err) => {
-    showError($("load-error"), `Could not load the WebAssembly module: ${err}`);
+    // Tor Browser (on Tails, say) blocks WebAssembly at its Safer and Safest
+    // security levels.
+    showError(
+      $("load-error"),
+      `Could not load the WebAssembly module (${err}). In Tor Browser, as on Tails, set the security level to Standard and reload: Safer and Safest block WebAssembly, which this page needs. For this file, offline, Standard is fine.`,
+    );
   });

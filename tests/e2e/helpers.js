@@ -41,7 +41,11 @@ async function pastePhrase(page, phrase) {
     const input = document.querySelector("#b1-grid input");
     const data = new DataTransfer();
     data.setData("text", text);
-    input.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
+    // Firefox empties the clipboardData of a paste event made by a script,
+    // so it is set on the event itself rather than through the constructor.
+    const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    input.dispatchEvent(event);
   }, phrase);
 }
 

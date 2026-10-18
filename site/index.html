@@ -196,6 +196,18 @@
   </figure>
 
   <section>
+    <h2>Who it's for</h2>
+    <ul>
+      <li><strong>Your only copy is a sheet of paper.</strong> It sits in a drawer or a safe, where one fire, flood or tidy-up loses it for good. With 2 of 3 shares at home, in a bank box and with a friend, losing any one of them loses nothing.</li>
+      <li><strong>Your phrase is stamped on steel.</strong> The plate that came with your Ledger or Trezor survives a fire, but a burglar who finds it has your wallet. Keep the device as it is, and replace the plate with shares in four places, any three of which recover the phrase: a thief would have to find three.</li>
+      <li><strong>You want your family to inherit it.</strong> Today nobody else can reach your funds, and if something happened to you, nobody ever could. Give shares to your partner and a notary, keep one yourself, and leave the "how to recover" sheet with your will. Your partner and the notary together can recover it without you; that's the point.</li>
+      <li><strong>The wallet belongs to an organisation.</strong> A company or association shouldn't depend on one person. With 3 of 5 board members, nobody can recover it alone, and it survives two people leaving. This backs up the phrase; it isn't multisig, so whoever recovers it holds the whole wallet.</li>
+      <li><strong>Someone holding a share is no longer the right person.</strong> A friend moves away, or you fall out. Make a new backup with new keepers, then destroy the old shares: until they're gone, the old backup still recovers your phrase.</li>
+      <li><strong>You plan to hold for twenty years.</strong> Will this tool still exist then? It doesn't need to. The shares follow an open standard that other tools also recover, and the tool itself is one file you keep next to them.</li>
+    </ul>
+  </section>
+
+  <section>
     <h2>How it works</h2>
     <ol>
       <li><strong>Type your phrase.</strong> The page shows its fingerprint and first Ethereum and Bitcoin addresses, so you can check it's your wallet. Test phrases get a warning.</li>
@@ -235,6 +247,7 @@
       <li>Download <a href="recovery-phrase-backup.html" download>recovery-phrase-backup.html</a> (version {{VERSION}}). Its SHA-256 is <code class="hash">{{RELEASE_SHA256}}</code>.</li>
       <li>Check the hash (<code>shasum -a 256 recovery-phrase-backup.html</code>). To check that the file matches the source, rebuild it from the latest commit with Docker (<code>scripts/build-reproducible.sh</code>) and compare.</li>
       <li>Start the computer from a live USB system such as Tails, and don't connect it to the network. If you can't, at least disconnect, and use a fresh browser profile with no extensions.</li>
+      <li>In Tor Browser (the browser on Tails), set the security level to Standard: Safer and Safest block WebAssembly, which the tool needs. For this one file, offline, Standard is fine.</li>
       <li>Open the file and follow the steps.</li>
     </ol>
   </section>

@@ -68,6 +68,14 @@ offline alone doesn't stop malware or a malicious extension from recording
 the phrase and sending it once the computer is back online. If you can't,
 at least disconnect and use a fresh browser profile without extensions.
 
+**On Tails**: copy the file to the Tails computer (a USB stick works),
+start Tails with networking off ("Offline Mode" in the Welcome Screen's
+additional settings), and open the file in Tor Browser. Set Tor Browser's
+security level to Standard first (the shield icon): Safer and Safest block
+WebAssembly, which the page needs, and the page says so if it can't load.
+For this one file, offline, Standard is fine. Tails before 6.14.1 only lets
+Tor Browser open files in its `Tor Browser` folder, so put the file there.
+
 **Check the download.** Each release carries `SHA256SUMS` and a GitHub
 attestation: a record, signed by GitHub, that this repository's CI built
 the file from the release's tag.
@@ -134,7 +142,14 @@ python-slip39 and seedkit, and that theirs recover here.
   entirely.
 - **A SLIP-39 passphrase is never checked.** A wrong one silently recovers a
   different phrase. That is why it is off by default and the fingerprint
-  exists: a recovery that doesn't reproduce the fingerprint is wrong.
+  exists: a recovery that doesn't reproduce the fingerprint is wrong. If you
+  set one, the recovery test asks you to type it again from your copy.
+- **A new backup doesn't retire the old one.** Backing up the same phrase
+  again makes new shares with the same fingerprint, which can't be mixed
+  with the old ones, and the old shares still recover the phrase until
+  they're destroyed. All shares of one backup start with the same two words
+  (shown at the end and on the "how to recover" sheet), which tells them
+  apart; a share from another backup is refused as soon as it is added.
 - **Your wallet's own BIP39 passphrase (the "25th word") is not part of the
   backup.** If your wallet uses one, back it up separately.
 - **Reviewed, not audited.** Before v1 the code is reviewed by several other
@@ -151,7 +166,7 @@ first use.
 | Rust tests and lints | `cargo test --workspace` and `cargo clippy --workspace --all-targets -- -D warnings` |
 | Release file, demo and website (this machine) | `python3 scripts/build.py` writes `dist/recovery-phrase-backup.html`, `dist/demo.html` and `dist/site/` |
 | Release file (reference) | `scripts/build-reproducible.sh` (Docker); `--verify-reproducible` builds twice and compares |
-| Browser tests | build the release file, then `cd tests/e2e && npm ci && npx playwright install chromium && npx playwright test` |
+| Browser tests | build the release file, then `cd tests/e2e && npm ci && npx playwright install chromium firefox && npx playwright test` |
 | Cross-tool suite | `scripts/interop/run.sh --check-only` (nix) |
 | Development page | `cd wasm && wasm-pack build --target web --out-dir ../web/pkg`, then serve `web/` with `python3 -m http.server` and open `index.html?test` |
 
@@ -184,7 +199,8 @@ and the build shows it on the page and the website.
 - `cli/`: the `rpb` command.
 - `web/`: the page, plain HTML and JavaScript with no framework.
 - `scripts/`: the release build and the cross-tool suite.
-- `tests/e2e/`: browser tests that drive the built release file.
+- `tests/e2e/`: browser tests that drive the built release file, in Chromium
+  and in Firefox (which Tor Browser, on Tails, is built on).
 - `reference/`: the legacy single-file tools this project started from, kept
   unmodified for reference.
 

@@ -98,7 +98,13 @@ test("back up a phrase by hand: check, split, spot-check, test", async ({ page }
   expect(sheet).toContain("recovery-phrase-backup.html) is kept:");
   expect(sheet).toContain("The shares are with:");
   expect(sheet).toContain("Never type the shares into a hardware wallet");
-  for (const word of PHRASE.split(" ")) expect(sheet).not.toMatch(new RegExp(`\\b${word}\\b`));
+  // The two words every share starts with tell this backup's cards from
+  // another's. They can be BIP39 words too, so they're left out of the check
+  // that no word of the phrase is on the sheet.
+  const backupWords = shares[0].split(" ").slice(0, 2).join(" ");
+  expect(sheet).toContain(`Every share of this backup starts with: ${backupWords}`);
+  await expect(page.locator("#b6-backup-words")).toHaveText(backupWords);
+  for (const word of PHRASE.split(" ")) expect(sheet.replace(backupWords, "")).not.toMatch(new RegExp(`\\b${word}\\b`));
 
   await page.click("#b6-finish");
   await expect(page.locator("#home")).toBeVisible();
@@ -352,6 +358,63 @@ test("a wrong SLIP-39 passphrase gives a different fingerprint, not an error", a
   await expect(page.locator("#r2-fingerprint")).not.toHaveText(FINGERPRINT);
   await page.click("#r2-no");
   await expect(page.locator("#r2-mismatch")).toBeVisible();
+});
+
+test("the recovery test asks for the SLIP-39 passphrase again, and fails on a typo", async ({ page }) => {
+  await page.click("#start-backup");
+  await pastePhrase(page, PHRASE);
+  await page.click("#b1-next");
+  await page.click("details.advanced summary");
+  await page.fill("#split-passphrase", "correct horse");
+  await page.click("#b2-next");
+  await expect(page.locator("#b3-summary")).toContainText("asks you to type it again");
+  await page.click("#b3-next");
+  const shares = await writeDownAllShares(page);
+
+  await expect(page.locator("#b5-passphrase")).toBeVisible();
+  await expect(page.locator("#b5-passphrase")).toHaveValue("");
+  await typeShare(page, "b5-entry", shares[0]);
+  await typeShare(page, "b5-entry", shares[1]);
+  await expect(page.locator("#b5-result")).toContainText("Now type your SLIP-39 passphrase");
+  await page.fill("#b5-passphrase", "correct hrose");
+  await expect(page.locator("#b5-result")).toContainText("the passphrase differs from the one you set");
+  await expect(page.locator("#b5-next")).toBeHidden();
+  await page.fill("#b5-passphrase", "correct horse");
+  await expect(page.locator("#b5-result")).toContainText("Recovery works");
+  await page.click("#b5-next");
+  await page.click("#b6-finish");
+
+  // Without a SLIP-39 passphrase, the test doesn't ask for one.
+  await backUp(page);
+  await expect(page.locator("#b5-passphrase")).toBeHidden();
+});
+
+test("a share from another backup of the same phrase is refused, naming the words that differ", async ({ page }) => {
+  const first = await backUp(page);
+  await page.click("#b5-skip");
+  await page.click("#b6-finish");
+  const second = await backUp(page);
+  const start = (share) => share.split(" ").slice(0, 2).join(" ");
+  // Both backups pick their identifier at random: 1 in 32,768 they match.
+  expect(start(second[0])).not.toBe(start(first[0]));
+
+  // In the backup's own recovery test...
+  await typeShare(page, "b5-entry", second[0]);
+  await typeShare(page, "b5-entry", first[1]);
+  await expect(page.locator("#b5-entry .error")).toContainText(`it starts with "${start(first[1])}", but the shares already added start with "${start(second[0])}"`);
+  await page.click("#b5-skip");
+  await page.click("#b6-finish");
+
+  // ...and in recovery, where a share from the other backup isn't counted.
+  await page.click("#start-recover");
+  await typeShare(page, "r1-entry", first[0]);
+  await typeShare(page, "r1-entry", second[1]);
+  await expect(page.locator("#r1-entry .error")).toContainText("This share is from a different backup");
+  await expect(page.locator("#r1-entry .collected li")).toHaveCount(1);
+  await page.locator("#r1-entry .word-grid input").first().fill("");
+  await typeShare(page, "r1-entry", first[2]);
+  await page.click("#r1-recover");
+  await expect(page.locator("#r2-fingerprint")).toHaveText(FINGERPRINT);
 });
 
 test("test phrases need an explicit acknowledgement; a bad checksum blocks", async ({ page }) => {

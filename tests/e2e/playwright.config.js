@@ -13,5 +13,10 @@ module.exports = defineConfig({
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? "list" : "line",
   use: { trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // Firefox stands in for Tor Browser, the browser on Tails, which the
+  // README recommends.
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+  ],
 });

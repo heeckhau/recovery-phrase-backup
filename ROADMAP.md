@@ -33,8 +33,9 @@ Complete and tested; pre-releases (v0.x) until the review.
 - **Trust**: a single-file release build that is reproducible (byte-identical
   in a pinned Linux x86-64 container), and CI on every push: tests, clippy,
   `cargo audit`, the reproducible build, the cross-tool suite (266/266
-  checks against three other SLIP-39 tools), ten browser tests against the
-  release file itself, and a check that no em dash appears in the repo.
+  checks against three other SLIP-39 tools), browser tests against the
+  release file itself in Chromium and Firefox (the base of Tor Browser, on
+  Tails), and a check that no em dash appears in the repo.
 
 Not done yet: the independent review and a maintainer's signature on
 releases. Until then releases are pre-releases (v0.x), and the website
@@ -265,18 +266,28 @@ shares one at a time, a recovery test, and done.
   a second confirmation ("I'll test restoring from my copies myself before I
   rely on them") and leads to the recovery test.
 - The recovery test is the real proof: a threshold of the written or printed
-  shares typed in fully, reproducing the fingerprint. It can be skipped.
+  shares typed in fully, reproducing the fingerprint. A SLIP-39 passphrase is
+  typed again there, from the user's copy: a test that reused the one typed
+  at the start would pass with a passphrase recorded wrong. It can be skipped.
 - The last step asks what to do with the original phrase: a backup that
   leaves the single original in a drawer hasn't removed the risk it exists
   to remove. It explains the trade-off and leaves the choice to the user.
   It also offers the "how to recover" sheet (see Share cards) and says to
   keep it with a copy of the HTML file, for example on a USB stick: without
-  the file, an heir needs someone technical.
+  the file, an heir needs someone technical. And it says that a new backup
+  of the same phrase doesn't retire this one: the old cards keep working
+  until destroyed.
 
 **Recovery.** Shares go in one at a time, with progress towards the
 threshold; then the phrase, and a fingerprint check before any address is
 shown. Surplus shares are ignored once they are confirmed to belong to the
 same backup (the spec and the reference implementation reject them instead).
+Two backups of the same phrase share the fingerprint, so the fingerprint
+can't tell their cards apart; the first two words can, since they encode the
+backup's random identifier (with the extendable flag and the iteration
+exponent: exactly 20 bits). A share whose first two words differ from those
+already added is refused as soon as it is added, naming both, and the "how to
+recover" sheet and the last step of the backup show them.
 
 **Recording and printing.** Before seeing any share, the user picks how to
 record them: **by hand** (the default; optional blank cards to write on;

@@ -336,6 +336,7 @@
   <div class="banner warning" id="demo-banner" hidden><strong>Demo with sample data only.</strong> Never type a real phrase or share here: <a href="index.html#download">download the tool</a> and use it offline.</div>
   <div class="banner warning" id="online-banner" hidden>You're online. For a real phrase, disconnect from the network first. This page never sends anything, but other software in your browser can: a malicious browser extension, for example, can read what you type here and send your phrase away. Offline, it can't send it right away, though malware on the computer could keep it and send it later. Safest is a live USB system such as Tails, offline; otherwise a fresh browser profile without extensions.</div>
 
+  <noscript><div class="banner warning">This page needs JavaScript and WebAssembly, and your browser has them turned off. In Tor Browser, as on Tails, set the security level to Standard, then reload: Safer and Safest turn them off. For this file, offline, Standard is fine.</div></noscript>
   <section class="card" id="home">
     <div class="home-actions">
       <button type="button" id="start-backup" disabled>Back up a phrase<span class="sub">Split it into shares</span></button>
@@ -466,6 +467,11 @@
     <div class="step" id="b5" hidden>
       <h2>Test your recovery</h2>
       <p id="b5-intro"></p>
+      <div class="field" id="b5-passphrase-field" hidden>
+        <label for="b5-passphrase" class="mt-0">Your SLIP-39 passphrase, typed again from where you keep it</label>
+        <input type="text" id="b5-passphrase" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off">
+        <p class="notice mt-035">The test uses what you type here, so a passphrase recorded wrong shows up now rather than at recovery.</p>
+      </div>
       <div id="b5-entry"></div>
       <div class="banner" id="b5-result" hidden></div>
       <button type="button" id="b5-next" hidden>Continue</button>
@@ -482,6 +488,9 @@
       <h2 class="mt-1">Make sure it can be recovered without you</h2>
       <p>Print a "how to recover" sheet: it has no secret on it, and has lines for you to fill in, such as who has the shares. Keep it with a copy of this file (recovery-phrase-backup.html), for example on a USB stick, somewhere the person who would recover will find it. Without the file they'd need someone technical.</p>
       <button type="button" class="btn-secondary" id="b6-print-sheet">Print a "How to recover" sheet (no secrets on it)</button>
+      <h2 class="mt-1">If you ever make a new backup</h2>
+      <p>Every backup has its own shares, even of the same phrase. Shares of two backups have the same fingerprint but can't be mixed, and the old shares keep recovering your phrase until they're destroyed. So when you replace this backup (after losing a share, say), collect the old cards and destroy them.</p>
+      <p>Every share of this backup starts with the same two words: <span class="fingerprint" id="b6-backup-words"></span>. A card that starts with others is from another backup.</p>
       <button type="button" id="b6-finish">Finish and clear this page</button>
     </div>
   </section>
@@ -524,7 +533,7 @@
           <button type="button" class="btn-secondary" id="r2-no">No</button>
           <button type="button" id="r2-yes">Yes, it matches</button>
         </div>
-        <div class="banner warning mt-1" id="r2-mismatch" hidden>Then this isn't your phrase. The usual causes: a wrong or missing SLIP-39 passphrase (it is never reported as an error), or shares from two different backups. Your shares may be fine: go back and check the passphrase and which shares you used.</div>
+        <div class="banner warning mt-1" id="r2-mismatch" hidden>Then this isn't your phrase. The usual cause is a wrong or missing SLIP-39 passphrase: it is never reported as an error. Your shares may be fine: go back and check the passphrase.</div>
         <div id="r2-addresses" hidden>
           <div class="field mt-1">
             <div class="field-label">First Ethereum address</div>
