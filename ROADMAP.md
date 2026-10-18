@@ -274,12 +274,20 @@ shares one at a time, a recovery test, and done.
   to remove. It explains the trade-off and leaves the choice to the user.
   It also offers the "how to recover" sheet (see Share cards) and says to
   keep it with a copy of the HTML file, for example on a USB stick: without
-  the file, an heir needs someone technical.
+  the file, an heir needs someone technical. And it says that a new backup
+  of the same phrase doesn't retire this one: the old cards keep working
+  until destroyed.
 
 **Recovery.** Shares go in one at a time, with progress towards the
 threshold; then the phrase, and a fingerprint check before any address is
 shown. Surplus shares are ignored once they are confirmed to belong to the
 same backup (the spec and the reference implementation reject them instead).
+Two backups of the same phrase share the fingerprint, so the fingerprint
+can't tell their cards apart; the first two words can, since they encode the
+backup's random identifier (with the extendable flag and the iteration
+exponent: exactly 20 bits). A share whose first two words differ from those
+already added is refused as soon as it is added, naming both, and the "how to
+recover" sheet and the last step of the backup show them.
 
 **Recording and printing.** Before seeing any share, the user picks how to
 record them: **by hand** (the default; optional blank cards to write on;

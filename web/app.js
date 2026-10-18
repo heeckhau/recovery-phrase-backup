@@ -218,6 +218,12 @@ function createWordGrid(container, kind, { count, numbers, onChange, onPasteCoun
   };
 }
 
+// The first two words of a share: its backup's random identifier, extendable
+// flag and iteration exponent (exactly 20 bits). Every share of one backup
+// starts with them, and every new backup, even of the same phrase, gets new
+// ones, so they tell backups apart where the fingerprint can't. Not secret.
+const backupWords = (mnemonic) => mnemonic.split(" ").slice(0, 2).join(" ");
+
 // A read-only numbered grid, for showing a share or a phrase.
 function renderWords(container, words) {
   container.innerHTML = "";
@@ -356,8 +362,14 @@ function createShareEntry(container, { fixedLength, enoughHint = "", onProgress,
       showError(error, "You've already added this share.");
       return;
     }
-    if (shares.length > 0 && shares[0].info.group_count !== info.group_count) {
-      showError(error, "This share is from a different backup than the ones already added.");
+    const start = backupWords(mnemonic);
+    const theirs = shares.length > 0 ? backupWords(shares[0].mnemonic) : start;
+    if (start !== theirs) {
+      showError(
+        error,
+        `This share is from a different backup: it starts with "${start}", but the shares already added start with "${theirs}". ` +
+          "Two backups of the same phrase have the same fingerprint, but their shares can't be mixed.",
+      );
       return;
     }
     shares.push({ mnemonic, info });
@@ -960,6 +972,7 @@ $("b5-skip").addEventListener("click", finishBackup);
 function finishBackup() {
   backupStep(6);
   $("b6-fingerprint").textContent = state.fingerprint;
+  $("b6-backup-words").textContent = backupWords(state.shares[0].mnemonic);
 }
 
 $("b6-finish").addEventListener("click", () => clearAll());
@@ -1030,6 +1043,9 @@ function recoverySheet() {
   const fp = el("p", "meta", "Fingerprint of this backup: ");
   fp.appendChild(el("span", "fp", state.fingerprint));
   page.appendChild(fp);
+  const start = el("p", "meta", "Every share of this backup starts with: ");
+  start.appendChild(el("span", "fp", backupWords(state.shares[0].mnemonic)));
+  page.appendChild(start);
   const { groupThreshold, groups } = state.scheme;
   const needed =
     groups.length === 1
@@ -1071,6 +1087,7 @@ function recoverySheet() {
   page.appendChild(list);
 
   const notes = [
+    "A card that starts with other words is from a different backup, for example an older one of the same phrase. It has the same fingerprint but can't be combined with these.",
     "Never type the shares into a hardware wallet such as a Trezor. It would accept them but open a different, empty wallet. Recover the phrase first, then restore the phrase.",
     "Without the file: the shares follow SLIP-39, an open standard. Someone technical can recover them with any SLIP-39 tool, such as Trezor's reference tool (python-shamir-mnemonic, \"shamir recover\"). It gives the phrase's entropy as hex, which any BIP39 tool turns back into the words.",
   ];

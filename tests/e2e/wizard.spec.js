@@ -98,7 +98,13 @@ test("back up a phrase by hand: check, split, spot-check, test", async ({ page }
   expect(sheet).toContain("recovery-phrase-backup.html) is kept:");
   expect(sheet).toContain("The shares are with:");
   expect(sheet).toContain("Never type the shares into a hardware wallet");
-  for (const word of PHRASE.split(" ")) expect(sheet).not.toMatch(new RegExp(`\\b${word}\\b`));
+  // The two words every share starts with tell this backup's cards from
+  // another's. They can be BIP39 words too, so they're left out of the check
+  // that no word of the phrase is on the sheet.
+  const backupWords = shares[0].split(" ").slice(0, 2).join(" ");
+  expect(sheet).toContain(`Every share of this backup starts with: ${backupWords}`);
+  await expect(page.locator("#b6-backup-words")).toHaveText(backupWords);
+  for (const word of PHRASE.split(" ")) expect(sheet.replace(backupWords, "")).not.toMatch(new RegExp(`\\b${word}\\b`));
 
   await page.click("#b6-finish");
   await expect(page.locator("#home")).toBeVisible();
@@ -381,6 +387,34 @@ test("the recovery test asks for the SLIP-39 passphrase again, and fails on a ty
   // Without a SLIP-39 passphrase, the test doesn't ask for one.
   await backUp(page);
   await expect(page.locator("#b5-passphrase")).toBeHidden();
+});
+
+test("a share from another backup of the same phrase is refused, naming the words that differ", async ({ page }) => {
+  const first = await backUp(page);
+  await page.click("#b5-skip");
+  await page.click("#b6-finish");
+  const second = await backUp(page);
+  const start = (share) => share.split(" ").slice(0, 2).join(" ");
+  // Both backups pick their identifier at random: 1 in 32,768 they match.
+  expect(start(second[0])).not.toBe(start(first[0]));
+
+  // In the backup's own recovery test...
+  await typeShare(page, "b5-entry", second[0]);
+  await typeShare(page, "b5-entry", first[1]);
+  await expect(page.locator("#b5-entry .error")).toContainText(`it starts with "${start(first[1])}", but the shares already added start with "${start(second[0])}"`);
+  await page.click("#b5-skip");
+  await page.click("#b6-finish");
+
+  // ...and in recovery, where a share from the other backup isn't counted.
+  await page.click("#start-recover");
+  await typeShare(page, "r1-entry", first[0]);
+  await typeShare(page, "r1-entry", second[1]);
+  await expect(page.locator("#r1-entry .error")).toContainText("This share is from a different backup");
+  await expect(page.locator("#r1-entry .collected li")).toHaveCount(1);
+  await page.locator("#r1-entry .word-grid input").first().fill("");
+  await typeShare(page, "r1-entry", first[2]);
+  await page.click("#r1-recover");
+  await expect(page.locator("#r2-fingerprint")).toHaveText(FINGERPRINT);
 });
 
 test("test phrases need an explicit acknowledgement; a bad checksum blocks", async ({ page }) => {

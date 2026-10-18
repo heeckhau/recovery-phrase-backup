@@ -144,6 +144,12 @@ python-slip39 and seedkit, and that theirs recover here.
   different phrase. That is why it is off by default and the fingerprint
   exists: a recovery that doesn't reproduce the fingerprint is wrong. If you
   set one, the recovery test asks you to type it again from your copy.
+- **A new backup doesn't retire the old one.** Backing up the same phrase
+  again makes new shares with the same fingerprint, which can't be mixed
+  with the old ones, and the old shares still recover the phrase until
+  they're destroyed. All shares of one backup start with the same two words
+  (shown at the end and on the "how to recover" sheet), which tells them
+  apart; a share from another backup is refused as soon as it is added.
 - **Your wallet's own BIP39 passphrase (the "25th word") is not part of the
   backup.** If your wallet uses one, back it up separately.
 - **Reviewed, not audited.** Before v1 the code is reviewed by several other

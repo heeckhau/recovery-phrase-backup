@@ -488,6 +488,9 @@
       <h2 class="mt-1">Make sure it can be recovered without you</h2>
       <p>Print a "how to recover" sheet: it has no secret on it, and has lines for you to fill in, such as who has the shares. Keep it with a copy of this file (recovery-phrase-backup.html), for example on a USB stick, somewhere the person who would recover will find it. Without the file they'd need someone technical.</p>
       <button type="button" class="btn-secondary" id="b6-print-sheet">Print a "How to recover" sheet (no secrets on it)</button>
+      <h2 class="mt-1">If you ever make a new backup</h2>
+      <p>Every backup has its own shares, even of the same phrase. Shares of two backups have the same fingerprint but can't be mixed, and the old shares keep recovering your phrase until they're destroyed. So when you replace this backup (after losing a share, say), collect the old cards and destroy them.</p>
+      <p>Every share of this backup starts with the same two words: <span class="fingerprint" id="b6-backup-words"></span>. A card that starts with others is from another backup.</p>
       <button type="button" id="b6-finish">Finish and clear this page</button>
     </div>
   </section>
@@ -530,7 +533,7 @@
           <button type="button" class="btn-secondary" id="r2-no">No</button>
           <button type="button" id="r2-yes">Yes, it matches</button>
         </div>
-        <div class="banner warning mt-1" id="r2-mismatch" hidden>Then this isn't your phrase. The usual causes: a wrong or missing SLIP-39 passphrase (it is never reported as an error), or shares from two different backups. Your shares may be fine: go back and check the passphrase and which shares you used.</div>
+        <div class="banner warning mt-1" id="r2-mismatch" hidden>Then this isn't your phrase. The usual cause is a wrong or missing SLIP-39 passphrase: it is never reported as an error. Your shares may be fine: go back and check the passphrase.</div>
         <div id="r2-addresses" hidden>
           <div class="field mt-1">
             <div class="field-label">First Ethereum address</div>
