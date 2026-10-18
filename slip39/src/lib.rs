@@ -8,6 +8,7 @@ mod wordlist;
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use subtle::ConstantTimeEq;
 use zeroize::Zeroizing;
 
 use codec::ShareData;
@@ -50,7 +51,9 @@ fn validate_passphrase(passphrase: &str) -> Result<(), Error> {
 /// implementation and other tools use 1.
 ///
 /// Returns one `Vec<String>` of member mnemonics per group, in the same
-/// order as `groups`.
+/// order as `groups`. Before returning them, recovers the secret from the
+/// new mnemonics themselves (see `check_shares`), and returns
+/// `Error::SelfCheckFailed` instead if any set of shares falls short.
 pub fn split(
     master_secret: &[u8],
     group_threshold: u8,
@@ -101,9 +104,10 @@ pub fn split(
     let group_shares = shamir::split_secret(group_threshold, group_count as u8, &ems)?;
 
     let mut result = Vec::with_capacity(group_count);
-    for (group_index, group_secret) in group_shares {
+    for (group_index, group_secret) in &group_shares {
+        let group_index = *group_index;
         let spec = groups[group_index as usize];
-        let member_shares = shamir::split_secret(spec.member_threshold, spec.member_count, &group_secret)?;
+        let member_shares = shamir::split_secret(spec.member_threshold, spec.member_count, group_secret)?;
 
         let mut mnemonics = Vec::with_capacity(spec.member_count as usize);
         for (member_index, share_value) in member_shares {
@@ -123,7 +127,95 @@ pub fn split(
         result.push(mnemonics);
     }
 
+    check_shares(&result, master_secret, passphrase)?;
     Ok(result)
+}
+
+/// The most threshold-sized sets of shares `check_shares` tries at each
+/// level. Typical schemes have far fewer (2 of 3 has 3, 3 of 5 has 10), so
+/// all of them are tried; 8 of 16 has 12,870, so a random 64 are.
+const SELF_CHECK_SETS: usize = 64;
+
+/// `split`'s self-check, on the mnemonics as they will be shown, so that a
+/// bug anywhere between the secret and the words (encoding, checksum, the
+/// Shamir arithmetic, a miscompiled build) never reaches paper. Uses only
+/// the mnemonics, read back like any other shares:
+/// - Every mnemonic decodes.
+/// - In each group, every threshold-sized set of members recovers the same
+///   group secret; then every threshold-sized set of groups recovers the
+///   same encrypted master secret. So every set of shares `combine` could
+///   be given leads to the same result. (For a scheme with more than
+///   `SELF_CHECK_SETS` such sets at a level, a random sample of them.)
+/// - `combine` on one minimal set returns `master_secret`: that result is
+///   the right one, through decryption and `combine` itself.
+fn check_shares(mnemonics: &[Vec<String>], master_secret: &[u8], passphrase: &str) -> Result<(), Error> {
+    let mut group_points: Vec<shamir::Point> = Vec::with_capacity(mnemonics.len());
+    let mut group_threshold = 0;
+    let mut minimal: Vec<&str> = Vec::new();
+    for group in mnemonics {
+        let members = group
+            .iter()
+            .map(|m| codec::decode(&m.split_whitespace().collect::<Vec<_>>()))
+            .collect::<Result<Vec<ShareData>, Error>>()
+            .map_err(|_| Error::SelfCheckFailed)?;
+        let first = members.first().ok_or(Error::SelfCheckFailed)?;
+        let (group_index, member_threshold) = (first.group_index, first.member_threshold);
+        group_threshold = first.group_threshold;
+
+        let points: Vec<shamir::Point> = members.iter().map(|m| (m.member_index, m.share_value.clone())).collect();
+        group_points.push((group_index, check_threshold_sets(member_threshold, &points)?));
+        if group_points.len() <= group_threshold as usize {
+            minimal.extend(group.iter().take(member_threshold as usize).map(String::as_str));
+        }
+    }
+    check_threshold_sets(group_threshold, &group_points)?;
+
+    let recovered = combine(&minimal, passphrase).map_err(|_| Error::SelfCheckFailed)?;
+    if !bool::from(recovered.ct_eq(master_secret)) {
+        return Err(Error::SelfCheckFailed);
+    }
+    Ok(())
+}
+
+/// Recovers from threshold-sized sets of `points` (every one, or a random
+/// `SELF_CHECK_SETS` of them), and returns the result if they all agree.
+fn check_threshold_sets(threshold: u8, points: &[shamir::Point]) -> Result<SecretBytes, Error> {
+    let n = points.len();
+    let t = threshold as usize;
+    if t == 0 || t > n || n > 16 {
+        return Err(Error::SelfCheckFailed);
+    }
+    let all: Vec<u32> = (0u32..1 << n).filter(|mask| mask.count_ones() as usize == t).collect();
+    let sets = if all.len() <= SELF_CHECK_SETS { all } else { random_sets(n, t)? };
+
+    let mut agreed: Option<SecretBytes> = None;
+    for mask in sets {
+        let chosen: Vec<shamir::Point> =
+            points.iter().enumerate().filter(|(i, _)| mask & (1 << i) != 0).map(|(_, p)| p.clone()).collect();
+        let recovered = shamir::recover_secret(threshold, &chosen).map_err(|_| Error::SelfCheckFailed)?;
+        match &agreed {
+            Some(first) if !bool::from(first.ct_eq(&recovered)) => return Err(Error::SelfCheckFailed),
+            Some(_) => {}
+            None => agreed = Some(recovered),
+        }
+    }
+    agreed.ok_or(Error::SelfCheckFailed)
+}
+
+/// `SELF_CHECK_SETS` random `t`-of-`n` sets, as bit masks (a partial
+/// Fisher-Yates shuffle each; the slight modulo bias doesn't matter here).
+fn random_sets(n: usize, t: usize) -> Result<Vec<u32>, Error> {
+    let mut sets = Vec::with_capacity(SELF_CHECK_SETS);
+    let mut random = [0u8; 16];
+    for _ in 0..SELF_CHECK_SETS {
+        getrandom::fill(&mut random)?;
+        let mut indices: Vec<usize> = (0..n).collect();
+        for (i, &r) in random.iter().enumerate().take(t) {
+            indices.swap(i, i + r as usize % (n - i));
+        }
+        sets.push(indices[..t].iter().fold(0, |mask, &i| mask | 1 << i));
+    }
+    Ok(sets)
 }
 
 /// The structural metadata a single mnemonic share reveals about itself:
@@ -398,6 +490,81 @@ mod tests {
         let ms = secret();
         assert_eq!(split(&ms, 1, &single_group(1, 1), "café", 0), Err(Error::InvalidPassphrase('é' as u32)));
         assert_eq!(combine(&["x"], "café"), Err(Error::InvalidPassphrase('é' as u32)));
+    }
+
+    #[test]
+    fn schemes_at_the_edges_round_trip() {
+        // shamir.rs's tests cover every threshold and share count; these
+        // cover split's edges: 1 of 1, 16 of 16, 8 of 16 (where the
+        // self-check samples rather than tries every set), and 1 or all of
+        // 16 groups.
+        let ms = secret();
+        let g = |member_threshold, member_count| GroupSpec { member_threshold, member_count };
+        let schemes: [(u8, Vec<GroupSpec>); 7] = [
+            (1, vec![g(1, 1)]),
+            (1, vec![g(2, 2)]),
+            (1, vec![g(16, 16)]),
+            (1, vec![g(8, 16)]),
+            (1, vec![g(2, 3); 16]),
+            (16, vec![g(1, 1); 16]),
+            (3, vec![g(1, 1), g(2, 3), g(3, 5), g(8, 16)]),
+        ];
+        for (group_threshold, groups_spec) in schemes {
+            let shares = split(&ms, group_threshold, &groups_spec, "", 0).unwrap();
+            // The last groups, and the last members of each.
+            let chosen: Vec<&str> = shares
+                .iter()
+                .zip(&groups_spec)
+                .rev()
+                .take(group_threshold as usize)
+                .flat_map(|(members, spec)| members.iter().rev().take(spec.member_threshold as usize))
+                .map(String::as_str)
+                .collect();
+            assert_eq!(*combine(&chosen, "").unwrap(), ms, "{group_threshold} of {groups_spec:?}");
+        }
+    }
+
+    #[test]
+    fn every_secret_length_round_trips() {
+        for len in (16..=32).step_by(2).chain([64]) {
+            let ms: Vec<u8> = (0..len as u8).collect();
+            let shares = split(&ms, 1, &single_group(3, 5), "", 0).unwrap();
+            let chosen: Vec<&str> = shares[0][1..4].iter().map(String::as_str).collect();
+            assert_eq!(*combine(&chosen, "").unwrap(), ms, "{len} bytes");
+        }
+    }
+
+    #[test]
+    fn self_check_rejects_shares_that_do_not_give_the_secret() {
+        let ms = secret();
+        let shares = split(&ms, 1, &single_group(2, 3), "pass", 0).unwrap();
+        assert_eq!(check_shares(&shares, &ms, "pass"), Ok(()));
+
+        let mut other = ms;
+        other[0] ^= 1;
+        assert_eq!(check_shares(&shares, &other, "pass"), Err(Error::SelfCheckFailed));
+        assert_eq!(check_shares(&shares, &ms, "wrong"), Err(Error::SelfCheckFailed));
+    }
+
+    #[test]
+    fn self_check_rejects_a_share_that_disagrees_with_the_others() {
+        // A share from a split with the same scheme: decodes fine, but
+        // with the others it recovers something else.
+        let ms = secret();
+        let mut shares = split(&ms, 1, &single_group(2, 3), "", 0).unwrap();
+        let foreign = split(&ms, 1, &single_group(2, 3), "", 0).unwrap();
+        shares[0][2] = foreign[0][2].clone();
+        assert_eq!(check_shares(&shares, &ms, ""), Err(Error::SelfCheckFailed));
+    }
+
+    #[test]
+    fn self_check_rejects_a_mnemonic_that_does_not_decode() {
+        let ms = secret();
+        let mut shares = split(&ms, 1, &single_group(2, 3), "", 0).unwrap();
+        let mut words: Vec<&str> = shares[0][1].split(' ').collect();
+        words[5] = if words[5] == "academic" { "acid" } else { "academic" };
+        shares[0][1] = words.join(" ");
+        assert_eq!(check_shares(&shares, &ms, ""), Err(Error::SelfCheckFailed));
     }
 
     #[test]

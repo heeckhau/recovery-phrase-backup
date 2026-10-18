@@ -37,6 +37,11 @@ never signs anything and never touches a network.
 6. **Done.** Guidance on what to do with your original phrase, and an
    optional "how to recover" sheet with no secret on it, for your heir.
 
+Before showing you any share, the tool recovers your phrase from the new
+shares itself: every set of shares that should work must give it back
+(for very large schemes, a random sample of them), or it makes none. Your
+own recovery test still matters: it checks the copies you made.
+
 Every share card carries the fingerprint. It shows that shares belong
 together, and a correct recovery reproduces it. It is not an address, so a
 found card reveals nothing about your funds. Cards also carry no share

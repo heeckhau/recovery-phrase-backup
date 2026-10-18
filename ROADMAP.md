@@ -18,7 +18,10 @@ Complete and tested; pre-releases (v0.x) until the review.
 - **`rpb-slip39`**: SLIP-39 written from the spec (no suitable Rust crate
   exists; see History), checked against all 45 official vectors. Accepts
   every length SLIP-39 allows. Secret material is zeroized; the share digest
-  and GF(256) lookups are constant-time.
+  and GF(256) lookups are constant-time. Before `split` returns any share,
+  it recovers the secret from the new mnemonics: every set of shares that
+  should work must give it back (a random 64 sets per level, for schemes
+  with more), or no shares are made.
 - **`rpb-core`**: BIP39 phrases at all five lengths, their BIP32 fingerprint
   and first Ethereum and native SegWit addresses, and a weak-phrase check;
   raw keys (hex, WIF) for the CLI.

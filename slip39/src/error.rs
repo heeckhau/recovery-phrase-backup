@@ -46,6 +46,8 @@ pub enum Error {
     NotEnoughMemberShares { group_index: u8, have: u8, need: u8 },
     #[error("no shares provided")]
     NoShares,
+    #[error("internal check failed: the new shares did not recover the secret, so none were made (please report this)")]
+    SelfCheckFailed,
 }
 
 /// The shortest possible valid SLIP-39 mnemonic: a 128-bit share value
