@@ -116,6 +116,15 @@ const CHECKSUM_BITS: usize = 30;
 
 /// Encodes `share` as its mnemonic word sequence.
 pub fn encode(share: &ShareData) -> Vec<String> {
+    encode_indices(share)
+        .iter()
+        .map(|&w| wordlist::word_at(w).expect("word index always in range").to_string())
+        .collect()
+}
+
+/// Encodes `share` as its 10-bit word indices (`encode` without the
+/// wordlist lookup).
+fn encode_indices(share: &ShareData) -> Zeroizing<Vec<u16>> {
     let mut bits = SecretBits(Bits::new());
     push_uint(&mut bits, share.id as u32, 15);
     push_uint(&mut bits, share.extendable as u32, 1);
@@ -138,9 +147,6 @@ pub fn encode(share: &ShareData) -> Vec<String> {
     }
 
     Zeroizing::new(words_from_bits(&bits))
-        .iter()
-        .map(|&w| wordlist::word_at(w).expect("word index always in range").to_string())
-        .collect()
 }
 
 /// Decodes a share's mnemonic words back into a `ShareData`, validating
@@ -164,12 +170,18 @@ pub fn decode(words: &[&str]) -> Result<ShareData, Error> {
             })
             .collect::<Result<_, _>>()?,
     );
+    decode_indices(&indices)
+}
 
-    let bits = SecretBits(bits_from_words(&indices));
+/// Decodes a share from its 10-bit word indices (`decode` after the
+/// wordlist lookup). Expects at least `MIN_WORD_COUNT` indices, each below
+/// 1024, as `decode` guarantees.
+fn decode_indices(indices: &[u16]) -> Result<ShareData, Error> {
+    let bits = SecretBits(bits_from_words(indices));
     let total_bits = bits.len();
 
     let extendable = read_uint(&bits, 15, 1) == 1;
-    if !rs1024::verify_checksum(extendable, &indices) {
+    if !rs1024::verify_checksum(extendable, indices) {
         return Err(Error::InvalidChecksum);
     }
 
@@ -338,6 +350,67 @@ mod tests {
                 let refs: Vec<&str> = words.iter().map(String::as_str).collect();
                 assert_eq!(decode(&refs).unwrap(), share);
             }
+        }
+    }
+}
+
+// Kani proofs (`cargo kani -p rpb-slip39 -Z stubbing`), for the shortest
+// share (a 16-byte value, 20 words), at the word-index level: the wordlist
+// step is a bijection, checked exhaustively by wordlist.rs's tests.
+#[cfg(kani)]
+mod proofs {
+    use super::*;
+
+    fn any_share() -> ShareData {
+        let share = ShareData {
+            id: kani::any(),
+            extendable: kani::any(),
+            iteration_exponent: kani::any(),
+            group_index: kani::any(),
+            group_threshold: kani::any(),
+            group_count: kani::any(),
+            member_index: kani::any(),
+            member_threshold: kani::any(),
+            share_value: Zeroizing::new(kani::any::<[u8; 16]>().to_vec()),
+        };
+        kani::assume(share.id < 1 << 15);
+        kani::assume(share.iteration_exponent < 16);
+        kani::assume(share.group_index < 16);
+        kani::assume((1..=16).contains(&share.group_threshold));
+        kani::assume((1..=16).contains(&share.group_count));
+        kani::assume(share.group_threshold <= share.group_count);
+        kani::assume(share.member_index < 16);
+        kani::assume((1..=16).contains(&share.member_threshold));
+        share
+    }
+
+    /// Every valid share encodes to 20 in-range word indices (so `encode`'s
+    /// `expect` never fires) and decodes back to itself.
+    #[kani::proof]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::unwind(40)]
+    fn encode_then_decode_round_trips() {
+        let share = any_share();
+        let indices = encode_indices(&share);
+        assert_eq!(indices.len(), MIN_WORD_COUNT);
+        for &w in indices.iter() {
+            assert!(w < 1024);
+        }
+        assert!(decode_indices(&indices) == Ok(share));
+    }
+
+    /// Any 20 word indices: decoding never panics, and whatever it accepts
+    /// encodes back to exactly those indices (one share, one encoding).
+    #[kani::proof]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::unwind(40)]
+    fn decode_never_panics_and_accepts_only_canonical_encodings() {
+        let indices: [u16; MIN_WORD_COUNT] = kani::any();
+        for &w in &indices {
+            kani::assume(w < 1024);
+        }
+        if let Ok(share) = decode_indices(&indices) {
+            assert_eq!(encode_indices(&share)[..], indices[..]);
         }
     }
 }

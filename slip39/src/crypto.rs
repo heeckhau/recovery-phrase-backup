@@ -119,3 +119,33 @@ mod tests {
         assert_ne!(ems_extendable, ems_not);
     }
 }
+
+// Kani proofs (`cargo kani -p rpb-slip39`). PBKDF2 is replaced by a cheap
+// stand-in: a Feistel network inverts with any round function, so the
+// round trip doesn't depend on which one, and real PBKDF2 (thousands of
+// SHA-256 iterations) is far beyond a model checker.
+#[cfg(kani)]
+mod proofs {
+    use super::*;
+
+    fn stub_round_function(round: u8, passphrase: &str, salt_prefix: &[u8], r: &[u8], iterations: u32) -> SecretBytes {
+        let tweak = round ^ (passphrase.len() as u8) ^ (salt_prefix.len() as u8) ^ (iterations as u8);
+        Zeroizing::new((0..r.len()).map(|i| r[i].wrapping_mul(31) ^ r[(i + 1) % r.len()].rotate_left(3) ^ tweak).collect())
+    }
+
+    #[kani::proof]
+    #[kani::stub(round_function, stub_round_function)]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::unwind(17)]
+    fn decrypt_undoes_encrypt() {
+        let secret: [u8; 16] = kani::any();
+        let iteration_exponent: u8 = kani::any();
+        kani::assume(iteration_exponent <= 15);
+        let id: u16 = kani::any();
+        let extendable: bool = kani::any();
+        let ems = encrypt(&secret, "", iteration_exponent, id, extendable);
+        assert_eq!(ems.len(), secret.len());
+        let recovered = decrypt(&ems, "", iteration_exponent, id, extendable);
+        assert_eq!(recovered[..], secret[..]);
+    }
+}

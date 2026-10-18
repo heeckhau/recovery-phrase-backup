@@ -216,3 +216,129 @@ mod tests {
         assert_eq!(split_secret(1, 2, &[0u8; 17]), Err(Error::InvalidSecretLength(136)));
     }
 }
+
+// Kani proofs (`cargo kani -p rpb-slip39 -Z stubbing`), for every secret
+// and every value the RNG could return. Replaced in the round trips, to
+// keep them within reach of the solver:
+// - `gf256::mul` and `gf256::inverse` by table-free versions, which
+//   `gf256::tests::direct_matches_tables_exhaustively` shows are the same
+//   functions;
+// - `digest4` (HMAC-SHA256) by a cheap function: a round trip only needs
+//   the digest to be the same for the same input.
+#[cfg(kani)]
+mod proofs {
+    use super::*;
+
+    fn stub_digest4(key: &[u8], msg: &[u8]) -> [u8; 4] {
+        let mut d = [0x5au8; 4];
+        for (i, &b) in key.iter().chain(msg.iter()).enumerate() {
+            d[i % 4] = d[i % 4].rotate_left(1) ^ b;
+        }
+        d
+    }
+
+    /// `p(x)` for the polynomial with coefficients `coeffs` (lowest first).
+    fn eval(coeffs: &[u8], x: u8) -> u8 {
+        coeffs.iter().rev().fold(0, |acc, &c| gf256::add(gf256::direct::mul(acc, x), c))
+    }
+
+    /// The fact Shamir sharing rests on: through `K` points with distinct
+    /// x-coordinates, `interpolate` evaluates the one polynomial of degree
+    /// below `K` that passes through them, at any `x`. For every such
+    /// polynomial and every choice of x-coordinates. One byte per value is
+    /// enough: `interpolate` handles each byte position on its own.
+    fn check_interpolation<const K: usize>() {
+        let coeffs: [u8; K] = kani::any();
+        let xs: [u8; K] = kani::any();
+        for i in 0..K {
+            for j in 0..i {
+                kani::assume(xs[i] != xs[j]);
+            }
+        }
+        let points: Vec<Point> = xs.iter().map(|&xi| (xi, Zeroizing::new(vec![eval(&coeffs, xi)]))).collect();
+        let x: u8 = kani::any();
+        assert_eq!(interpolate(x, &points).unwrap()[..], [eval(&coeffs, x)]);
+    }
+
+    #[kani::proof]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::stub(zeroize::volatile_set, crate::kani_stubs::volatile_set)]
+    #[kani::stub(zeroize::volatile_write, crate::kani_stubs::volatile_write)]
+    #[kani::stub(gf256::mul, gf256::direct::mul)]
+    #[kani::stub(gf256::inverse, gf256::direct::inverse_by_constraint)]
+    #[kani::unwind(9)]
+    fn interpolation_through_2_points() {
+        check_interpolation::<2>();
+    }
+
+    #[kani::proof]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::stub(zeroize::volatile_set, crate::kani_stubs::volatile_set)]
+    #[kani::stub(zeroize::volatile_write, crate::kani_stubs::volatile_write)]
+    #[kani::stub(gf256::mul, gf256::direct::mul)]
+    #[kani::stub(gf256::inverse, gf256::direct::inverse_by_constraint)]
+    #[kani::unwind(9)]
+    fn interpolation_through_3_points() {
+        check_interpolation::<3>();
+    }
+
+    /// Splits an arbitrary 16-byte secret `threshold`-of-`share_count`, then
+    /// recovers it from every `threshold`-sized set of shares.
+    fn check_round_trip(threshold: u8, share_count: u8) {
+        let secret: [u8; 16] = kani::any();
+        let shares = split_secret(threshold, share_count, &secret).unwrap();
+        assert_eq!(shares.len(), share_count as usize);
+        for (i, (x, _)) in shares.iter().enumerate() {
+            assert_eq!(*x as usize, i);
+        }
+        for subset in 0u32..(1 << share_count) {
+            // Not `count_ones()`: Kani 0.68 crashes on its intrinsic.
+            if (0..share_count).filter(|i| subset & (1 << i) != 0).count() != threshold as usize {
+                continue;
+            }
+            let chosen: Vec<Point> =
+                shares.iter().enumerate().filter(|(i, _)| subset & (1 << i) != 0).map(|(_, p)| p.clone()).collect();
+            assert_eq!(recover_secret(threshold, &chosen).unwrap()[..], secret[..]);
+        }
+    }
+
+    #[kani::proof]
+    #[kani::stub(getrandom::fill, crate::kani_stubs::fill)]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::stub(gf256::mul, gf256::direct::mul)]
+    #[kani::stub(gf256::inverse, gf256::direct::inverse)]
+    #[kani::stub(digest4, stub_digest4)]
+    #[kani::unwind(17)]
+    fn round_trip_2_of_3() {
+        check_round_trip(2, 3);
+    }
+
+    #[kani::proof]
+    #[kani::stub(getrandom::fill, crate::kani_stubs::fill)]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::stub(zeroize::volatile_set, crate::kani_stubs::volatile_set)]
+    #[kani::stub(zeroize::volatile_write, crate::kani_stubs::volatile_write)]
+    #[kani::stub(gf256::mul, gf256::direct::mul)]
+    #[kani::stub(gf256::inverse, gf256::direct::inverse)]
+    #[kani::stub(digest4, stub_digest4)]
+    #[kani::unwind(17)]
+    fn round_trip_2_of_2() {
+        check_round_trip(2, 2);
+    }
+
+    /// Any threshold, any 1 to 3 shares of 16 bytes with any x-coordinates
+    /// (duplicates included): `recover_secret` returns, it never panics.
+    #[kani::proof]
+    #[kani::stub(zeroize::optimization_barrier, crate::kani_stubs::optimization_barrier)]
+    #[kani::stub(gf256::mul, gf256::direct::mul)]
+    #[kani::stub(gf256::inverse, gf256::direct::inverse)]
+    #[kani::stub(digest4, stub_digest4)]
+    #[kani::unwind(17)]
+    fn recover_secret_never_panics() {
+        let threshold: u8 = kani::any();
+        let count: usize = kani::any();
+        kani::assume((1..=3).contains(&count));
+        let shares: Vec<Point> = (0..count).map(|_| (kani::any(), Zeroizing::new(kani::any::<[u8; 16]>().to_vec()))).collect();
+        let _ = recover_secret(threshold, &shares);
+    }
+}

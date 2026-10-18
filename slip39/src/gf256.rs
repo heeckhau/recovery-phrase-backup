@@ -140,6 +140,48 @@ pub fn div(a: u8, b: u8) -> Option<u8> {
     inverse(b).map(|b_inv| mul(a, b_inv))
 }
 
+/// Table-free `mul` and `inverse`, for the Kani proofs elsewhere in the
+/// crate: the tables sit behind a `LazyLock`, which Kani 0.68 can't
+/// compile, and a table lookup on a symbolic byte is costly for the solver.
+/// `direct_matches_tables_exhaustively` below shows they are the same
+/// functions as `mul` and `inverse`.
+#[cfg(any(test, kani))]
+pub(crate) mod direct {
+    pub(crate) fn mul(a: u8, b: u8) -> u8 {
+        super::mul_direct(a, b)
+    }
+
+    /// `a^254`, which is `a⁻¹` since `a^255 = 1` for every nonzero `a`.
+    pub(crate) fn inverse(a: u8) -> Option<u8> {
+        if a == 0 {
+            return None;
+        }
+        let mut result = 1u8;
+        let mut power = a;
+        for bit in 0..8 {
+            if (254u8 >> bit) & 1 == 1 {
+                result = mul(result, power);
+            }
+            power = mul(power, power);
+        }
+        Some(result)
+    }
+
+    /// `inverse` as a constraint rather than a computation: the `b` with
+    /// `a * b = 1`. Exact, since every nonzero element has exactly one
+    /// inverse (`every_nonzero_element_times_its_inverse_is_one`), and far
+    /// cheaper for the solver than `a^254` when `a` is symbolic.
+    #[cfg(kani)]
+    pub(crate) fn inverse_by_constraint(a: u8) -> Option<u8> {
+        if a == 0 {
+            return None;
+        }
+        let b: u8 = kani::any();
+        kani::assume(mul(a, b) == 1);
+        Some(b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -195,10 +237,51 @@ mod tests {
     }
 
     #[test]
+    fn direct_matches_tables_exhaustively() {
+        for a in 0..=255u8 {
+            assert_eq!(direct::inverse(a), inverse(a), "inverse({a})");
+            for b in 0..=255u8 {
+                assert_eq!(direct::mul(a, b), mul(a, b), "{a}*{b}");
+            }
+        }
+    }
+
+    #[test]
     fn ct_lookup_matches_direct_indexing_exhaustively() {
         let table: Vec<u8> = (0..=255u8).map(|i| i.wrapping_mul(7).wrapping_add(13)).collect();
         for index in 0..=255u8 {
             assert_eq!(ct_lookup(&table, index), table[index as usize]);
         }
+    }
+}
+
+// Kani proofs (`cargo kani -p rpb-slip39`): each holds for every input,
+// not a sample. The tests above already cover mul()/inverse() exhaustively;
+// these cover the constant-time helpers for every table, not just one.
+#[cfg(kani)]
+mod proofs {
+    use super::*;
+
+    #[kani::proof]
+    #[kani::unwind(257)]
+    fn ct_lookup_matches_direct_indexing() {
+        let table: [u8; 256] = kani::any();
+        let index: u8 = kani::any();
+        assert_eq!(ct_lookup(&table, index), table[index as usize]);
+    }
+
+    #[kani::proof]
+    fn reduce_log_sum_is_mod_255() {
+        let sum: u16 = kani::any();
+        kani::assume(sum <= 508);
+        assert_eq!(reduce_log_sum(sum) as u16, sum % 255);
+    }
+
+    #[kani::proof]
+    fn negate_log_is_additive_inverse_mod_255() {
+        let log_a: u8 = kani::any();
+        kani::assume(log_a <= 254);
+        assert_eq!((negate_log(log_a) as u16 + log_a as u16) % 255, 0);
+        assert!(negate_log(log_a) <= 254);
     }
 }

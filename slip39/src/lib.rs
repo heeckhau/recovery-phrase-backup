@@ -2,6 +2,8 @@ mod codec;
 mod crypto;
 mod error;
 mod gf256;
+#[cfg(kani)]
+mod kani_stubs;
 mod rs1024;
 mod shamir;
 mod wordlist;
