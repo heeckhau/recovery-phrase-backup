@@ -135,6 +135,24 @@ The cross-tool suite ([scripts/interop/](scripts/interop/README.md)) checks
 on every change that shares made here recover in python-shamir-mnemonic,
 python-slip39 and seedkit, and that theirs recover here.
 
+## How it compares
+
+- **A Trezor with Shamir backup** also makes SLIP-39 shares, but for a new
+  wallet on that device. This tool backs up the phrase you already have,
+  from any wallet, without extra hardware.
+- **Ledger Recover** hands encrypted parts of your phrase to companies. Here
+  you choose who holds the shares.
+- **[python-slip39](https://github.com/pjkundert/python-slip39)** backs up a
+  phrase the same way, and its shares recover here and the other way round.
+  But it needs Python on the machine that should stay offline, makes shares
+  only for 12- and 24-word phrases, and prints every share, plus the phrase,
+  into one PDF.
+
+What this tool adds: one file that opens offline with nothing to install, a
+reproducible build, cards that carry nothing a finder could use, and a
+recovery test and a "how to recover" sheet for your heirs. The details, and
+the reasons behind each choice, are in [DESIGN.md](DESIGN.md).
+
 ## What to know before relying on it
 
 - **Use it on a clean system, offline.** The page sends nothing, but other

@@ -1,4 +1,4 @@
-// The correctness-critical UI (ROADMAP, "Considerations: UI"): both
+// The correctness-critical UI (DESIGN.md, "The backup wizard"): both
 // wizards end to end against the release file, under its strict CSP, with
 // the checks that matter: the spot check, the recovery test, what gets
 // printed, and that nothing secret is left behind.
