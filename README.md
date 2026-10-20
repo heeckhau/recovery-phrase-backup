@@ -14,10 +14,6 @@ SLIP-39.
 It is one HTML file that runs offline in your browser. It is not a wallet: it
 never signs anything and never touches a network.
 
-> **Status: pre-release.** The code is complete and tested, but it has not
-> been through its independent review yet ([ROADMAP.md](ROADMAP.md)).
-> Until v1, don't use it for a phrase that guards real funds.
-
 ## How it works
 
 1. **Your phrase.** Type it in a numbered word grid (or paste it). The page
@@ -158,9 +154,6 @@ python-slip39 and seedkit, and that theirs recover here.
   apart; a share from another backup is refused as soon as it is added.
 - **Your wallet's own BIP39 passphrase (the "25th word") is not part of the
   backup.** If your wallet uses one, back it up separately.
-- **Reviewed, not audited.** Before v1 the code is reviewed by several other
-  LLMs, and what they find is fixed. That is a second pair of eyes, not a
-  professional audit, and this project doesn't claim one.
 
 ## Building and testing
 

@@ -11,9 +11,9 @@ possible trust chain over convenience or polish: minimal, well-known
 dependencies; a plain static page over a framework; code someone can read end
 to end over code that's merely tested.
 
-## Where it stands (2026-10-15)
+## Where it stands (2026-10-20)
 
-Complete and tested; pre-releases (v0.x) until the review.
+Complete, tested and reviewed; ready for v1.
 
 - **`rpb-slip39`**: SLIP-39 written from the spec (no suitable Rust crate
   exists; see History), checked against all 45 official vectors. Accepts
@@ -37,20 +37,17 @@ Complete and tested; pre-releases (v0.x) until the review.
   release file itself in Chromium and Firefox (the browser on Ubuntu, and
   the base of Tor Browser), and a check that no em dash appears in the repo.
 
-Not done yet: the independent review and a maintainer's signature on
-releases. Until then releases are pre-releases (v0.x), and the website
-offers the latest tested build of `main` for download, with its SHA-256.
+Not done yet: a maintainer's signature on releases. The website offers the
+latest tested build of `main` for download, with its SHA-256.
 
 ## Next
 
-1. **Independent review.** Several other LLMs each review `rpb-slip39`, the
-   page and the build, given the code and the threat model (offline, single
-   file, real recovery phrases). Findings are fixed as they come in, like
-   any other bug. v1 does not wait for a professional audit, and the
-   project never calls itself "audited": an LLM review is a useful second
-   pair of eyes, not an audit, and claiming otherwise would spend the trust
-   the rest of the plan earns. A human audit stays welcome if one ever
-   becomes possible.
+1. **Independent review.** *Done (2026-10-20):* several other LLMs
+   reviewed `rpb-slip39`, the page and the build, given the code and the
+   threat model (offline, single file, real recovery phrases), and a few
+   people read and tried it. Findings were fixed like any other bug. No
+   professional audit: the project never calls itself "audited", and a
+   human audit stays welcome if one ever becomes possible.
 2. **A name.** *Done (2026-10-15):* Recovery Phrase Backup. The
    repository and release file are `recovery-phrase-backup`, the crates
    `rpb-*` and the command `rpb` (formerly `private-key-convertor`, `pkc-*`
@@ -95,9 +92,8 @@ offers the latest tested build of `main` for download, with its SHA-256.
      nothing. With reduced motion the same story is told as text. A
      commissioned hand-drawn cartoon can replace it later.
 5. **Outreach, with a stopping rule.** Put v1 in front of self-custody
-   communities, EthStaker first because it is reachable. If after 3 to 6
-   months nobody endorses or uses it, stop: something useful will have been
-   built anyway.
+   communities. If after 3 to 6 months nobody endorses or uses it, stop:
+   something useful will have been built anyway.
 
 ## Later, maybe
 

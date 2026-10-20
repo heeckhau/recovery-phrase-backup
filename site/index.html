@@ -40,7 +40,6 @@
   .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
   .button { display: inline-block; padding: 10px 18px; border: 1px solid var(--accent); text-decoration: none; font-weight: 600; }
   .button.primary { background: var(--accent); color: var(--bg); }
-  .note { border: 1px solid var(--border); background: var(--panel); padding: 12px 14px; }
   .warn { color: var(--warn); }
   code { color: var(--accent); }
   .hash { overflow-wrap: anywhere; }
@@ -231,7 +230,7 @@
       <li><strong>You don't depend on this project.</strong> Shares are tested against other SLIP-39 tools on every change, so you can <a href="#without">recover without this one</a>.</li>
       <li><strong>Keep a copy of the tool.</strong> It's a single web page, with nothing to install and no server behind it, and web pages are made to keep working: browsers still open pages from the 1990s, because breaking old pages is the one thing they avoid. Store the file with your shares or your "how to recover" sheet. If it ever stopped opening, any other SLIP-39 tool can still <a href="#without">recover your shares</a>.</li>
     </ul>
-    <p><strong>What's left to trust:</strong> that the shares are made with good randomness. A recovery test can't show this; only reading the code can. That's why the code is kept small, and why version 1 waits for an independent review.</p>
+    <p><strong>What's left to trust:</strong> that the shares are made with good randomness. A recovery test can't show this; only reading the code can. That's why the code is kept small.</p>
   </section>
 
   <section>
@@ -242,7 +241,7 @@
 
   <section id="download">
     <h2>Use it for real</h2>
-    <div class="note"><p class="warn">Not reviewed yet.</p><p>The download below is the latest build of <a href="https://github.com/heeckhau/recovery-phrase-backup">the source</a>, published after every test passes; tagged versions are on the <a href="https://github.com/heeckhau/recovery-phrase-backup/releases">releases page</a>. Version 1 comes after an independent review. Until then, don't use it for a phrase that guards real funds.</p></div>
+    <p>The download below is the latest build of <a href="https://github.com/heeckhau/recovery-phrase-backup">the source</a>, published after every test passes; tagged versions are on the <a href="https://github.com/heeckhau/recovery-phrase-backup/releases">releases page</a>.</p>
     <ol>
       <li>Download <a href="recovery-phrase-backup.html" download>recovery-phrase-backup.html</a> (version {{VERSION}}). Its SHA-256 is <code class="hash">{{RELEASE_SHA256}}</code>.</li>
       <li>Check the hash (<code>shasum -a 256 recovery-phrase-backup.html</code>). To check that the file matches the source, rebuild it from the latest commit with Docker (<code>scripts/build-reproducible.sh</code>) and compare.</li>
@@ -258,7 +257,6 @@
       <li><strong>Use it on a clean system, offline.</strong> The page sends nothing, but other software on the computer could, such as a malicious extension, even later once you're back online. A live USB system rules that out.</li>
       <li><strong>Printing puts everything in one place</strong> until you cut the cards apart. Use a printer at home, never "Save as PDF", or write the shares by hand.</li>
       <li><strong>Your wallet's own passphrase</strong> (the "25th word"), if it has one, is not part of the backup. Back it up separately.</li>
-      <li><strong>Reviewed, not audited.</strong> The code is reviewed by several AI models before release, and what they find is fixed. That is a second pair of eyes, not a professional audit.</li>
     </ul>
   </section>
 

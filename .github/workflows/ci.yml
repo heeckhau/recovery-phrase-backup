@@ -178,7 +178,6 @@ jobs:
           case "$GITHUB_REF_NAME" in
             v0.*)
               prerelease=--prerelease
-              printf '%s\n\n' "**Pre-release, not yet independently reviewed.** Until v1, don't use it for a phrase that guards real funds." > notes.md
               ;;
           esac
           cat >> notes.md <<NOTES
