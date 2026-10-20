@@ -97,7 +97,7 @@ GitHub; this doesn't. The release file is built reproducibly in a pinned
 Linux x86-64 container, so anyone with Docker gets the same bytes:
 
 ```sh
-git checkout v0.1.0             # the release's tag
+git checkout v0.2.0             # the release's tag
 scripts/build-reproducible.sh   # writes dist/recovery-phrase-backup.html and prints its SHA-256
 ```
 
