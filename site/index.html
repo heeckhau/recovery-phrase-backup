@@ -224,7 +224,7 @@
     <h2>You don't have to trust me</h2>
     <p>You shouldn't have to trust anyone with your recovery phrase, including me, the author. The tool is built so that you don't:</p>
     <ul>
-      <li><strong>It can't send anything.</strong> You run it on a live USB system such as Tails with the network off, so even a broken or malicious version has no way out.</li>
+      <li><strong>It can't send anything.</strong> You run it from an Ubuntu live USB stick with the network off, so even a broken or malicious version has no way out.</li>
       <li><strong>You can check what you run.</strong> The source is public and small enough to read, and the build is reproducible: anyone can rebuild the file and get exactly the same bytes as the download.</li>
       <li><strong>Few dependencies.</strong> No JavaScript libraries and nothing loaded from elsewhere. The cryptography comes from a few widely used open-source Rust libraries.</li>
       <li><strong>No new cryptography.</strong> It uses two open standards, BIP39 for your words and SLIP-39 for the shares.</li>
@@ -237,7 +237,7 @@
   <section>
     <h2>"Never type your phrase into a website"</h2>
     <p>That's the right rule, and this tool keeps it. The demo on this site accepts only its own published sample phrases. For your real phrase, you download the tool: a single file that you open in your browser with the network switched off. It is blocked from making any connection, saves nothing, and forgets everything when you close it.</p>
-    <p>Offline alone isn't enough if the computer itself can't be trusted: malware or a malicious browser extension can record what you type and send it the next time you go online. That's why the recommended way is to start the computer from a live USB system such as <a href="https://tails.net">Tails</a>: a clean system that doesn't touch your usual one and forgets everything when you shut it down.</p>
+    <p>Offline alone isn't enough if the computer itself can't be trusted: malware or a malicious browser extension can record what you type and send it the next time you go online. That's why the recommended way is to start the computer from a live USB stick, such as <a href="https://ubuntu.com/tutorials/try-ubuntu-before-you-install">"Try Ubuntu"</a>: a clean system that doesn't touch your usual one and forgets everything when you shut it down.</p>
   </section>
 
   <section id="download">
@@ -246,9 +246,9 @@
     <ol>
       <li>Download <a href="recovery-phrase-backup.html" download>recovery-phrase-backup.html</a> (version {{VERSION}}). Its SHA-256 is <code class="hash">{{RELEASE_SHA256}}</code>.</li>
       <li>Check the hash (<code>shasum -a 256 recovery-phrase-backup.html</code>). To check that the file matches the source, rebuild it from the latest commit with Docker (<code>scripts/build-reproducible.sh</code>) and compare.</li>
-      <li>Start the computer from a live USB system such as Tails, and don't connect it to the network. If you can't, at least disconnect, and use a fresh browser profile with no extensions.</li>
-      <li>In Tor Browser (the browser on Tails), set the security level to Standard: Safer and Safest block WebAssembly, which the tool needs. For this one file, offline, Standard is fine.</li>
-      <li>Open the file and follow the steps.</li>
+      <li>Start the computer from an Ubuntu USB stick and choose "Try Ubuntu". Don't connect to Wi-Fi, and unplug any network cable. If you can't start from a USB stick, at least disconnect, and use a fresh browser profile with no extensions.</li>
+      <li>Copy the file into the Home folder, from a second USB stick for example.</li>
+      <li>Open it in Firefox and follow the steps.</li>
     </ol>
   </section>
 

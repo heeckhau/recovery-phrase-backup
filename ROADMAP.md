@@ -34,8 +34,8 @@ Complete and tested; pre-releases (v0.x) until the review.
   in a pinned Linux x86-64 container), and CI on every push: tests, clippy,
   `cargo audit`, the reproducible build, the cross-tool suite (266/266
   checks against three other SLIP-39 tools), browser tests against the
-  release file itself in Chromium and Firefox (the base of Tor Browser, on
-  Tails), and a check that no em dash appears in the repo.
+  release file itself in Chromium and Firefox (the browser on Ubuntu, and
+  the base of Tor Browser), and a check that no em dash appears in the repo.
 
 Not done yet: the independent review and a maintainer's signature on
 releases. Until then releases are pre-releases (v0.x), and the website
@@ -303,7 +303,7 @@ so it says so plainly at the print step: a home printer on your own network
 is fine, avoid office, shared and cloud printers, never save as PDF, cut the
 cards apart right away. Printing one share per job used to make a careless
 save capture only one harmless share, but it was tedious, and the gain is
-small for a home printer. On a live USB (Tails) all of this disappears at
+small for a home printer. On a live USB system all of this disappears at
 shutdown.
 
 **Share cards.** A card carries the numbered words, the fingerprint, and a
@@ -364,7 +364,7 @@ CLI, BIP39 phrase to shares and back, unaudited by its own README) and
 
 **Where this project differs:**
 1. *Runs anywhere offline with nothing to install*: one HTML file, any OS,
-   any modern browser, including Tails.
+   any modern browser, including on a live USB system.
 2. *A short trust chain you can check*: a small Rust codebase on a handful
    of mostly RustCrypto crates, an independent SLIP-39 implementation,
    reproducible builds, MIT/Apache-2.0, and no licensing, payment or network

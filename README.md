@@ -62,19 +62,25 @@ then disconnect from the network and open the file in a browser. (The
 [website](https://heeckhau.github.io/recovery-phrase-backup/#download)
 offers the latest build of `main` instead, with its SHA-256.) The page
 shows its version at the bottom. The
-recommended setup is a live USB system such as Tails, without a network
-connection:
+recommended setup is Ubuntu started from a live USB stick, without a
+network connection:
 offline alone doesn't stop malware or a malicious extension from recording
 the phrase and sending it once the computer is back online. If you can't,
 at least disconnect and use a fresh browser profile without extensions.
 
-**On Tails**: copy the file to the Tails computer (a USB stick works),
-start Tails with networking off ("Offline Mode" in the Welcome Screen's
-additional settings), and open the file in Tor Browser. Set Tor Browser's
-security level to Standard first (the shield icon): Safer and Safest block
-WebAssembly, which the page needs, and the page says so if it can't load.
-For this one file, offline, Standard is fine. Tails before 6.14.1 only lets
-Tor Browser open files in its `Tor Browser` folder, so put the file there.
+**On Ubuntu**: start the computer from an Ubuntu USB stick
+([how to make one](https://ubuntu.com/tutorials/try-ubuntu-before-you-install))
+and choose "Try Ubuntu", not install. Don't connect to Wi-Fi, and unplug any
+network cable. Copy the file into the Home folder (a second USB stick works)
+and open it in Firefox. The live system forgets everything at shutdown.
+
+**On Tails**, which works too where it runs on the hardware: start Tails
+with networking off ("Offline Mode" in the Welcome Screen's additional
+settings) and open the file in Tor Browser. Set Tor Browser's security level
+to Standard first (the shield icon): Safer and Safest block WebAssembly,
+which the page needs, and the page says so if it can't load. For this one
+file, offline, Standard is fine. Tails before 6.14.1 only lets Tor Browser
+open files in its `Tor Browser` folder, so put the file there.
 
 **Check the download.** Each release carries `SHA256SUMS` and a GitHub
 attestation: a record, signed by GitHub, that this repository's CI built
@@ -133,8 +139,8 @@ python-slip39 and seedkit, and that theirs recover here.
 - **Use it on a clean system, offline.** The page sends nothing, but other
   software on the computer could, even later once it is back online. The
   machine is trusted for the session; nothing protects a phrase typed into a
-  compromised computer, which is why a live USB system such as Tails is the
-  recommendation.
+  compromised computer, which is why a live USB system such as Ubuntu's is
+  the recommendation.
 - **Printing is the one moment everything is in one place.** Until the cards
   are cut apart and stored separately, a printout of all shares is your whole
   phrase. A home printer on your own network is fine; avoid office, shared
@@ -200,7 +206,7 @@ and the build shows it on the page and the website.
 - `web/`: the page, plain HTML and JavaScript with no framework.
 - `scripts/`: the release build and the cross-tool suite.
 - `tests/e2e/`: browser tests that drive the built release file, in Chromium
-  and in Firefox (which Tor Browser, on Tails, is built on).
+  and in Firefox (the browser on Ubuntu, and the base of Tor Browser).
 - `reference/`: the legacy single-file tools this project started from, kept
   unmodified for reference.
 

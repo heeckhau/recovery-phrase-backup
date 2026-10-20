@@ -193,7 +193,7 @@ jobs:
 
           The first command checks the file's SHA-256 (\`$hash\`). The second needs the [GitHub CLI](https://cli.github.com): it checks GitHub's attestation that this repository's CI built the file from tag $GITHUB_REF_NAME. To check the file against the source without trusting GitHub, run \`git checkout $GITHUB_REF_NAME\` and then \`scripts/build-reproducible.sh\` (needs Docker): it prints the same hash.
 
-          **Use it.** Start a computer from a live USB system such as Tails, keep it offline, and open the file in a browser (on Tails, Tor Browser at security level Standard: Safer and Safest block WebAssembly, which the page needs). If you can't, at least disconnect from the network and use a fresh browser profile without extensions.
+          **Use it.** Start a computer from an Ubuntu USB stick ("Try Ubuntu"), keep it offline, copy the file into the Home folder and open it in Firefox. If you can't, at least disconnect from the network and use a fresh browser profile without extensions. On Tails, set Tor Browser's security level to Standard: Safer and Safest block WebAssembly, which the page needs.
           NOTES
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag $prerelease \
             --title "$GITHUB_REF_NAME" --notes-file notes.md \

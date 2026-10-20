@@ -13,8 +13,8 @@ module.exports = defineConfig({
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? "list" : "line",
   use: { trace: "retain-on-failure" },
-  // Firefox stands in for Tor Browser, the browser on Tails, which the
-  // README recommends.
+  // Firefox is the browser on Ubuntu's live system, which the README
+  // recommends, and the base of Tor Browser.
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
