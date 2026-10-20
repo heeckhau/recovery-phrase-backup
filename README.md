@@ -14,6 +14,11 @@ SLIP-39.
 It is one HTML file that runs offline in your browser. It is not a wallet: it
 never signs anything and never touches a network.
 
+**[Try the demo](https://heeckhau.github.io/recovery-phrase-backup/demo.html)** with
+its sample phrases, or [download the tool](#using-it) to use it for real.
+
+<img src=".github/screenshot.png" alt="The backup wizard showing share 1 of 3: twenty numbered words to write down, any two of the three shares recover the phrase" width="560">
+
 ## How it works
 
 1. **Your phrase.** Type it in a numbered word grid (or paste it). The page
