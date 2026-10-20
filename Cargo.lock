@@ -639,7 +639,7 @@ dependencies = [
 
 [[package]]
 name = "rpb-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "clap",
  "rpassword",
@@ -650,7 +650,7 @@ dependencies = [
 
 [[package]]
 name = "rpb-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bech32",
  "bip32",
@@ -667,7 +667,7 @@ dependencies = [
 
 [[package]]
 name = "rpb-slip39"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bitvec",
  "getrandom",
@@ -684,7 +684,7 @@ dependencies = [
 
 [[package]]
 name = "rpb-wasm"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "console_error_panic_hook",
  "rpb-core",
