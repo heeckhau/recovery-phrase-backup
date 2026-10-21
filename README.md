@@ -106,6 +106,17 @@ platform but differ across platforms, which is why the reference build runs
 in a container. On Apple Silicon it runs under emulation and takes a couple
 of minutes.)
 
+**Check the maintainer's signature.** From v0.2.0, each release also carries
+`SIGNATURE.txt`: a one-line message naming the release file's SHA-256 and
+the commit it is built from, signed (Ethereum `personal_sign`) by
+`heeckhau.eth`, whose address is
+`0x9b18e9e9aa3dD35100b385b7035C0B1E44AfcA14`. It doesn't depend on GitHub.
+Check it against that address, not only the name, since an ENS name can be
+pointed elsewhere: paste the address, message and signature into
+[Etherscan's signature checker](https://etherscan.io/verifiedSignatures), or
+run the `cast wallet verify` command in `SIGNATURE.txt`
+([Foundry](https://getfoundry.sh)).
+
 **The command-line tool** does the same splitting and recovery for scripting
 or a Raspberry Pi, and can also convert a raw private key between hex and
 WIF. It asks for secrets with hidden input rather than taking them as
@@ -205,8 +216,13 @@ and the build shows it on the page and the website.
    CI runs every check on the tag, then its `release` job checks that the
    tag matches `Cargo.toml` and drafts a GitHub release (a pre-release
    before 1.0) with the tested file, `SHA256SUMS` and an attestation.
-3. Rebuild with `scripts/build-reproducible.sh`, check the hash matches the
-   draft's `SHA256SUMS`, and publish the draft.
+3. Run `scripts/sign-release.py --notes NOTES.md` (add `--ledger` or
+   `--trezor` to sign on the device). It checks the draft's `SHA256SUMS`
+   and attestation, rebuilds the tag with `scripts/build-reproducible.sh`
+   in a clean checkout and compares the bytes, checks that `heeckhau.eth`
+   still resolves to the pinned address, has you sign the message, verifies
+   the signature, uploads `SIGNATURE.txt` with the notes, and publishes the
+   draft once you confirm. `--dry-run` uploads nothing.
 4. Set `main` to the next version with a `-dev` suffix (`0.3.0-dev`), so
    builds of `main` don't carry the release's version.
 
@@ -220,7 +236,8 @@ and the build shows it on the page and the website.
 - `wasm/`: thin bindings for the browser.
 - `cli/`: the `rpb` command.
 - `web/`: the page, plain HTML and JavaScript with no framework.
-- `scripts/`: the release build and the cross-tool suite.
+- `scripts/`: the release build, the release signing and the cross-tool
+  suite.
 - `tests/e2e/`: browser tests that drive the built release file, in Chromium
   and in Firefox (the browser on Ubuntu, and the base of Tor Browser).
 - `reference/`: the legacy single-file tools this project started from, kept
