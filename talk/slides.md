@@ -50,6 +50,7 @@ style: |
   .cols.top { align-items: start; }
   .muted, .small { color: var(--muted); }
   .small { font-size: 20px; }
+  .small.url { font-size: 18px; white-space: nowrap; }
   .warn { color: var(--warn); }
 
   /* The website's explainer: one 14 s loop. */
@@ -109,6 +110,12 @@ style: |
   @keyframes c3 { 0%, 40% { opacity: 0; } 44%, 54% { opacity: 1; } 57%, 100% { opacity: 0; } }
   @keyframes c4 { 0%, 57% { opacity: 0; } 61%, 68% { opacity: 1; } 71%, 100% { opacity: 0; } }
   @keyframes c5 { 0%, 71% { opacity: 0; } 74%, 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
+
+  /* With reduced motion, each drawing holds one frame that tells its story. */
+  @media (prefers-reduced-motion: reduce) {
+    .anim, .anim2 { animation: none !important; }
+    #c2, #places, #k5, #phrase2, #tick2 { opacity: 1; }
+  }
 
   /* Groups: either 2 of 3 places or 5 of 7 people recover the phrase. One 18 s loop.
      Each moving card sets --dx/--dy, the offset from its place to the phrase. */
@@ -359,7 +366,7 @@ The backup can ask a lot of you. The recovery can't ask much of your heirs.
 ## You don't have to trust me
 
 - **Offline**: not a wallet, never touches a network. Ideally on a live USB stick
-- **Reproducible build**: check that the file is built from the published source
+- **Reproducible build**, signed by **`heeckhau.eth`**: check that the file is built from the published source
 - **Open source**, tested against other SLIP-39 tools: you don't even need this one to recover
 
 ---
@@ -370,7 +377,9 @@ The backup can ask a lot of you. The recovery can't ask much of your heirs.
 
 ![bg right:45% fit](../.github/screenshot.png)
 
-The demo version comes with sample phrases.
+The demo version comes with sample phrases:
+
+<p class="small url">heeckhau.github.io/recovery-phrase-backup/demo.html</p>
 
 **Never type your real seed into a computer that's online.**
 
