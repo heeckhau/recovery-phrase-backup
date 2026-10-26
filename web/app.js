@@ -257,7 +257,7 @@ function createShareEntry(container, { fixedLength, enoughHint = "", onProgress,
   const lengthRow = el("div");
   lengthRow.append(lengthLabel, lengthSelect);
   lengthRow.hidden = Boolean(fixedLength);
-  const gridBox = el("div", "word-grid");
+  const gridBox = el("div", "word-grid share-grid");
   const error = el("div", "error");
   const addButton = el("button", "btn-secondary", "Add this share");
   addButton.type = "button";
@@ -326,7 +326,7 @@ function createShareEntry(container, { fixedLength, enoughHint = "", onProgress,
       const item = el("li");
       const details = el("details");
       details.appendChild(el("summary", null, shareLabel(info)));
-      const words = el("div", "word-grid");
+      const words = el("div", "word-grid share-grid");
       renderWords(words, mnemonic.split(" "));
       const remove = el("button", "btn-remove mt-075", "Remove this share");
       remove.type = "button";

@@ -215,6 +215,10 @@
   .step p { font-size: 0.9rem; line-height: 1.5; margin: 0.5rem 0; }
   .word-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem 0.75rem; margin-top: 0.75rem; }
   @media (max-width: 540px) { .word-grid { grid-template-columns: repeat(2, 1fr); } }
+  /* Shares print four to a row (.print-card .words), so show them the same
+     way on screen; two to a row on narrow screens keeps the same breaks. */
+  .word-grid.share-grid { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 600px) { .word-grid.share-grid { grid-template-columns: repeat(2, 1fr); } }
   .word-cell { display: flex; align-items: center; gap: 0.35rem; }
   .word-cell .num {
     width: 1.6rem;
@@ -443,7 +447,7 @@
       <p>Fingerprint: <span class="fingerprint" id="b4-fingerprint"></span> <span class="checked-badge" id="b4-checked" hidden>Checked</span></p>
       <div id="b4-show">
         <p id="b4-howto"></p>
-        <div class="word-grid" id="b4-words"></div>
+        <div class="word-grid share-grid" id="b4-words"></div>
         <button type="button" class="btn-secondary" id="b4-print-blank">Print blank cards to write on</button>
         <button type="button" class="btn-secondary" id="b4-print">Print the shares</button>
         <p class="notice mt-075" id="b4-print-note" hidden>Checking a printed card can feel pointless, but it catches a card that printed cut off, smudged or not at all. Three words, then the next card.</p>
@@ -452,7 +456,7 @@
       </div>
       <div id="b4-verify" hidden>
         <p>Check your copy: type these words from what you wrote down. Each turns green when it matches.</p>
-        <div class="word-grid" id="b4-check-grid"></div>
+        <div class="word-grid share-grid" id="b4-check-grid"></div>
         <div class="error" id="b4-error"></div>
         <div class="banner success mt-075" id="b4-match" hidden>All three match.</div>
         <button type="button" class="btn-secondary" id="b4-show-again">Show the share again</button>
